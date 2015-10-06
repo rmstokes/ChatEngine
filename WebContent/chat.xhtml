@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>Vesting</title>
+    <style type="text/css"><![CDATA[
+        input#chat {
+            width: 410px
+        }
+
+        #console-container {
+            width: 400px;
+        }
+
+        #console {
+            border: 1px solid #CCCCCC;
+            border-right-color: #999999;
+            border-bottom-color: #999999;
+            height: 170px;
+            overflow-y: scroll;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #console p {
+            padding: 0;
+            margin: 0;
+        }
+    ]]></style>
+    <script type="application/javascript"><![CDATA[
+        "use strict";
+
+        
+        var Chat = {};
+        
+        Chat.socket = null;
+        
+        var host = '';
+
+        Chat.connect = (function(host) {
+            if ('WebSocket' in window) {
+                Chat.socket = new WebSocket(host);                
+            } else if ('MozWebSocket' in window) {
+                Chat.socket = new MozWebSocket(host);                
+            } else {
+                Console.log('Error: WebSocket is not supported by this browser.');
+                return;
+            }
+
+            Chat.socket.onopen = function () {
+                //alert(message.data);
+                Console.log('Info: WebSocket connection opened.');
+                //create onkeyup listener
+                document.getElementById('chat').onkeyup = function(event) {                     
+                    //send every keypress to server for broadcast
+                    //to all users.
+                    Chat.sendMessage(event);
+                };
+            };
+
+            Chat.socket.onclose = function () {
+                document.getElementById('chat').onkeydown = null;
+                Console.log('Info: WebSocket closed... host: '+host);
+            };
+
+            Chat.socket.onmessage = function (message) {
+                //message.data here will be in xml format
+                //parse the message.data text to find out if client is still typing message
+                //or if the user has completed a full message.
+                
+                var xml = message.data;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(xml,"text/xml");
+                var messageNode = xmlDoc.getElementsByTagName('message')[0];
+                var messageType = messageNode.getAttribute('type');                
+                var textNode = xmlDoc.getElementsByTagName('text')[0];
+                var innerText = textNode.childNodes[0].nodeValue;
+                
+                //if message is still being typed
+                //display in console on the same line as the user's other text                
+                //if message is complete then display as full entry in console.                 
+                
+                if (messageType == 'typing'){
+                    //output text to console if it originated from another client                    
+                    var senderID = messageNode.getAttribute('senderID'); //assigned by client
+                    var clientID = messageNode.getAttribute('clientID'); //assigned by server
+                    
+                    if (clientID == '' || clientID == null) alert('null clientID');                    
+                    if (clientID != senderID){
+                      //was this user the one that sent text message that was just received back?
+                      //if so, do nothing otherwise display in console.                      
+                      var guestLabel = 'Guest '+senderID+': ';
+                      
+                      //check if tag already exists with id==senderID
+                      //if so, then send guestLabel and innerText to that element's innerHTML
+                      //otherwise, create a <p> element below all the other elements in console
+                      //before populating <p> with text.
+                      var consoleElement = document.getElementById(senderID);                      
+                      if (consoleElement == null){
+                        //need to create element to display text in console.
+                        var console = document.getElementById('console');
+                        var newline = document.createElement('BR');
+                        var paragraph = document.createElement('P'); //create paragraph element
+                        paragraph.style.wordWrap = 'break-word';
+                        paragraph.innerHTML = guestLabel+innerText;
+                        paragraph.id = senderID;                        
+                        console.appendChild(paragraph);                         
+                        
+                      } else {        
+                          //<p> element already exists so just add new character.
+                          consoleElement.innerHTML = guestLabel+innerText; //add text to paragraph element
+                      }                      
+                      
+                    }
+                    
+                } else if (messageType == 'chat'){
+                    //message type is 'chat' meaning a complete message has been logged.
+                    
+                    //place the chat text in appropriate <p> element followed by newline.                    
+                    var senderID = messageNode.getAttribute('senderID');
+                    var consoleElement = document.getElementById(senderID);
+                    var guestLabel = 'Guest '+senderID+': ';
+                    var console = document.getElementById('console');
+                    var newline = document.createElement('br');
+                    if (consoleElement == null) {
+                      //null consoleElement means that the senderID and clientID are equal.
+                      //in this case create a <p> to display chat output.                      
+                      var paragraph = document.createElement('P'); //create paragraph element
+                      paragraph.style.wordWrap = 'break-word';                      
+                      paragraph.innerHTML = guestLabel+innerText;                                            
+                      console.appendChild(paragraph);  
+                      paragraph.appendChild(newline);
+                    } else {
+                        //senderID != clientID so there is already text in <p> element                       
+                        consoleElement.innerHTML = '';
+                        consoleElement.innerHTML = guestLabel+innerText;
+                        consoleElement.id = ''; //clear the id                        
+                        consoleElement.appendChild(newline);
+                    }
+                    
+                    
+                    //Console.log(guestLabel+innerText);
+                } else if (messageType == 'alert'){
+                    //notify group that a user has joined session.
+                    Console.log(innerText);
+                } 
+                
+            };
+        });
+
+        Chat.initialize = function() {
+            if (window.location.protocol == 'http:') {
+                Chat.connect('ws://' + window.location.host + '/Chat/chat');
+            } else {
+                Chat.connect('wss://' + window.location.host + '/Chat/chat');
+            }
+        };
+
+        Chat.sendMessage = (function(event) {
+            var keycode = event.keyCode;
+            var message = document.getElementById('chat').value;
+            
+            if (message != ''){
+              //if user has typed a message
+              //build up xml string based on whether user pressed enter or not
+              
+              if (keycode == 13){
+                //user pressed enter: message finished
+                //var clientID = document.getElementById('clientID').value;
+                var xml = '<message type="chat">'+       
+                '<chat>'+
+                '<text>'+message+'</text>'+
+                '<font> </font>'+
+                '<size> </size>'+
+                '<color> </color>'+
+                '<bold> </bold>'+
+                '<italic> </italic>'+
+                '<underline> </underline>'+
+                '</chat>'+
+                '</message>';
+                
+                Chat.socket.send(xml);
+                document.getElementById('chat').value = '';
+              
+              } else {
+                //user message isn't finished
+                //var clientID = document.getElementById('clientID').value;
+                var xml = '<message type="typing">'+                
+                '<chat>'+
+                '<text>'+message+'</text>'+
+                '<font> </font>'+
+                '<size> </size>'+
+                '<color> </color>'+
+                '<bold> </bold>'+
+                '<italic> </italic>'+
+                '<underline> </underline>'+
+                '</chat>'+
+                '</message>';
+                
+                Chat.socket.send(xml);                
+              }
+              
+            
+            }
+            
+            
+            
+            /*
+            if (message != '') {
+                Chat.socket.send(keycode, message);
+                document.pgetElementById('chat').value = '';
+            }*/
+        });
+
+        var Console = {};
+
+        Console.log = (function(message) {
+            var console = document.getElementById('console');
+            var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.innerHTML = message;
+            console.appendChild(p);
+            while (console.childNodes.length > 25) {
+                console.removeChild(console.firstChild);
+            }
+            console.scrollTop = console.scrollHeight;
+        });
+        
+        
+        Chat.initialize();
+
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Remove elements with "noscript" class - <noscript> is not allowed in XHTML
+            var noscripts = document.getElementsByClassName("noscript");
+            for (var i = 0; i < noscripts.length; i++) {
+                noscripts[i].parentNode.removeChild(noscripts[i]);
+            }
+        }, false);    
+        
+        
+
+               
+                
+    ]]>
+    
+    
+    
+    </script>
+</head>
+<body>
+<div class="noscript"><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websockets rely on Javascript being enabled. Please enable
+    Javascript and reload this page!</h2></div>
+<div>
+<input type='hidden' id='clientID' value=''/>
+    <p>
+        <input type="text" placeholder="type and press enter to chat" id="chat"/>
+    </p>
+    <div id="console-container">
+        <div id="console"/>
+    </div>
+</div>
+</body>
+</html>
