@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This admin page allows instructor to select the number of groups (chat rooms) to create
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+  <head>
+    <title>Admin Page</title>
+    <link rel="stylesheet" type="text/css" href="admin.css"/>
+    
+     <script type="application/javascript"><![CDATA[
+        "use strict";
+        var Chat = {};        
+        var clientID = window.name;        
+        if (clientID == null){
+          //send xml message to server to get a new sessionID.
+          alert('clientID is null');
+          var xml = '<message type="requestID"></message>';
+        }
+        
+        Chat.socket = null;
+        
+        var host = '';
+        
+        //this function called by Chat.initialize function below
+        Chat.connect = (function(host) {
+            //create websocket if supported by client
+            if ('WebSocket' in window) {
+                Chat.socket = new WebSocket(host);                
+                //alert('admin page client id: '+clientID);                
+            } else if ('MozWebSocket' in window) {
+                Chat.socket = new MozWebSocket(host);                
+            } else {
+                Console.log('Error: WebSocket is not supported by this browser.');
+                return;
+            }
+
+            Chat.socket.onopen = function () {
+                //connection opened with server
+            };
+
+            Chat.socket.onclose = function () {
+              //connnection closed with server
+              
+            };
+
+            Chat.socket.onmessage = function (message) {
+                //message received from server     
+                //if groups have been created then alert user and
+                //provide a way to navigate to the login page
+                              
+                var xml = message.data;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(xml,"text/xml");
+                var messageNode = xmlDoc.getElementsByTagName('message')[0];
+                var messageType = messageNode.getAttribute('type'); 
+                if (messageType == 'groupsCreated'){
+                  alert('Groups have been successfully created');
+                  //may want to automatically log admin into all the groups in multiple tabs
+                  
+                  window.location.href = 'http://'+window.location.host + '/Chat/login.xhtml';
+                } else {
+                
+                }
+                
+            }; //end onmessage
+        }); //end Chat.connect()
+
+        Chat.initialize = function() {
+            if (window.location.protocol == 'http:') {
+                Chat.connect('ws://' + window.location.host + '/Chat/admin');
+            } else {
+                Chat.connect('wss://' + window.location.host + '/Chat/admin');
+            }
+        }        
+
+             
+        
+        
+        Chat.initialize();
+        
+        function createGroups(){
+          //send xml message to server to create groups.          
+          var numGroups = document.getElementById('groupCount').value;
+          //alert('numGroups: '+numGroups);
+          var xml = '<message type="groupCreation" senderID="'+clientID+'">'+
+          '<text>'+numGroups+'</text>'+
+          '</message>';
+          Chat.socket.send(xml);
+        }
+
+    ]]>
+        
+        
+    
+    </script>  
+  </head>
+  <body>
+  <div>
+    <h1>Welcome to Instructor Administrative Page</h1>
+  </div>
+  <br/>
+  <div>
+    <!-- <p> Please Designate Number of Groups </p> -->
+    Username <input type='text'/><br/>
+    Number of Groups <select id='groupCount'>
+      <!-- max number of groups is 10 for now -->
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>        
+      </select>
+    <button onclick='createGroups()'>Create</button>
+    
+  </div>
+  
+  <div id='main_picture'>
+    <!-- <img id='robot_hand' src="robot_hand.jpg" alt="Image Not Available" style="width:800px;height:400px;"/> -->
+  </div>
+  </body>
+
+
+</html>

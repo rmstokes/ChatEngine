@@ -24,14 +24,14 @@
         }
 
         #console-container {
-            width: 400px;
+            width: 500px;
         }
 
         #console {
             border: 1px solid #CCCCCC;
             border-right-color: #999999;
             border-bottom-color: #999999;
-            height: 170px;
+            height: 300px;
             overflow-y: scroll;
             padding: 5px;
             width: 100%;
@@ -47,6 +47,25 @@
 
         
         var Chat = {};
+        //var clientID = localStorage.getItem('clientID');
+        var index; //location of $ character
+        for (var i=0; i<window.name.length; i++){
+            if (window.name.charAt(i) == '$') {
+                index = i;
+                break;
+            }
+        }
+        var username = window.name.substring(index+1);
+        //alert('parsed username: '+username);
+        //var username = sessionStorage.getItem('username');
+        //alert('username: '+username);
+        var clientID = window.name.substring(0, index);
+        //alert('clientID passed from landing page: '+clientID);
+        if (clientID == null){
+          //send xml message to server to get a new sessionID.
+          alert('clientID is null');
+          var xml = '<message type="requestID"></message>';
+        }
         
         Chat.socket = null;
         
@@ -64,25 +83,31 @@
 
             Chat.socket.onopen = function () {
                 //alert(message.data);
-                Console.log('Info: WebSocket connection opened.');
+                Console.log('Info: WebSocket connection opened.');                
                 //create onkeyup listener
                 document.getElementById('chat').onkeyup = function(event) {                     
                     //send every keypress to server for broadcast
                     //to all users.
                     Chat.sendMessage(event);
                 };
+                
+                //broadcast to group that user has joined
+                //alert('about to broadcast');
+                var xml = '<message type="broadcast" senderID="'+clientID+'" username="'+username+'"></message>';
+                Chat.socket.send(xml);
             };
 
             Chat.socket.onclose = function () {
                 document.getElementById('chat').onkeydown = null;
                 Console.log('Info: WebSocket closed... host: '+host);
+                sessionStorage.clear();
             };
 
             Chat.socket.onmessage = function (message) {
                 //message.data here will be in xml format
                 //parse the message.data text to find out if client is still typing message
                 //or if the user has completed a full message.
-                
+                //alert('chat onmessage');
                 var xml = message.data;
                 var parser = new DOMParser();
                 var xmlDoc = parser.parseFromString(xml,"text/xml");
@@ -91,6 +116,7 @@
                 var textNode = xmlDoc.getElementsByTagName('text')[0];
                 var innerText = textNode.childNodes[0].nodeValue;
                 
+                //alert('after innerText');
                 //if message is still being typed
                 //display in console on the same line as the user's other text                
                 //if message is complete then display as full entry in console.                 
@@ -98,14 +124,14 @@
                 if (messageType == 'typing'){
                     //output text to console if it originated from another client                    
                     var senderID = messageNode.getAttribute('senderID'); //assigned by client
-                    var clientID = messageNode.getAttribute('clientID'); //assigned by server
+                    //var clientID = messageNode.getAttribute('clientID'); //assigned by server
                     
                     if (clientID == '' || clientID == null) alert('null clientID');                    
                     if (clientID != senderID){
                       //was this user the one that sent text message that was just received back?
                       //if so, do nothing otherwise display in console.                      
-                      var guestLabel = 'Guest '+senderID+': ';
-                      
+                      //var guestLabel = 'Guest '+senderID+': ';
+                      var userLabel = messageNode.getAttribute('sendername')+": ";
                       //check if tag already exists with id==senderID
                       //if so, then send guestLabel and innerText to that element's innerHTML
                       //otherwise, create a <p> element below all the other elements in console
@@ -117,13 +143,13 @@
                         var newline = document.createElement('BR');
                         var paragraph = document.createElement('P'); //create paragraph element
                         paragraph.style.wordWrap = 'break-word';
-                        paragraph.innerHTML = guestLabel+innerText;
+                        paragraph.innerHTML = userLabel+innerText;
                         paragraph.id = senderID;                        
                         console.appendChild(paragraph);                         
                         
                       } else {        
                           //<p> element already exists so just add new character.
-                          consoleElement.innerHTML = guestLabel+innerText; //add text to paragraph element
+                          consoleElement.innerHTML = userLabel+innerText; //add text to paragraph element
                       }                      
                       
                     }
@@ -134,7 +160,8 @@
                     //place the chat text in appropriate <p> element followed by newline.                    
                     var senderID = messageNode.getAttribute('senderID');
                     var consoleElement = document.getElementById(senderID);
-                    var guestLabel = 'Guest '+senderID+': ';
+                    //var guestLabel = 'Guest '+senderID+': ';
+                    var userLabel = messageNode.getAttribute('sendername')+": ";
                     var console = document.getElementById('console');
                     var newline = document.createElement('br');
                     if (consoleElement == null) {
@@ -142,13 +169,13 @@
                       //in this case create a <p> to display chat output.                      
                       var paragraph = document.createElement('P'); //create paragraph element
                       paragraph.style.wordWrap = 'break-word';                      
-                      paragraph.innerHTML = guestLabel+innerText;                                            
+                      paragraph.innerHTML = userLabel+innerText;                                            
                       console.appendChild(paragraph);  
                       paragraph.appendChild(newline);
                     } else {
                         //senderID != clientID so there is already text in <p> element                       
                         consoleElement.innerHTML = '';
-                        consoleElement.innerHTML = guestLabel+innerText;
+                        consoleElement.innerHTML = userLabel+innerText;
                         consoleElement.id = ''; //clear the id                        
                         consoleElement.appendChild(newline);
                     }
@@ -156,22 +183,41 @@
                     
                     //Console.log(guestLabel+innerText);
                 } else if (messageType == 'alert'){
+                    //also update the clientID for the sender to reflect new identity on server
+                    //upon entering chat page the client receives a new ID from server
+                    var senderID = messageNode.getAttribute('senderID');
+                    //alert('clientID: '+clientID);
+                    //alert('senderID: '+senderID);
+                    if (clientID == senderID){
+                        //window.name = messageNode.getAttribute('updatedID');
+                        //clientID = window.name;
+                        //alert('clientID == senderID');                        
+                        clientID = messageNode.getAttribute('updatedID');
+                        //alert('updated clientID: '+clientID);
+                    }
                     //notify group that a user has joined session.
+                    //alert('user joined/alert message received.');
                     Console.log(innerText);
-                } 
+                    
+                } else if (messageType == 'clientIdentification'){
+                  alert('client identification');
+                }
                 
             };
         });
 
         Chat.initialize = function() {
             if (window.location.protocol == 'http:') {
+                //alert('window.location.host: '+window.location.host);
                 Chat.connect('ws://' + window.location.host + '/Chat/chat');
             } else {
                 Chat.connect('wss://' + window.location.host + '/Chat/chat');
             }
         };
-
+        
+        
         Chat.sendMessage = (function(event) {
+            //alert('onkeypress clientID: '+clientID);
             var keycode = event.keyCode;
             var message = document.getElementById('chat').value;
             
@@ -182,7 +228,7 @@
               if (keycode == 13){
                 //user pressed enter: message finished
                 //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="chat">'+       
+                var xml = '<message type="chat" senderID="'+clientID+'" sendername="'+username+'">'+       
                 '<chat>'+
                 '<text>'+message+'</text>'+
                 '<font> </font>'+
@@ -200,7 +246,7 @@
               } else {
                 //user message isn't finished
                 //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="typing">'+                
+                var xml = '<message type="typing" senderID="'+clientID+'" sendername="'+username+'">'+                
                 '<chat>'+
                 '<text>'+message+'</text>'+
                 '<font> </font>'+
@@ -211,7 +257,7 @@
                 '<underline> </underline>'+
                 '</chat>'+
                 '</message>';
-                
+                //alert('sending xml message for keystroke');
                 Chat.socket.send(xml);                
               }
               
@@ -253,9 +299,15 @@
             }
         }, false);    
         
+        function buttonSend(event){
+            //send message from text field when button is clicked
+            //var message = document.getElementById('chat').value;
+            //Chat.sendMessage(event);
+            
+        }
+    
         
-
-               
+                       
                 
     ]]>
     
@@ -266,14 +318,15 @@
 <body>
 <div class="noscript"><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websockets rely on Javascript being enabled. Please enable
     Javascript and reload this page!</h2></div>
-<div>
-<input type='hidden' id='clientID' value=''/>
-    <p>
-        <input type="text" placeholder="type and press enter to chat" id="chat"/>
-    </p>
+<div>    
     <div id="console-container">
         <div id="console"/>
     </div>
+    <p>
+        <input type="text" placeholder="type and press enter to chat" id="chat"/>
+        <button id='chat_button' onclick='buttonSend(event)'>Chat</button>
+    </p>
 </div>
+
 </body>
 </html>

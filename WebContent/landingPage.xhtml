@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+This is the page that users will see when they first input the url.
+
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+  <head>
+    <title>Landing Page</title>
+    <link rel="stylesheet" type="text/css" href="landingPage.css"/>
+    
+    <script type="application/javascript"><![CDATA[ 
+        "use strict";
+        var Chat = {};
+        
+        Chat.socket = null;
+        
+        var host = '';
+
+        Chat.connect = (function(host) {
+        //this function is called when Chat object is initialized
+        //Chat object contains Websocket and can be used to send/receive messages
+            
+            //create websocket object if browser supports it
+            if ('WebSocket' in window) {
+                Chat.socket = new WebSocket(host);                 
+            } else if ('MozWebSocket' in window) {
+                Chat.socket = new MozWebSocket(host);                   
+            } else {
+                //browser doesn't support websocket
+                Console.log('Error: WebSocket is not supported by this browser.');
+                return;
+            }
+
+            Chat.socket.onopen = function () {
+                //connection opened
+            };
+
+            Chat.socket.onclose = function () {
+                //connection closed
+                
+            };
+
+            Chat.socket.onmessage = function (message) {
+                //message received
+                //check message to determine which page to display next.
+                var xml = message.data;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(xml,"text/xml");
+                var messageNode = xmlDoc.getElementsByTagName('message')[0];
+                var messageType = messageNode.getAttribute('type');
+                var clientID = messageNode.getAttribute('senderID');                
+                
+                //set persistent clientID inside window.name object
+                //this value will persist until browser tab is closed
+                //Note: window.name will maintain new value for each open tab.
+                if(typeof(Storage) !== "undefined") {
+                    //make sure that the browser supports window.name feature. 
+                    window.name = clientID;
+                } else {
+                    // Sorry! No Web Storage support..
+                    alert('no local storage support');
+                }
+                
+                //check type of message to determine which page to display
+                if (messageType == 'displayAdmin'){
+                    //client selected 'create groups' and was assigned a clientID from server
+                    //so display the admin page.
+                    window.location.href = 'http://'+window.location.host + '/Chat/admin.xhtml';
+                } else if (messageType == 'displayLogin'){
+                    //client selected 'login' and was assigned a clientID from server
+                    //so display the login page.
+                    window.location.href = 'http://'+window.location.host + '/Chat/login.xhtml';
+                } else{
+                    alert('landing page received incomprehensible message');
+                }
+               
+                             
+                
+            }; //end onmessage
+        }); //end Chat.connect()
+
+        Chat.initialize = function() {
+            if (window.location.protocol == 'http:') {                
+                Chat.connect('ws://' + window.location.host + '/Chat/landing');
+            } else {
+                Chat.connect('wss://' + window.location.host + '/Chat/landing');
+            }
+        }        
+
+             
+        
+        
+        Chat.initialize();
+                
+        
+        function setUserType(){
+            //send user type to server.
+            var userType = document.getElementById('userType').value; 
+            //alert('userType: '+userType);
+            var xml = '<message type="setUserType">'+
+            '<text>'+userType+'</text>'+
+            '</message>';
+            Chat.socket.send(xml);
+            //alert('sent xml');
+        }
+
+    ]]>        
+        
+    
+    </script>  
+    
+    
+  </head>
+  <body>
+    <h1>Computer Mediated Problem Solving</h1>
+    <div id=''>
+      <p>Select Desired Function:</p>
+      <select id='userType'>
+        <option>Login</option>
+        <option>Create Groups</option>
+      </select>
+      <button onclick='setUserType()'>Submit</button>
+    </div>
+    <!-- <div id='main_image'>   </div> -->
+  </body>
+
+</html>

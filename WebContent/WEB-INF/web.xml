@@ -22,14 +22,15 @@
     <servlet-name>chat</servlet-name>
     <servlet-class>websocket.ChatAnnotation</servlet-class>
   </servlet>
+  
   <!-- <servlet-mapping>
     <servlet-name>Test</servlet-name>
     <url-pattern>/test2</url-pattern>
   </servlet-mapping>
   -->
-  
+ 
  <welcome-file-list>
-        <welcome-file>chat.html</welcome-file>
+        <welcome-file>landingPage.xhtml</welcome-file>
         <welcome-file>chat.xhtml</welcome-file>
         <welcome-file>chat.htm</welcome-file>
         <welcome-file>chat.jsp</welcome-file>
