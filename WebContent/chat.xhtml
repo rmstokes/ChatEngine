@@ -112,9 +112,26 @@
                 var parser = new DOMParser();
                 var xmlDoc = parser.parseFromString(xml,"text/xml");
                 var messageNode = xmlDoc.getElementsByTagName('message')[0];
-                var messageType = messageNode.getAttribute('type');                
+                var messageType = messageNode.getAttribute('type');
+                //alert('messageType: '+messageType);                
                 var textNode = xmlDoc.getElementsByTagName('text')[0];
-                var innerText = textNode.childNodes[0].nodeValue;
+                //alert('textNode.childNodes[0]: '+textNode.childNodes[0]);
+                
+                //if message is empty then clear the user's input from screen.
+                //this makes sure that if 'backspace' causes all characters to be removed then the username will vanish
+                if (textNode.childNodes[0] === undefined){
+                  //alert('text element is empty');
+                  var senderID = messageNode.getAttribute('senderID');
+                  var paragraph = document.getElementById(senderID);
+                  var userLabel = messageNode.getAttribute('sendername')+": ";
+                  //paragraph.innerHTML = userLabel;
+                  //erase all text (including userLabel) from element and clear the id.
+                  paragraph.innerHTML = '';
+                  paragraph.id = '';
+                  return;
+                }
+                var innerText = textNode.childNodes[0].nodeValue;                
+                var senderColor = messageNode.getAttribute('senderColor');
                 
                 //alert('after innerText');
                 //if message is still being typed
@@ -122,6 +139,7 @@
                 //if message is complete then display as full entry in console.                 
                 
                 if (messageType == 'typing'){
+                    //alert('typing activity from color: '+senderColor);
                     //output text to console if it originated from another client                    
                     var senderID = messageNode.getAttribute('senderID'); //assigned by client
                     //var clientID = messageNode.getAttribute('clientID'); //assigned by server
@@ -143,11 +161,14 @@
                         var newline = document.createElement('BR');
                         var paragraph = document.createElement('P'); //create paragraph element
                         paragraph.style.wordWrap = 'break-word';
+                        paragraph.style.color = senderColor;
+                        //alert('set paragraph.style.color: '+senderColor);
                         paragraph.innerHTML = userLabel+innerText;
                         paragraph.id = senderID;                        
                         console.appendChild(paragraph);                         
                         
-                      } else {        
+                      } else {
+                      
                           //<p> element already exists so just add new character.
                           consoleElement.innerHTML = userLabel+innerText; //add text to paragraph element
                       }                      
@@ -168,7 +189,8 @@
                       //null consoleElement means that the senderID and clientID are equal.
                       //in this case create a <p> to display chat output.                      
                       var paragraph = document.createElement('P'); //create paragraph element
-                      paragraph.style.wordWrap = 'break-word';                      
+                      paragraph.style.wordWrap = 'break-word';
+                      paragraph.style.color = senderColor;
                       paragraph.innerHTML = userLabel+innerText;                                            
                       console.appendChild(paragraph);  
                       paragraph.appendChild(newline);
@@ -185,19 +207,32 @@
                 } else if (messageType == 'alert'){
                     //also update the clientID for the sender to reflect new identity on server
                     //upon entering chat page the client receives a new ID from server
+                    //alert('alert message received');
+                    
                     var senderID = messageNode.getAttribute('senderID');
-                    //alert('clientID: '+clientID);
-                    //alert('senderID: '+senderID);
+                    
+                    //alert('clientID: '+clientID+' senderID: '+senderID);
+                    //alert('senderColor: '+senderColor);
+                    
                     if (clientID == senderID){
-                        //window.name = messageNode.getAttribute('updatedID');
-                        //clientID = window.name;
-                        //alert('clientID == senderID');                        
-                        clientID = messageNode.getAttribute('updatedID');
-                        //alert('updated clientID: '+clientID);
+                        //if sender and client are same then log the updated clientID from server
+                        //alert('sender is me');
+                        clientID = messageNode.getAttribute('updatedID');                        
+                        //set senderColor for this client
+                        //each client will submit their color back to server on every subsequent message.                        
+                        if(typeof(Storage) != "undefined") {
+                            // Code for localStorage/sessionStorage.
+                            sessionStorage.setItem("clientColor", senderColor);
+                            //alert('set senderColor: '+senderColor);
+                        } else {
+                            alert('no web storage support');
+                            // Sorry! No Web Storage support..
+                        }
                     }
                     //notify group that a user has joined session.
                     //alert('user joined/alert message received.');
                     Console.log(innerText);
+                    
                     
                 } else if (messageType == 'clientIdentification'){
                   alert('client identification');
@@ -218,17 +253,20 @@
         
         Chat.sendMessage = (function(event) {
             //alert('onkeypress clientID: '+clientID);
+            //if (event.type === 'click') alert('event.type: '+event.type);
+            //if (event.type == 'click') alert('event.type has quotes');
             var keycode = event.keyCode;
             var message = document.getElementById('chat').value;
-            
-            if (message != ''){
+            var senderColor = sessionStorage.getItem("clientColor");
+            //alert('verifying senderColor: '+senderColor);
+            //if (message != ''){
               //if user has typed a message
               //build up xml string based on whether user pressed enter or not
-              
-              if (keycode == 13){
-                //user pressed enter: message finished
+              //alert('message: '+message);
+              if (keycode == 13 || event.type === 'click'){
+                //user pressed enter or clicked chat button: message finished
                 //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="chat" senderID="'+clientID+'" sendername="'+username+'">'+       
+                var xml = '<message type="chat" senderID="'+clientID+'" senderColor="'+senderColor+'" sendername="'+username+'">'+       
                 '<chat>'+
                 '<text>'+message+'</text>'+
                 '<font> </font>'+
@@ -246,7 +284,7 @@
               } else {
                 //user message isn't finished
                 //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="typing" senderID="'+clientID+'" sendername="'+username+'">'+                
+                var xml = '<message type="typing" senderID="'+clientID+'" senderColor="'+senderColor+'" sendername="'+username+'">'+                
                 '<chat>'+
                 '<text>'+message+'</text>'+
                 '<font> </font>'+
@@ -262,7 +300,7 @@
               }
               
             
-            }
+            //}
             
             
             
@@ -302,8 +340,8 @@
         function buttonSend(event){
             //send message from text field when button is clicked
             //var message = document.getElementById('chat').value;
-            //Chat.sendMessage(event);
-            
+            Chat.sendMessage(event);
+            //alert('event: '+event);
         }
     
         
