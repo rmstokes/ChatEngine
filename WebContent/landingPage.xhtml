@@ -11,6 +11,7 @@ This is the page that users will see when they first input the url.
     <title>Landing Page</title>
     <link rel="stylesheet" type="text/css" href="landingPage.css"/>
     
+    <script src="utility.js"></script>
     <script type="application/javascript"><![CDATA[ 
         "use strict";
         var Chat = {};
@@ -23,7 +24,9 @@ This is the page that users will see when they first input the url.
         //this function is called when Chat object is initialized
         //Chat object contains Websocket and can be used to send/receive messages
             
-            //create websocket object if browser supports it
+            //window.host = host;
+            //util_webSocketCheck();
+             //create websocket object if browser supports it
             if ('WebSocket' in window) {
                 Chat.socket = new WebSocket(host);                 
             } else if ('MozWebSocket' in window) {
@@ -64,6 +67,11 @@ This is the page that users will see when they first input the url.
                     alert('no local storage support');
                 }
                 
+                if (messageType == 'redirect'){
+                	util_redirect(messageNode);
+                }
+                
+                /*
                 //check type of message to determine which page to display
                 if (messageType == 'displayAdmin'){
                     //client selected 'create groups' and was assigned a clientID from server
@@ -76,24 +84,25 @@ This is the page that users will see when they first input the url.
                 } else{
                     alert('landing page received incomprehensible message');
                 }
-               
+               */
                              
                 
             }; //end onmessage
         }); //end Chat.connect()
 
-        Chat.initialize = function() {
+       /* Chat.initialize = function() {
             if (window.location.protocol == 'http:') {                
                 Chat.connect('ws://' + window.location.host + '/Chat/landing');
             } else {
                 Chat.connect('wss://' + window.location.host + '/Chat/landing');
             }
-        }        
+        }    */    
 
              
         
-        
-        Chat.initialize();
+		Chat.initialize = util_webSocketConnect;
+        Chat.initialize('landing');
+        //Chat.initialize();
                 
         
         function setUserType(){

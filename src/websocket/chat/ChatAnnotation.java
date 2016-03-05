@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -54,6 +55,7 @@ import org.xml.sax.InputSource;
 import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 
 import util.HTMLFilter;
+import util.MessageType;
 
 @ServerEndpoint(value = "/{path}")
 public class ChatAnnotation {
@@ -62,10 +64,11 @@ public class ChatAnnotation {
 
 	private static final String GUEST_PREFIX = "Guest";
 	private static final AtomicInteger connectionIds = new AtomicInteger(0);
+	
 	private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
+	private static final ArrayList<Client> userList = new ArrayList<Client>();
+	private static final FileLogger fileLogger = new FileLogger();
 
-	private String nickname;
-	private Session session;
 	// private static String adminID = null;
 	private static boolean adminCreatedGroups = false;
 	private static Hashtable<Integer, HashSet<String>> groupTable = new Hashtable<Integer, HashSet<String>>();
@@ -77,11 +80,16 @@ public class ChatAnnotation {
 
 	// create clientColor variable to store username color for each client
 	private static Hashtable<String, String> clientColor = new Hashtable<String, String>();
+	
+	
+	private String nickname;
+	private Session session;
+	private Client userClient;
 
 	public ChatAnnotation() {
 		// a new ChatAnnotation object is created for every Client page that
 		// connects to server.
-		System.out.println("chat annotation constructor");
+		System.out.println("Chat Annotation Constructor");
 	}
 
 	@OnOpen
@@ -91,8 +99,9 @@ public class ChatAnnotation {
 		// path argument identifies which client page is on other end
 		// for 'landing' page connections add the ChatAnnotation object to
 		// static list.
-		System.out.println("inside start OnOpen");
-		System.out.println("path: " + path);
+		System.out.println("inside start - opened Websocket Connection at /"+path);
+		//System.out.println("path: " + path);
+		
 		this.session = session;
 		System.out.println("real session id: " + session.getId());
 
@@ -127,7 +136,9 @@ public class ChatAnnotation {
 	public void end(Session session, @PathParam("path") String path) {
 		System.out.println("inside end method...");
 		connections.remove(this);
-		if (!path.equals("chat")) return; 		
+		
+		
+		if (!path.equals("chat")) return;
 		
 		//decrement colorVector value 
 		//format: HashTable<Group#, Hashtable<color, count>> ex. Group 1: red->1;
@@ -135,8 +146,10 @@ public class ChatAnnotation {
 		int originalGroupNumber = getSenderGroup(senderID);
 		String username = this.nickname;
 		System.out.println("username: "+username);
+		
 		String color = clientColor.get(username);
 		System.out.println("color: "+color);
+		
 		Hashtable<String, Integer> colorCount = colorVector.get(originalGroupNumber);
 		int count = colorCount.get(color);
 		count--;
@@ -178,7 +191,53 @@ public class ChatAnnotation {
 		String messageType = element.getAttribute("type");
 
 		String senderID = null;
-		if (messageType.equals("typing") || messageType.equals("chat")) {
+		
+		if (messageType.equals(MessageType.Landing_SetUserType)) {
+			//From Landing page- Set user type based on client input
+			senderID = session.getId();
+			System.out.println("message: " + message);
+			System.out.println("element: " + element.getTextContent());
+			System.out.println("senderID: " + senderID);
+			
+			//Set the permanent ID of the client here; add to number of recent users
+			this.userClient = new Client(senderID);
+			userList.add(this.userClient);
+			
+			String userType = element.getTextContent();
+			switch (userType) {
+			case "Login":
+				//go to the student login page
+				sendXMLRedirect("login", userClient.getPermID());
+				//session.getBasicRemote().sendText(msg1);
+				return;
+				
+			case "Create Groups":
+				//go to admin page
+				sendXMLRedirect("admin", userClient.getPermID());
+				//session.getBasicRemote().sendText(msg2);
+				return;
+			default:
+				System.out.println("Invalid userType input");
+				return;
+			}
+		}
+		
+		//If there is no Permanent ID, redirect client to Landing now
+		//Else get the senderID and Client if it exists
+		if (userClient==null) {
+			senderID = element.getAttribute("senderID");
+			
+			//Could do this client side- but good to have fail-safe
+			if (senderID=="" || senderID==null) {
+				sendXMLRedirect("landing", "NaN");
+			}
+			//Get Client- should be initialized from the landing page
+			
+		}
+		
+		if (messageType.equals("typing") || messageType.equals("chat")) {//FROM CHAT
+			
+			//Capture the logging for chat here
 			
 			senderID = element.getAttribute("senderID");
 			
@@ -196,13 +255,16 @@ public class ChatAnnotation {
 			String senderColor = getSenderColor(senderID);
 			element.setAttribute("senderColor", senderColor);
 			broadcast(message);
-		} else if (messageType.equals("groupCreation")) {
+		} else if (messageType.equals("groupCreation")) {//FROM ADMIN
 			// this is message from admin page to create groups
 			int numGroups = Integer.parseInt(element.getTextContent());
 			System.out.println("numGroups: " + numGroups);
+			
 			// create the groups
-			// can check here if admin is still connected to prevent multiple
-			// admins
+			// can check here if admin is still connected to prevent multiple admins
+			
+			//can send a confirmation message if groups already exist
+			//Error message if no. of groups is 0
 
 			for (int key = 1; key <= numGroups; key++) {
 				// create empty linkedlists for every key.
@@ -233,35 +295,39 @@ public class ChatAnnotation {
 			String msg = "<message type='groupsCreated' senderID='" + senderID + "'></message>";
 			session.getBasicRemote().sendText(msg);
 
-		} else if (messageType.equals("setUserType")) {
-			// this is a message from landing page drop down menu
-			// session contains the initial client id.
-
-			/***** this is where each client's id is assigned. ****/
-
-			senderID = session.getId();
-			System.out.println("message: " + message);
-			System.out.println("element: " + element.getTextContent());
-			System.out.println("senderID: " + senderID);
-			String userType = element.getTextContent();
-
-			switch (userType) {
-			case "Login":
-				// return student login page
-				String msg1 = "<message type='displayLogin' senderID='" + senderID + "'></message>";
-				session.getBasicRemote().sendText(msg1);
-				break;
-			case "Create Groups":
-				// return admin page
-				String msg2 = "<message type='displayAdmin' senderID='" + senderID + "'></message>";
-				session.getBasicRemote().sendText(msg2);
-				// System.out.println("sent html to client.");
-				break;
-			default:
-				System.out.println("Error: check userType");
-				return;
-			}
-		} else if (messageType.equals("joinGroup")) {
+//		} else if (messageType.equals("setUserType")) {//FROM LANDING
+//			// this is a message from landing page drop down menu
+//			// session contains the initial client id.
+//
+//			/***** this is where each client's id is assigned. ****/
+//
+//			senderID = session.getId();
+//			System.out.println("message: " + message);
+//			System.out.println("element: " + element.getTextContent());
+//			System.out.println("senderID: " + senderID);
+//
+//			//Here the current SessionID becomes the permanentID for this Client
+//			this.userClient = new Client(senderID); 
+//			
+//			String userType = element.getTextContent();
+//
+//			switch (userType) {
+//			case "Login":
+//				// return student login page
+//				String msg1 = "<message type='displayLogin' senderID='" + senderID + "'></message>";
+//				session.getBasicRemote().sendText(msg1);
+//				break;
+//			case "Create Groups":
+//				// return admin page
+//				String msg2 = "<message type='displayAdmin' senderID='" + senderID + "'></message>";
+//				session.getBasicRemote().sendText(msg2);
+//				// System.out.println("sent html to client.");
+//				break;
+//			default:
+//				System.out.println("Error: check userType");
+//				return;
+//			}
+		} else if (messageType.equals("joinGroup")) { //FROM LOGIN PAGE
 			// add user to proper group
 			//String nickname = element.getAttribute("username");
 			nickname = element.getAttribute("username");
@@ -269,10 +335,12 @@ public class ChatAnnotation {
 			senderID = element.getAttribute("senderID");
 			System.out.println("joinGroup message received.");
 			System.out.println("senderID: " + senderID);
+			
 			String groupNumber = element.getTextContent();
 			System.out.println("joining group: " + groupNumber);
+			
 			HashSet<String> group = groupTable.get(Integer.parseInt(groupNumber));
-			System.out.println("retrieved LL");
+			System.out.println("retrieved group list");
 			boolean addedToList = group.add(senderID);
 
 			// send message to move client browser to chat page
@@ -280,11 +348,13 @@ public class ChatAnnotation {
 			session.getBasicRemote().sendText(msg3);
 			System.out.println("addedToList: " + addedToList);
 
-		} else if (messageType.equals("requestID")) {
+		} else if (messageType.equals("requestID")) {//FROM ALL PAGES EXCEPT LANDING
 			senderID = session.getId();
+			
+			//So we're not on the landing page, so if the user is not illegal
 			String msg4 = "<message type='alert' senderID='" + senderID + "'></message>";
 			session.getBasicRemote().sendText(msg4);
-		} else if (messageType.equals("broadcast")) {
+		} else if (messageType.equals("broadcast")) {//FROM CHAT
 			// broadcast message means user has just joined chat group.
 			// map the current session's sender id to the connection id
 			// established on initial
@@ -344,6 +414,8 @@ public class ChatAnnotation {
 			System.out.println("calling broadcast with alert message.");
 			broadcast(msg5);
 		}
+		
+		//Capture message here in FileLogger class
 	}
 
 	@OnError
@@ -492,5 +564,17 @@ public class ChatAnnotation {
 		}
 		System.out.println("senderColor assigned: "+senderColor);
 		return senderColor;
+	}
+	
+	private String getXMLMessage(String msgType, String senderID) {
+		String msg =  "<message type='"+msgType+"' senderID='" + senderID + "'></message>";
+		return msg;
+	}
+	
+	//Send a redirect message to 
+	private void sendXMLRedirect(String path, String senderID) throws IOException {
+		String msg =  "<message type='redirect' path='" + path + "' senderID='" + senderID +"'></message>";
+		session.getBasicRemote().sendText(msg);
+		//return msg;
 	}
 }
