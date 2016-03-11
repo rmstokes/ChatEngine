@@ -8,19 +8,22 @@
     <title>Admin Page</title>
     <link rel="stylesheet" type="text/css" href="admin.css"/>
     
+    <script src="utility.js"></script>
      <script type="application/javascript"><![CDATA[
         "use strict";
         var Chat = {};        
-        var clientID = window.name;        
-        if (clientID == null){
+        var clientID = window.name;    
+        util_permIDCheck();    
+        /*if (clientID == null){
           //send xml message to server to get a new sessionID.
           alert('clientID is null');
           var xml = '<message type="requestID"></message>';
-        }
+        }*/
         
         Chat.socket = null;
         
         var host = '';
+        var adminGroupsCreated = null;
         
         //this function called by Chat.initialize function below
         Chat.connect = (function(host) {
@@ -43,6 +46,7 @@
               //connnection closed with server
               
             };
+            //Chat.socket.onclose = util_close();
 
             Chat.socket.onmessage = function (message) {
                 //message received from server     
@@ -58,36 +62,71 @@
                   alert('Groups have been successfully created');
                   //may want to automatically log admin into all the groups in multiple tabs
                   
-                  window.location.href = 'http://'+window.location.host + '/Chat/login.xhtml';
+                  //window.location.href = 'http://'+window.location.host + '/Chat/login.xhtml';
+                } else if (messageType == 'checkGroups') {
+                	var checkGroups = messageNode.getAttribute('checkGroups');
+                	var checkGroupHTML = document.getElementById("checkGroupPara");
+                	checkGroupHTML.innerHTML = "Groups = "+checkGroups;
+                	if (checkGroups == "Not Created") {
+                		checkGroupHTML.style.backgroundColor = "Navy";
+                		adminGroupsCreated = false;
+                	} else {
+                		checkGroupHTML.style.backgroundColor = "LightGreen";
+                		adminGroupsCreated = true;
+                	}
+                	if (adminGroupsCreated) {
+                		//document.getElementById("adminMonitorBtn").disabled = false;
+                		document.getElementById("loginBtn").disabled = false;
+                	}
+                } else if (messageType == 'redirect'){
+                	util_redirect(messageNode);
+                } else if (messageType == 'noPermID'){
+                	util_noPermID();
+                } else if (messageType == 'alert'){
+                	var msgtext = messageNode.childNodes[0].nodeValue;
+                	util_alert(msgtext);
                 } else {
-                
+                	alert("Could not parse server message: \n"+
+                		message.data);
                 }
+                
                 
             }; //end onmessage
         }); //end Chat.connect()
 
-        Chat.initialize = function() {
+        /*Chat.initialize = function() {
             if (window.location.protocol == 'http:') {
                 Chat.connect('ws://' + window.location.host + '/Chat/admin');
             } else {
                 Chat.connect('wss://' + window.location.host + '/Chat/admin');
             }
-        }        
+        } */       
 
              
         
-        
+		Chat.initialize = util_webSocketConnect;
         Chat.initialize();
+		//Chat.initialize("admin");
         
-        function createGroups(){
+        function createGroups( ){
+        	
+        	if (adminGroupsCreated) {
+        	var adminOverwrite = confirm("A list of groups already exist. Do you want to overwrite them? \n"+
+        			"This will reset the group documentation.");
+        			if(!adminOverwrite) {
+        				return;
+        			}
+        	}
           //send xml message to server to create groups.          
           var numGroups = document.getElementById('groupCount').value;
+          var instruct = document.getElementById('instruct').value;
           //alert('numGroups: '+numGroups);
-          var xml = '<message type="groupCreation" senderID="'+clientID+'">'+
+          var xml = '<message type="groupCreation" senderID="'+clientID+'" instructor="'+instruct+'">'+
           '<text>'+numGroups+'</text>'+
           '</message>';
           Chat.socket.send(xml);
         }
+        
 
     ]]>
         
@@ -102,7 +141,8 @@
   <br/>
   <div>
     <!-- <p> Please Designate Number of Groups </p> -->
-    Username <input type='text'/><br/>
+    <p id="checkGroupPara" style="background-color:GRAY; float:right; color:white"> Waiting for server </p>
+    Username <input type='text' id='instruct'/><br/>
     Number of Groups <select id='groupCount'>
       <!-- max number of groups is 10 for now -->
         <option value="1">1</option>
@@ -117,6 +157,12 @@
         <option value="10">10</option>        
       </select>
     <button onclick='createGroups()'>Create</button>
+    <br/>
+    <button id="loginBtn" onclick='util_webRedirect("login")' disabled="">Go to Login Page</button>
+    <br/>
+    <br/>
+    <button id="adminMonitorBtn" onclick='adminMonitor()' disabled="">Go to Admin Chat Monitor</button>
+    
     
   </div>
   

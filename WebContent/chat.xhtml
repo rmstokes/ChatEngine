@@ -17,7 +17,7 @@
 -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>Vesting</title>
+    <title>Chat (ALPHA)</title>
     <style type="text/css"><![CDATA[
         input#chat {
             width: 410px
@@ -41,35 +41,36 @@
             padding: 0;
             margin: 0;
         }
+        
+        # h1 {
+        	font-family: "serif";
+        	font-weight: bold;
+        }
+        
+         div p.username {
+        	font-weight: bold;
+        	color: black;
+        	//background-color:red; 
+        	border-style: outset;
+        }
     ]]></style>
+    
+    <script src="utility.js" type="text/javascript"></script>
     <script type="application/javascript"><![CDATA[
         "use strict";
 
-        
+        console.log("Not this kind of Console.log");
         var Chat = {};
-        //var clientID = localStorage.getItem('clientID');
-        var index; //location of $ character
-        for (var i=0; i<window.name.length; i++){
-            if (window.name.charAt(i) == '$') {
-                index = i;
-                break;
-            }
-        }
-        var username = window.name.substring(index+1);
-        //alert('parsed username: '+username);
-        //var username = sessionStorage.getItem('username');
-        //alert('username: '+username);
-        var clientID = window.name.substring(0, index);
-        //alert('clientID passed from landing page: '+clientID);
-        if (clientID == null){
-          //send xml message to server to get a new sessionID.
-          alert('clientID is null');
-          var xml = '<message type="requestID"></message>';
-        }
+        util_permIDCheck();
+        
+        var clientID = window.name;	
         
         Chat.socket = null;
         
         var host = '';
+        var TYPING_BGC = 'WhiteSmoke';
+        var USER_BGC = 'LightGoldenRodYellow';
+        var CHAT_HISTORY_BGC = 'Beige';
 
         Chat.connect = (function(host) {
             if ('WebSocket' in window) {
@@ -82,28 +83,151 @@
             }
 
             Chat.socket.onopen = function () {
-                //alert(message.data);
                 Console.log('Info: WebSocket connection opened.');                
                 //create onkeyup listener
-                document.getElementById('chat').onkeyup = function(event) {                     
-                    //send every keypress to server for broadcast
-                    //to all users.
+                document.getElementById('chat').onkeyup = function(event) {
+                    //send every keypress to server for broadcast to all users
                     Chat.sendMessage(event);
                 };
                 
                 //broadcast to group that user has joined
-                //alert('about to broadcast');
-                var xml = '<message type="broadcast" senderID="'+clientID+'" username="'+username+'"></message>';
+                var xml = '<message type="joinChat" senderID="'+clientID+'" ></message>';
                 Chat.socket.send(xml);
             };
 
             Chat.socket.onclose = function () {
                 document.getElementById('chat').onkeydown = null;
                 Console.log('Info: WebSocket closed... host: '+host);
-                sessionStorage.clear();
+                sessionStorage.clear(); //? Did we use sessionStorage?
             };
 
-            Chat.socket.onmessage = function (message) {
+			Chat.socket.onmessage = function (message) {
+				//message arrives in xml, parse data into xml format and get attributes
+				//sort by message type
+				//Typing- user still typing, save reference
+				//Chat - user finished typing
+				//Alert - Info from server
+				
+				var xml = message.data;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(xml,"text/xml");
+                var messageNode = xmlDoc.getElementsByTagName('message')[0];
+                var messageType = messageNode.getAttribute('type');
+                
+                //Capture non chat related messages here
+                if (messageType == 'redirect'){
+                	alert("It seems you refreshed the chat page. \n"
+                		+ "Unfortunately, the server doesn't like that and you'll have \n"
+                		+ "to login again. Sorry.");
+                	util_redirect(messageNode);
+                	return;
+                } else if (messageType == 'noPermID'){
+                	util_noPermID();
+                	return;
+                } else if (messageType == 'checkGroups'){
+                	//ignore but capture this
+                	return;
+                } else if (messageType == 'lGroupMembers'){
+                	showUsers(messageNode);
+                	return;
+                }
+                
+                //if message is empty then clear the user's input from screen.
+                //this makes sure that if 'backspace' causes all characters to be removed then the username will vanish
+                //Note: Users 'typing' messages are not processed
+                
+                var textNode; //this thing is the cause of so many issues
+                var innerText = '';
+                if (xmlDoc.getElementsByTagName('text')!==undefined) {
+                	textNode = xmlDoc.getElementsByTagName('text')[0];
+                	if (textNode.childNodes[0]!==undefined) {
+                		innerText = textNode.childNodes[0].nodeValue;
+                	}
+                }      
+       			
+                var senderColor = messageNode.getAttribute('senderColor');
+                var senderID = messageNode.getAttribute('senderID');
+                var userLabel = messageNode.getAttribute('sendername')+": ";
+                userLabel = "<b>"+userLabel+"</b>";
+                
+                //Parse a simplified date from the server timestamp on broadcastGroup
+                var serverTS = new Date();
+                serverTS.setTime(messageNode.getAttribute('timestamp'));
+                var timestamp = serverTS.getHours()+":"+serverTS.getMinutes()+":"+serverTS.getSeconds()+"."+serverTS.getMilliseconds();
+                timestamp = '<div style="float: right; display: inline-block">'+timestamp+'</div>';
+                //var timestamp = messageNode.getAttribute('timestamp');
+                
+                var console = document.getElementById('console'); //get console
+                var newline = document.createElement('br'); //get break tag
+                var paragraph = document.getElementById(senderID);
+                
+                var chatText = userLabel + innerText + timestamp;
+                //var chatText = userLabel + innerText;
+                
+                 
+                 if (messageType == 'typing'){ //Sender is still typing
+                 	if (clientID != senderID){
+                 		//Do nothing if client recieved its own info since its already in the chatbox
+                 		if (paragraph==null) {
+                 			//need to create <p> element to display text in console
+                 			paragraph = document.createElement('p'); //get paragraph tag
+                 			
+                 			paragraph.style.wordWrap = 'break-word';
+                 			paragraph.innerHTML = chatText;
+                 			paragraph.id = senderID; //label paragraph after the userID
+                 			paragraph.style.color = senderColor;
+                 			paragraph.style.backgroundColor = TYPING_BGC;
+                 			console.appendChild(paragraph); //add to console
+                 		} else if (textNode != undefined && textNode.childNodes[0] === undefined){ //No text in 'typing' message
+                 			paragraph.innerHTML = '';
+                 			//paragraph.id = ''; //dont see reason to lose id reference
+                 		} else {
+                 			// <p> element already exists to add to that value
+                 			paragraph.innerHTML = chatText;
+                 		}
+                 	} //close !ID
+                 } else if (messageType == 'chat') {
+                 	//Complete message has been logged - applies to all group members
+                 	//no exceptions like on typing
+                 	if (paragraph == null) {
+                 		//means that the user is the broadcaster, so new <p> for chat
+                 		paragraph = document.createElement('p');
+                 		paragraph.style.wordWrap = 'break-word';
+                 		paragraph.style.color = senderColor;
+                 		paragraph.style.backgroundColor = USER_BGC;
+                 		paragraph.innerHTML = chatText;
+                 		
+                 		//If chat history object, change BG
+                 		if (messageNode.getAttribute("chatHistory")!=undefined) {
+                 			paragraph.style.backgroundColor = CHAT_HISTORY_BGC;
+                 		}
+                 		
+                 		console.appendChild(paragraph);
+                 		paragraph.appendChild(newline);
+                 	} else {
+                 		//senderID != clientID so <p> element already exists
+                 		paragraph.innerHTML = chatText;
+                 		paragraph.id = ''; //remove reference by senderID
+                 		paragraph.style.backgroundColor = 'White';
+                 		paragraph.appendChild(newline);
+                 	}
+                 } else if (messageType == 'alert') {
+                 	//server message from no user in particular; using console.log
+                 	Console.log(innerText+timestamp);
+                 } else {
+                 	alert('invalid message from server: \n'+xml);
+                 }
+                 
+                 //Scroll to bottom on console
+                 console.scrollTop = console.scrollHeight;
+                 
+                 //Set Group Name
+                 var groupNum = messageNode.getAttribute("groupNumber");
+                 document.getElementById('groupName').innerHTML = "Group "+groupNum;
+             };
+                 			
+			
+            /*Chat.socket.onmessage = function (message) {
                 //message.data here will be in xml format
                 //parse the message.data text to find out if client is still typing message
                 //or if the user has completed a full message.
@@ -116,6 +240,15 @@
                 //alert('messageType: '+messageType);                
                 var textNode = xmlDoc.getElementsByTagName('text')[0];
                 //alert('textNode.childNodes[0]: '+textNode.childNodes[0]);
+                
+               	if (messageType == 'redirect'){
+                	util_redirect(messageNode);
+                } else if (messageType == 'noPermID'){
+                	util_noPermID();
+                } else if (messageType == 'checkGroups'){
+                	//ignore but capture this
+                	return;
+                }
                 
                 //if message is empty then clear the user's input from screen.
                 //this makes sure that if 'backspace' causes all characters to be removed then the username will vanish
@@ -238,97 +371,51 @@
                   alert('client identification');
                 }
                 
-            };
-        });
-
-        Chat.initialize = function() {
-            if (window.location.protocol == 'http:') {
-                //alert('window.location.host: '+window.location.host);
-                Chat.connect('ws://' + window.location.host + '/Chat/chat');
-            } else {
-                Chat.connect('wss://' + window.location.host + '/Chat/chat');
-            }
+            };*/
+        }); //end of Socket.connect
+		
+        
+        Chat.sendMessage = function (event) {
+        	var keycode = event.keyCode;
+        	var message = document.getElementById('chat').value;
+        	var chatType = 'typing'; //typing by default
+        	//If Enter clicked or Chat btn clicked
+        	//If message is empty, it should be a typing event so we're not broadcasting blank text
+        	if (message!='' && (keycode == 13 || event.type === 'click')){ 
+        		chatType = 'chat';
+                document.getElementById('chat').value = '';
+        	}
+        	var xml = '<message type="'+chatType+'" senderID="'+clientID+'">'+       
+                '<chat>'+
+                '<text>'+message+'</text>'+
+                '</chat>'+
+                '</message>';
+            Chat.socket.send(xml);
         };
         
-        
-        Chat.sendMessage = (function(event) {
-            //alert('onkeypress clientID: '+clientID);
-            //if (event.type === 'click') alert('event.type: '+event.type);
-            //if (event.type == 'click') alert('event.type has quotes');
-            var keycode = event.keyCode;
-            var message = document.getElementById('chat').value;
-            var senderColor = sessionStorage.getItem("clientColor");
-            //alert('verifying senderColor: '+senderColor);
-            //if (message != ''){
-              //if user has typed a message
-              //build up xml string based on whether user pressed enter or not
-              //alert('message: '+message);
-              if (keycode == 13 || event.type === 'click'){
-                //user pressed enter or clicked chat button: message finished
-                //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="chat" senderID="'+clientID+'" senderColor="'+senderColor+'" sendername="'+username+'">'+       
-                '<chat>'+
-                '<text>'+message+'</text>'+
-                '<font> </font>'+
-                '<size> </size>'+
-                '<color> </color>'+
-                '<bold> </bold>'+
-                '<italic> </italic>'+
-                '<underline> </underline>'+
-                '</chat>'+
-                '</message>';
-                
-                Chat.socket.send(xml);
-                document.getElementById('chat').value = '';
-              
-              } else {
-                //user message isn't finished
-                //var clientID = document.getElementById('clientID').value;
-                var xml = '<message type="typing" senderID="'+clientID+'" senderColor="'+senderColor+'" sendername="'+username+'">'+                
-                '<chat>'+
-                '<text>'+message+'</text>'+
-                '<font> </font>'+
-                '<size> </size>'+
-                '<color> </color>'+
-                '<bold> </bold>'+
-                '<italic> </italic>'+
-                '<underline> </underline>'+
-                '</chat>'+
-                '</message>';
-                //alert('sending xml message for keystroke');
-                Chat.socket.send(xml);                
-              }
-              
-            
-            //}
-            
-            
-            
-            /*
-            if (message != '') {
-                Chat.socket.send(keycode, message);
-                document.pgetElementById('chat').value = '';
-            }*/
-        });
+      
 
         var Console = {};
 
+		//Log is for system messages; get printed verbatim in black
         Console.log = (function(message) {
             var console = document.getElementById('console');
             var p = document.createElement('p');
             p.style.wordWrap = 'break-word';
             p.innerHTML = message;
             console.appendChild(p);
-            while (console.childNodes.length > 25) {
-                console.removeChild(console.firstChild);
-            }
+            //For sake of chat history refreshes, think we should keep this, also it does work in regular chat
+            /*while (console.childNodes.length > 25) {
+                console.removeChild(console.firstChild); //?? Do we need to remove old messages?
+            }*/
             console.scrollTop = console.scrollHeight;
         });
         
         
+        Chat.initialize = util_webSocketConnect;
         Chat.initialize();
 
-
+		//No idea how you'd get this far without JS lol
         document.addEventListener("DOMContentLoaded", function() {
             // Remove elements with "noscript" class - <noscript> is not allowed in XHTML
             var noscripts = document.getElementsByClassName("noscript");
@@ -339,12 +426,31 @@
         
         function buttonSend(event){
             //send message from text field when button is clicked
-            //var message = document.getElementById('chat').value;
             Chat.sendMessage(event);
-            //alert('event: '+event);
         }
     
-        
+        function showUsers(messageNode) {
+        	var userSideBar = document.getElementById('userContainer');
+        	//clear the whole thing
+        	while(userSideBar.firstChild) {
+        		userSideBar.removeChild(userSideBar.firstChild);
+        	}
+        	var users = messageNode.getElementsByTagName('member');
+        	
+        	for (var i=0; i<users.length; i++) {
+        		var userP = document.createElement('p');
+        		var userColor = users[i].getAttribute('senderColor');
+        		var username = users[i].innerHTML;
+        	
+        		
+        		userP.style.backgroundColor = userColor;
+        		userP.style.borderColor = userColor;
+        		userP.className = "username"; //class name but not class??
+        		userP.innerHTML = username;
+        		
+        		userSideBar.appendChild(userP);
+        	}
+        }
                        
                 
     ]]>
@@ -354,17 +460,25 @@
     </script>
 </head>
 <body>
+<h1 id='groupName'></h1>
 <div class="noscript"><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websockets rely on Javascript being enabled. Please enable
     Javascript and reload this page!</h2></div>
 <div>    
+	<div id="userContainer" style="float:right; font-weight:bold">
+    	<!--  <p class="username" style="background-color:red;">  UserName1 </p> -->
+    	<!-- <p class="username" style="background-color:red; border-color:red">  UserName1 </p> -->
+    </div>
     <div id="console-container">
         <div id="console"/>
     </div>
+    
+
     <p>
-        <input type="text" placeholder="type and press enter to chat" id="chat"/>
+        <input id="chat" type="text" placeholder="type and press enter to chat" />
         <button id='chat_button' onclick='buttonSend(event)'>Chat</button>
     </p>
 </div>
+
 
 </body>
 </html>

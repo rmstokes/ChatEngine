@@ -4,21 +4,28 @@
   <head>
     <title>Login Page</title>
      <link rel="stylesheet" type="text/css" href="login.css"/>
+     
+    <script src="utility.js" type="text/javascript"></script>
      <script type="application/javascript"><![CDATA[
         "use strict";
 
         
         var Chat = {};        
-        var clientID = window.name;        
-        if (clientID == null){
+        var clientID = window.name;
+        util_permIDCheck();        
+        /*if (clientID == null){
           //debugging block
           alert('clientID is null');
           var xml = '<message type="requestID"></message>';
-        }
+        }*/
         
         Chat.socket = null;
         
         var host = '';
+        var adminGroupsCreated = null;
+        var groupPrompt = false;
+        //true - user has been prompted that groups exist/not exist - needs to be reminded
+        //false group has not been prompted and assumes groups exist
 
         Chat.connect = (function(host) {
             if ('WebSocket' in window) {
@@ -38,6 +45,8 @@
             Chat.socket.onclose = function () {
                 
             };
+            
+            // Chat.socket.onclose = util_close();
 
             Chat.socket.onmessage = function (message) {
                 //message.data here will be in xml format               
@@ -48,14 +57,54 @@
                 var messageType = messageNode.getAttribute('type');                
                 
                 if (messageType == 'displayChat'){
-                  window.location.href = 'http://'+window.location.host + '/Chat/chat.xhtml';
-                } else if (messageType == 'alert'){
+                	util_webRedirect('chat');
+                  //window.location.href = 'http://'+window.location.host + '/Chat/chat.xhtml';
+                  
+                /*} else if (messageType == 'alert'){
                   //message to generate clientID
                   //this block is necessary if user logging in has not already been assigned id from server.                  
                   clientID = messageNode.getAttribute('senderID');
                   
                 } else {
                   alert('invalid message received by login.xhtml');
+                }*/
+                
+                } else if (messageType == 'redirect'){
+                	util_redirect(messageNode);
+                } else if (messageType == 'noPermID'){
+                	util_noPermID();
+                } else if (messageType == 'alert'){
+                	var msgtext = messageNode.childNodes[0].nodeValue;
+                	util_alert(msgtext);
+                } else if (messageType == 'checkGroups'){
+                	var checkGroups = messageNode.getAttribute('checkGroups');
+                	if (checkGroups == 'Not Created') {
+                		alert("There are no groups created currently.");
+                		document.getElementById("joinBtn").disabled = true;
+                		groupPrompt = true;
+                	} else {
+                		if(groupPrompt)
+                			alert("Groups have been created/updated!");
+                			
+                		//generate number of groups to join, groupNum = checkGroups
+                		var groupPicker = document.getElementById("groupSelection");
+                		var groupNum = Number(checkGroups);
+                		
+                		//Remove extras (if groups < 4)
+                		while (groupPicker.length > groupNum) {
+                			groupPicker.remove(groupPicker.length-1);
+                		}
+                		//Add if less than
+                		for (var i=groupPicker.length; i<groupNum; i++) {
+                			var groupOpt = document.createElement('option');
+                			groupOpt.text = "Group "+(i+1);
+                			groupPicker.add(groupOpt);
+                		}
+                		document.getElementById("joinBtn").disabled = false;
+                	}
+                } else {
+                	alert("Could not parse server message: \n"+
+                		message.data);
                 }
                            
                 
@@ -63,7 +112,7 @@
             }
         });
 
-        Chat.initialize = function() {
+        /* Chat.initialize = function() {
             if (window.location.protocol == 'http:') {
                 Chat.connect('ws://' + window.location.host + '/Chat/login');
             } else {
@@ -71,13 +120,21 @@
             }
         }        
         
-        Chat.initialize();      
+        Chat.initialize();     */
+        
+        Chat.initialize = util_webSocketConnect;
+        Chat.initialize(); 
+        window.onload = function () {
+        	//alert('');
+        	//Given up trying to make this work in Firefox
+			setTimeout( "document.getElementById('emailAddress').focus();", 1);
+        	};
 
         function joinGroup(){
           var groupNumber = document.getElementById('groupSelection').value;
           var username = document.getElementById('emailAddress').value;
           //store the username in persistent variable so chat page can access it.
-          window.name = window.name + "$" + username;
+          //window.name = window.name + "$" + username; dont change window.name
           var xml = '<message type="joinGroup" senderID="'+clientID+'" username="'+username+'"><text>'+groupNumber+'</text></message>';
           Chat.socket.send(xml);
         }       
@@ -91,8 +148,10 @@
   <body>
     <h1>Join group to collaborate</h1>
     
+    <label id='b'>
       Email Address:<br/>
       <input type='text' id='emailAddress'/>
+      </label>
       <br/>
       Choose Group Number:<br/>
       <select id='groupSelection'>
@@ -102,7 +161,7 @@
         <option value="3">Group 3</option>
         <option value="4">Group 4</option>
       </select>
-      <button onclick='joinGroup()'>Join</button>
+      <button id="joinBtn" onclick='joinGroup()'>Join</button>
     
     
   

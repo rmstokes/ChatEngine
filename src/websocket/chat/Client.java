@@ -1,14 +1,22 @@
 package websocket.chat;
 
+import javax.websocket.Session;
+
+import util.CHAT_COLOR;
+
 public class Client {
 	
-	private final String permID;
-	private String username;
-	private int sessionID;
-	private int groupID;
+	public final String permID;
+	public String sessionID;
+
+	public String username;
+	public int groupID;
+	public CHAT_COLOR chatColor;
+	public Session session;
 	
 	public Client (String senderID) {
 		permID = senderID;
+		sessionID = senderID; //Not necessary
 	}
 	
 	public String getPermID() {

@@ -19,6 +19,8 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.w3c.dom.Element;
 
+import websocket.chat.ChatAnnotation;
+
 public class FileLogger extends TimerTask {
 	
 	private static long FILE_UPDATE_TIME = 1000*60; //Run every minute
@@ -36,7 +38,7 @@ public class FileLogger extends TimerTask {
 	public FileLogger() {
 		System.out.println("FileLogger constructor "+new Date().toString());
 		fileTimer = new Timer();
-		fileTimer.schedule(this, FILE_UPDATE_TIME, FILE_UPDATE_TIME); 
+		fileTimer.schedule(this, FILE_UPDATE_TIME, FILE_UPDATE_TIME);
 	}
 	
 	//Incomplete-
@@ -54,14 +56,34 @@ public class FileLogger extends TimerTask {
 	
 	//for retrieving chat history- should not be structurally changed
 	public ArrayList<Element> getLoggedClientMessages() {
+		//Element[] e = {};
+		//if (loggedClientMessages==null) return e; //return empty array
 		return loggedClientMessages;
+		
 	}
 	
 	
 	public void run () {
 		//Here check the fileCounter and save new messages to file
-		System.out.println("Saving to file! "+new Date().toString());
+		System.out.println("#/------------------------------------#/");
+		//System.out.println("Saving to file! "+new Date().toString());
 		
+		System.out.println("File Save Date: "+new Date().toString());
+		
+		try {
+			for (Element logMsg : loggedClientMessages) {
+				System.out.println(ChatAnnotation.convertXMLtoString(logMsg));
+			}
+		} catch (Exception e) {
+			System.out.println("Problem interpreting messages");
+		}
+
+		System.out.println("#/------------------------------------#/");
+	}
+	
+	public void destroy() {
+		this.run(); //Save data one last time
+		fileTimer.cancel(); //Stop timer
 	}
 
 }

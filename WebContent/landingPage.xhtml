@@ -45,6 +45,8 @@ This is the page that users will see when they first input the url.
                 //connection closed
                 
             };
+            
+            //Chat.socket.onclose = util_close();
 
             Chat.socket.onmessage = function (message) {
                 //message received
@@ -69,6 +71,12 @@ This is the page that users will see when they first input the url.
                 
                 if (messageType == 'redirect'){
                 	util_redirect(messageNode);
+                } else if (messageType == 'checkGroups') {
+                	//capture, but ignore
+                	return;
+                } else {
+                	alert("Could not parse server message: \n"+
+                		message);
                 }
                 
                 /*
@@ -129,7 +137,8 @@ This is the page that users will see when they first input the url.
       <p>Select Desired Function:</p>
       <select id='userType'>
         <option>Login</option>
-        <option>Create Groups</option>
+        <option>Admin</option>
+        <option>Admin Monitor</option>
       </select>
       <button onclick='setUserType()'>Submit</button>
     </div>
