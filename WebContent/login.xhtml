@@ -12,12 +12,10 @@
         
         var Chat = {};        
         var clientID = window.name;
-        util_permIDCheck();        
-        /*if (clientID == null){
-          //debugging block
-          alert('clientID is null');
-          var xml = '<message type="requestID"></message>';
-        }*/
+        
+        //Before permIDCheck, get ID if none exists- ONLY FOR LOGIN PAGE
+       
+        
         
         Chat.socket = null;
         
@@ -30,7 +28,6 @@
         Chat.connect = (function(host) {
             if ('WebSocket' in window) {
                 Chat.socket = new WebSocket(host);
-                
             } else if ('MozWebSocket' in window) {
                 Chat.socket = new MozWebSocket(host);                
             } else {
@@ -39,7 +36,18 @@
             }
 
             Chat.socket.onopen = function () {
-                
+                //Login special access for clientID
+        		if (clientID == null || clientID == "") {
+        			var xml = '<message type="setUserType">'+
+            		'<text>PermIDGet</text>'+
+            		'</message>';
+            		setTimeout(function () {Chat.socket.send(xml);}, 100);
+            		//Chat.socket.send(xml); //Assume 100% success and let server side validate on connect
+            		//Give it a second
+        			//setTimeout(function () {util_permIDCheck();}, 100);
+        			 
+        			
+       			}
             };
 
             Chat.socket.onclose = function () {
@@ -59,18 +67,15 @@
                 if (messageType == 'displayChat'){
                 	util_webRedirect('chat');
                   //window.location.href = 'http://'+window.location.host + '/Chat/chat.xhtml';
-                  
-                /*} else if (messageType == 'alert'){
-                  //message to generate clientID
-                  //this block is necessary if user logging in has not already been assigned id from server.                  
-                  clientID = messageNode.getAttribute('senderID');
-                  
-                } else {
-                  alert('invalid message received by login.xhtml');
-                }*/
                 
                 } else if (messageType == 'redirect'){
                 	util_redirect(messageNode);
+                } else if (messageType == 'permID') {
+                	var senderID = messageNode.getAttribute('senderID');
+                	clientID = senderID;
+                	console.log(clientID+" login clientID override");
+                	window.name = clientID;
+                	//window.clientID = window.name;
                 } else if (messageType == 'noPermID'){
                 	util_noPermID();
                 } else if (messageType == 'alert'){
@@ -106,10 +111,10 @@
                 	alert("Could not parse server message: \n"+
                 		message.data);
                 }
-                           
-                
-                
+                              
             }
+            
+            
         });
 
         /* Chat.initialize = function() {
@@ -124,15 +129,25 @@
         
         Chat.initialize = util_webSocketConnect;
         Chat.initialize(); 
+        
         window.onload = function () {
         	//alert('');
         	//Given up trying to make this work in Firefox
 			setTimeout( "document.getElementById('emailAddress').focus();", 1);
+			
+			document.getElementById('emailAddress').onkeyup = function(event) {
+        				if (event.keyCode==13) //13 == Enter
+                    		joinGroup();
+                	};
         	};
 
         function joinGroup(){
           var groupNumber = document.getElementById('groupSelection').value;
           var username = document.getElementById('emailAddress').value;
+          if (username=="") {
+          	alert("Username is blank!");
+          	return;
+          }
           //store the username in persistent variable so chat page can access it.
           //window.name = window.name + "$" + username; dont change window.name
           var xml = '<message type="joinGroup" senderID="'+clientID+'" username="'+username+'"><text>'+groupNumber+'</text></message>';
@@ -150,7 +165,7 @@
     
     <label id='b'>
       Email Address:<br/>
-      <input type='text' id='emailAddress'/>
+      <input type='text' id='emailAddress' onkeyup='function(e) {if(e.keyCode==13) joinGroup()}'/>
       </label>
       <br/>
       Choose Group Number:<br/>

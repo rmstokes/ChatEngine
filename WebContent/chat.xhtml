@@ -40,6 +40,24 @@
         #console p {
             padding: 0;
             margin: 0;
+            /* Testing some chat room changes
+            padding-top: 1px;
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+            border-bottom-color: black;
+            */
+        }
+        
+        #console p br {
+        	clear: both;
+        }
+        
+        #console p div {
+        	/*This is the timestamp */
+        	color: black;
+        	float: right;
+        	display: inline-block; 
+        	font-size:13px;
         }
         
         # h1 {
@@ -60,6 +78,17 @@
         "use strict";
 
         console.log("Not this kind of Console.log");
+        
+        //Shamelessly stolen from StackOverflow
+        //http://stackoverflow.com/questions/1267283/how-can-i-create-a-zerofilled-value-using-javascript/1268377#1268377
+        Number.prototype.pad = function(numZeros) {
+     		//var n = Math.abs(num);
+    		var zeros = Math.max(0, numZeros - Math.floor(this).toString().length );
+    		var zeroString = Math.pow(10,zeros).toString().substr(1);
+
+    		return zeroString+this;
+    	}
+    
         var Chat = {};
         util_permIDCheck();
         
@@ -68,9 +97,11 @@
         Chat.socket = null;
         
         var host = '';
-        var TYPING_BGC = 'WhiteSmoke';
-        var USER_BGC = 'LightGoldenRodYellow';
-        var CHAT_HISTORY_BGC = 'Beige';
+        
+        
+        var TYPING_BGC = '#ebf2f9';
+        var USER_BGC = 'SeaShell';
+        var CHAT_HISTORY_BGC = 'LightGoldenRodYellow';
 
         Chat.connect = (function(host) {
             if ('WebSocket' in window) {
@@ -98,7 +129,7 @@
             Chat.socket.onclose = function () {
                 document.getElementById('chat').onkeydown = null;
                 Console.log('Info: WebSocket closed... host: '+host);
-                sessionStorage.clear(); //? Did we use sessionStorage?
+                //sessionStorage.clear(); //? Did we use sessionStorage?
             };
 
 			Chat.socket.onmessage = function (message) {
@@ -142,6 +173,10 @@
                 	textNode = xmlDoc.getElementsByTagName('text')[0];
                 	if (textNode.childNodes[0]!==undefined) {
                 		innerText = textNode.childNodes[0].nodeValue;
+                		
+                		
+        				//Properly REparse & out of text otherwise XML Parser WILL CRASH
+        				innerText = innerText.replace(/&/gm, '&amp;');
                 	}
                 }      
        			
@@ -153,8 +188,9 @@
                 //Parse a simplified date from the server timestamp on broadcastGroup
                 var serverTS = new Date();
                 serverTS.setTime(messageNode.getAttribute('timestamp'));
-                var timestamp = serverTS.getHours()+":"+serverTS.getMinutes()+":"+serverTS.getSeconds()+"."+serverTS.getMilliseconds();
-                timestamp = '<div style="float: right; display: inline-block">'+timestamp+'</div>';
+                var timestamp = serverTS.getHours().pad(2)+":"+serverTS.getMinutes().pad(2)+":"
+                	+serverTS.getSeconds().pad(2)+"."+serverTS.getMilliseconds().pad(3);
+                timestamp = '<div>'+timestamp+'</div>';
                 //var timestamp = messageNode.getAttribute('timestamp');
                 
                 var console = document.getElementById('console'); //get console
@@ -169,6 +205,8 @@
                  	if (clientID != senderID){
                  		//Do nothing if client recieved its own info since its already in the chatbox
                  		if (paragraph==null) {
+                 			//quit if innerText is ""
+                 			if (innerText=="") return;
                  			//need to create <p> element to display text in console
                  			paragraph = document.createElement('p'); //get paragraph tag
                  			
@@ -180,6 +218,8 @@
                  			console.appendChild(paragraph); //add to console
                  		} else if (textNode != undefined && textNode.childNodes[0] === undefined){ //No text in 'typing' message
                  			paragraph.innerHTML = '';
+                 			//remove paragraph from console
+                 			console.removeChild(paragraph);
                  			//paragraph.id = ''; //dont see reason to lose id reference
                  		} else {
                  			// <p> element already exists to add to that value
@@ -213,6 +253,9 @@
                  	}
                  } else if (messageType == 'alert') {
                  	//server message from no user in particular; using console.log
+                 	//For join/leave group, do some fancy formatting on username
+                 	var usernameString = messageNode.getAttribute('sendername');
+                 	innerText = innerText.replace(usernameString, '<span style="color: '+senderColor+'; font-weight: bold;" >'+usernameString+'</span>');
                  	Console.log(innerText+timestamp);
                  } else {
                  	alert('invalid message from server: \n'+xml);
@@ -227,151 +270,7 @@
              };
                  			
 			
-            /*Chat.socket.onmessage = function (message) {
-                //message.data here will be in xml format
-                //parse the message.data text to find out if client is still typing message
-                //or if the user has completed a full message.
-                //alert('chat onmessage');
-                var xml = message.data;
-                var parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(xml,"text/xml");
-                var messageNode = xmlDoc.getElementsByTagName('message')[0];
-                var messageType = messageNode.getAttribute('type');
-                //alert('messageType: '+messageType);                
-                var textNode = xmlDoc.getElementsByTagName('text')[0];
-                //alert('textNode.childNodes[0]: '+textNode.childNodes[0]);
-                
-               	if (messageType == 'redirect'){
-                	util_redirect(messageNode);
-                } else if (messageType == 'noPermID'){
-                	util_noPermID();
-                } else if (messageType == 'checkGroups'){
-                	//ignore but capture this
-                	return;
-                }
-                
-                //if message is empty then clear the user's input from screen.
-                //this makes sure that if 'backspace' causes all characters to be removed then the username will vanish
-                if (textNode.childNodes[0] === undefined){
-                  //alert('text element is empty');
-                  var senderID = messageNode.getAttribute('senderID');
-                  var paragraph = document.getElementById(senderID);
-                  var userLabel = messageNode.getAttribute('sendername')+": ";
-                  //paragraph.innerHTML = userLabel;
-                  //erase all text (including userLabel) from element and clear the id.
-                  paragraph.innerHTML = '';
-                  paragraph.id = '';
-                  return;
-                }
-                var innerText = textNode.childNodes[0].nodeValue;                
-                var senderColor = messageNode.getAttribute('senderColor');
-                
-                //alert('after innerText');
-                //if message is still being typed
-                //display in console on the same line as the user's other text                
-                //if message is complete then display as full entry in console.                 
-                
-                if (messageType == 'typing'){
-                    //alert('typing activity from color: '+senderColor);
-                    //output text to console if it originated from another client                    
-                    var senderID = messageNode.getAttribute('senderID'); //assigned by client
-                    //var clientID = messageNode.getAttribute('clientID'); //assigned by server
-                    
-                    if (clientID == '' || clientID == null) alert('null clientID');                    
-                    if (clientID != senderID){
-                      //was this user the one that sent text message that was just received back?
-                      //if so, do nothing otherwise display in console.                      
-                      //var guestLabel = 'Guest '+senderID+': ';
-                      var userLabel = messageNode.getAttribute('sendername')+": ";
-                      //check if tag already exists with id==senderID
-                      //if so, then send guestLabel and innerText to that element's innerHTML
-                      //otherwise, create a <p> element below all the other elements in console
-                      //before populating <p> with text.
-                      var consoleElement = document.getElementById(senderID);                      
-                      if (consoleElement == null){
-                        //need to create element to display text in console.
-                        var console = document.getElementById('console');
-                        var newline = document.createElement('BR');
-                        var paragraph = document.createElement('P'); //create paragraph element
-                        paragraph.style.wordWrap = 'break-word';
-                        paragraph.style.color = senderColor;
-                        //alert('set paragraph.style.color: '+senderColor);
-                        paragraph.innerHTML = userLabel+innerText;
-                        paragraph.id = senderID;                        
-                        console.appendChild(paragraph);                         
-                        
-                      } else {
-                      
-                          //<p> element already exists so just add new character.
-                          consoleElement.innerHTML = userLabel+innerText; //add text to paragraph element
-                      }                      
-                      
-                    }
-                    
-                } else if (messageType == 'chat'){
-                    //message type is 'chat' meaning a complete message has been logged.
-                    
-                    //place the chat text in appropriate <p> element followed by newline.                    
-                    var senderID = messageNode.getAttribute('senderID');
-                    var consoleElement = document.getElementById(senderID);
-                    //var guestLabel = 'Guest '+senderID+': ';
-                    var userLabel = messageNode.getAttribute('sendername')+": ";
-                    var console = document.getElementById('console');
-                    var newline = document.createElement('br');
-                    if (consoleElement == null) {
-                      //null consoleElement means that the senderID and clientID are equal.
-                      //in this case create a <p> to display chat output.                      
-                      var paragraph = document.createElement('P'); //create paragraph element
-                      paragraph.style.wordWrap = 'break-word';
-                      paragraph.style.color = senderColor;
-                      paragraph.innerHTML = userLabel+innerText;                                            
-                      console.appendChild(paragraph);  
-                      paragraph.appendChild(newline);
-                    } else {
-                        //senderID != clientID so there is already text in <p> element                       
-                        consoleElement.innerHTML = '';
-                        consoleElement.innerHTML = userLabel+innerText;
-                        consoleElement.id = ''; //clear the id                        
-                        consoleElement.appendChild(newline);
-                    }
-                    
-                    
-                    //Console.log(guestLabel+innerText);
-                } else if (messageType == 'alert'){
-                    //also update the clientID for the sender to reflect new identity on server
-                    //upon entering chat page the client receives a new ID from server
-                    //alert('alert message received');
-                    
-                    var senderID = messageNode.getAttribute('senderID');
-                    
-                    //alert('clientID: '+clientID+' senderID: '+senderID);
-                    //alert('senderColor: '+senderColor);
-                    
-                    if (clientID == senderID){
-                        //if sender and client are same then log the updated clientID from server
-                        //alert('sender is me');
-                        clientID = messageNode.getAttribute('updatedID');                        
-                        //set senderColor for this client
-                        //each client will submit their color back to server on every subsequent message.                        
-                        if(typeof(Storage) != "undefined") {
-                            // Code for localStorage/sessionStorage.
-                            sessionStorage.setItem("clientColor", senderColor);
-                            //alert('set senderColor: '+senderColor);
-                        } else {
-                            alert('no web storage support');
-                            // Sorry! No Web Storage support..
-                        }
-                    }
-                    //notify group that a user has joined session.
-                    //alert('user joined/alert message received.');
-                    Console.log(innerText);
-                    
-                    
-                } else if (messageType == 'clientIdentification'){
-                  alert('client identification');
-                }
-                
-            };*/
+            
         }); //end of Socket.connect
 		
         
@@ -385,6 +284,10 @@
         		chatType = 'chat';
                 document.getElementById('chat').value = '';
         	}
+        	
+        	//Properly parse & out of text otherwise XML Parser WILL CRASH
+        	message = message.replace(/&/gm, '&amp;');
+        	
         	var xml = '<message type="'+chatType+'" senderID="'+clientID+'">'+       
                 '<chat>'+
                 '<text>'+message+'</text>'+
@@ -442,11 +345,13 @@
         		var userColor = users[i].getAttribute('senderColor');
         		var username = users[i].innerHTML;
         	
-        		
+        		userP.style.color = 'Snow';
         		userP.style.backgroundColor = userColor;
+        		//userP.style.backgroundColor = 'Snow';
         		userP.style.borderColor = userColor;
+        		userP.style.textAlign = 'center';
         		userP.className = "username"; //class name but not class??
-        		userP.innerHTML = username;
+        		userP.innerHTML = "# "+username+" ";
         		
         		userSideBar.appendChild(userP);
         	}

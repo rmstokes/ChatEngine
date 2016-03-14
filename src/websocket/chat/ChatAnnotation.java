@@ -67,12 +67,12 @@ public class ChatAnnotation {
 
 	private static final Log log = LogFactory.getLog(ChatAnnotation.class);
 
-	private static final String GUEST_PREFIX = "Guest";
-	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSXXX");
-	private static final AtomicInteger connectionIds = new AtomicInteger(0);
+	//private static final String GUEST_PREFIX = "Guest";
+	//private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSXXX");
+	//private static final AtomicInteger connectionIds = new AtomicInteger(0);
 	
-	private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
-	private static final Set<Session> connectedSessions = new CopyOnWriteArraySet<Session>();
+	//private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
+	private static final ArrayList<Session> connectedSessions = new ArrayList<Session>();
 	private static final ArrayList<Client> userList = new ArrayList<Client>();
 	private static FileLogger fileLogger;// = new FileLogger();
 	
@@ -80,18 +80,18 @@ public class ChatAnnotation {
 
 	// private static String adminID = null;
 	private static boolean adminCreatedGroups = false;
-	private static Hashtable<Integer, HashSet<String>> groupTable = new Hashtable<Integer, HashSet<String>>();
+	//private static Hashtable<Integer, HashSet<String>> groupTable = new Hashtable<Integer, HashSet<String>>();
 
 	// create color vector to assign colors to members of each chat group
 	// format: HashTable<Group#, Hashtable<color, count>> ex. Group 1: red->1;
 	// Group1: blue->0
-	private static Hashtable<Integer, Hashtable<String, Integer>> colorVector = new Hashtable<Integer, Hashtable<String, Integer>>();
+	//private static Hashtable<Integer, Hashtable<String, Integer>> colorVector = new Hashtable<Integer, Hashtable<String, Integer>>();
 
 	// create clientColor variable to store username color for each client
-	private static Hashtable<String, String> clientColor = new Hashtable<String, String>();
+	//private static Hashtable<String, String> clientColor = new Hashtable<String, String>();
 	
 	
-	private String nickname;
+	//private String nickname;
 	private Session session;
 	private Client userClient;
 
@@ -120,15 +120,19 @@ public class ChatAnnotation {
 			//Send information about groups (num, exists) so the admin/login page can inform
 			//the user and act properly
 			sendXMLCheckGroups(session.getId());
-			connectedSessions.add(this.session);
-			connections.add(this);
+			synchronized (connectedSessions) {
+				connectedSessions.add(this.session);
+			}
+			//connections.add(this);
 			return;
 		case "login":
 			// if admin has not created groups then don't allow client to
 			// connect.
 			System.out.println("login page connected.");
-			connectedSessions.add(this.session);
-			connections.add(this);
+			synchronized (connectedSessions) {
+				connectedSessions.add(this.session);
+			}
+			//connections.add(this);
 			sendXMLCheckGroups(session.getId());
 			return;
 		case "chat":
@@ -136,8 +140,10 @@ public class ChatAnnotation {
 			// connect.
 			System.out.println("chat page connected.");
 			System.out.println("adminCreatedGroups: " + adminCreatedGroups);
-			connectedSessions.add(this.session);
-			connections.add(this);
+			synchronized (connectedSessions) {
+				connectedSessions.add(this.session);
+			}
+			//connections.add(this);
 			return;
 		case "landing":
 			System.out.println("landing page connected.");
@@ -154,8 +160,10 @@ public class ChatAnnotation {
 	@OnClose
 	public void end(Session session, @PathParam("path") String path) throws Exception {
 		System.out.println("inside end method... Closing webSocket @ "+path);
-		connections.remove(this);
-		connectedSessions.remove(this.session);
+		//connections.remove(this);
+		synchronized (connectedSessions) {
+			connectedSessions.remove(this.session);
+		}
 		
 		if (!session.isOpen()) return;
 		if (path.equals("chat")) {
@@ -168,7 +176,8 @@ public class ChatAnnotation {
 
 			//try {
 			//remove user from group
-			HashSet<Client> group = groupManager.getGroup(userClient.groupID);
+			//HashSet<Client> group = groupManager.getGroup(userClient.groupID);
+			Set<Client> group = groupManager.getGroup(userClient.groupID);
 			userClient.groupID = 0; //technically null, no zero group
 			group.remove(userClient);
 			
@@ -188,15 +197,17 @@ public class ChatAnnotation {
 			exitMsg.setAttribute("senderID", this.userClient.permID);
 			exitMsg.setAttribute("groupNumber", Integer.toString(bGroupID));
 			exitMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			exitMsg.setAttribute("sendername", userClient.username);
 			exitMsg.appendChild(doc.createElement("text"));
-			exitMsg.getFirstChild().setTextContent("<span style=\"color:"+ userClient.chatColor.toString()+"\">"+
-					userClient.username +" </span> has left the group.");
+			exitMsg.getFirstChild().setTextContent(userClient.username+" has left the group.");
+			//exitMsg.getFirstChild().setTextContent("<span style=\"color:"+ userClient.chatColor.toString()+"\">"+
+					//userClient.username +" </span> has left the group.");
 			
 			if(group.size()==0) {
 				//need to log the room exit, but not broadcast cause group is empty
 				long dateTimestamp = new Date().getTime();
 				exitMsg.setAttribute("timestamp", Long.toString(dateTimestamp));
-				synchronized (this) {
+				synchronized (fileLogger.getLoggedClientMessages()) {
 					fileLogger.captureMessage(exitMsg);
 				}
 				return;
@@ -247,7 +258,7 @@ public class ChatAnnotation {
 	public void incoming(String message) throws Exception {
 		// parse xml message and send broadcast to group.
 		// may handle certain types of messages differently though
-
+		
 		// parse xml
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -258,9 +269,9 @@ public class ChatAnnotation {
 
 		// get message type
 		Element element = doc.getDocumentElement();
-		String messageType = element.getAttribute("type"); //type of message
+		String messageType = element.getAttribute("type");
 
-		String senderID = null; //Not initialized here
+		String senderID = null; 
 		
 		if (messageType.equals(MessageType.Landing_SetUserType)) {
 			//From Landing page- Set user type based on client input
@@ -284,6 +295,11 @@ public class ChatAnnotation {
 			case "Admin":
 				//go to admin page
 				sendXMLRedirect("admin", userClient.getPermID());
+				return;
+			case "PermIDGet":
+				//Work around for login page
+				System.out.println("Login page requesting permanent ID");
+				sendXMLMessage("permID", userClient.getPermID());
 				return;
 			default:
 				System.out.println("Invalid userType input");
@@ -336,7 +352,7 @@ public class ChatAnnotation {
 			
 			groupManager = new GroupManager(numGroups, instructor);
 			//End Filelogger and recreate new one
-			if(fileLogger!=null)
+			if (fileLogger!=null)
 				fileLogger.destroy();
 			fileLogger = new FileLogger();
 			//Remember to stop timer (causes memory leak?)
@@ -347,7 +363,7 @@ public class ChatAnnotation {
 			return;
 			
 		} else if (messageType.equals(MessageType.Login_JoinGroup)) {
-			//load info into the user client
+			//FROM LOGIN PAGE, add user to group
 			System.out.println("joinGroup message received");
 			System.out.println("permID: "+userClient.permID+" -> "+ userClient.toString());
 			
@@ -365,9 +381,9 @@ public class ChatAnnotation {
 			
 			//Concurrency- though its unlikely multiple users will connect at once
 			boolean joinGroupErr;
-			synchronized (this) {
+			//synchronized (this) {
 				joinGroupErr = groupManager.joinGroup(groupNumber, userClient); //cant add duplicates
-			}
+			//}
 			if (!joinGroupErr) {
 				sendXMLMessage("alert", userClient.permID, 
 						"Could not join Group "+groupNumber+". Please ask for assistance.");
@@ -415,11 +431,13 @@ public class ChatAnnotation {
 			broadMsg.setAttribute("type", "alert");
 			broadMsg.setAttribute("senderID", senderID);
 			broadMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
-			//broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
-			//broadMsg.setAttribute("sendername", userClient.username); //Not needed for alert messages
+			//sending senderColor/name for client side beautification
+			broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			broadMsg.setAttribute("sendername", userClient.username); //Not needed for alert messages
 			broadMsg.appendChild(doc.createElement("text"));
-			broadMsg.getFirstChild().setTextContent("<span style=\"color:"+ userClient.chatColor.toString()+"\">"+
-					userClient.username +" </span> has joined the group.");
+			broadMsg.getFirstChild().setTextContent(userClient.username +" has joined the group.");
+			//broadMsg.getFirstChild().setTextContent("<span style=\"color:"+ userClient.chatColor.toString()+"\">"+
+					//userClient.username +" </span> has joined the group.");
 			
 			System.out.println("Broadcasting user join message via alert");
 			//System.out.println("Broadcast Message: "+convertXMLtoString(broadMsg));
@@ -433,7 +451,7 @@ public class ChatAnnotation {
 			//Send list of group members
 			sendGroupMembers(userClient.groupID);
 			
-			return;
+			//return;
 		} else if (messageType.equals(MessageType.Chat_Typing) || messageType.equals(MessageType.Chat_Chat)) {
 			//From Chat- messages in the chat room
 			
@@ -648,11 +666,10 @@ public class ChatAnnotation {
 		//attributes we have to derive from it
 		//Assume ChatAnnotation has added the necessary elements
 		
-		
 		if (groupID==0) {
 			session.close();
 			return; //There's an issue where refreshing the page removes the user from the group
-			//but only after a chat message
+			//but only after a chat message, should be resolved now
 		}
 		
 		//Capture message in FileLogger here
@@ -663,7 +680,7 @@ public class ChatAnnotation {
 		
 		//Time in milliseconds is the easiest to translate in JS without losing important information
 		msg.setAttribute("timestamp", Long.toString(dateTimestamp));
-		synchronized (this) {
+		synchronized (fileLogger.getLoggedClientMessages()) {
 			fileLogger.captureMessage(msg);
 		}
 		
@@ -671,17 +688,18 @@ public class ChatAnnotation {
 		System.out.println("Broadcast Message: "+convertXMLtoString(msg));
 		
 		
-		HashSet<Client> group = groupManager.getGroup(groupID);
+		//HashSet<Client> group = groupManager.getGroup(groupID);
+		Set<Client> group = groupManager.getGroup(groupID);
 		
 		//Get each client and push message to them
-		synchronized (group) {
+		String xmlStr = convertXMLtoString(msg);
+		//synchronized (group) {
 		for (Client gClient : group) {
-			try { //synchronized but dunno how secure it really is
-				synchronized (gClient) {
-					String xmlStr = convertXMLtoString(msg);
+			try { 
+				//synchronized (gClient) { //
 					gClient.session.getBasicRemote().sendText(xmlStr);
 					System.out.println("Broadcast to groupMember -> " +gClient.toString());
-				}
+				//}
 			//a ton of error handling for lost messages
 			} catch (Exception e) {
 				log.debug("Chat Error: Failed to send message to client", e);
@@ -707,7 +725,7 @@ public class ChatAnnotation {
 
 			}//end of try catch		
 		}//end of for - for each group Member
-		}//end of synchronized group
+		//}//end of synchronized group
 		
 		
 	} //End of broadcastGroup
@@ -876,7 +894,7 @@ public class ChatAnnotation {
 	//Message to send data about group. Can integrate with regular msg but requires client side changes too
 	private void sendXMLCheckGroups(String senderID) throws IOException {
 		String groups = adminCreatedGroups ? Integer.toString(groupManager.getNumOfGroups()) : "Not Created";
-		System.out.println("Sent Group Info - num: "+groups);
+		System.out.println("Sent Group Info - num: "+groups+" to "+connectedSessions.size()+" clients");
 		String msg = "<message type='checkGroups' checkGroups='" + groups + "' senderID='" + senderID +"'></message>";
 		session.getBasicRemote().sendText(msg);
 	}
@@ -884,13 +902,16 @@ public class ChatAnnotation {
 	//Send to all clients currently connected to server
 	private void broadcastCheckGroups() throws IOException {
 		String groups = adminCreatedGroups ? Integer.toString(groupManager.getNumOfGroups()) : "Not Created";
-		System.out.println("Broadcast Group Info - num: "+groups);
 		String msg = "<message type='checkGroups' checkGroups='" + groups + "' senderID='Server Broadcast'></message>";
 		//send to everyone
+		synchronized (connectedSessions) {
 		for (Session s : connectedSessions) {
 			if (!s.isOpen()) continue;
 			s.getBasicRemote().sendText(msg);
 		}
+		}//end of synchronized
+
+		System.out.println("Broadcast Group Info - num: "+groups+" to "+connectedSessions.size()+" clients");
 	}
 	
 	//XML to String
@@ -922,18 +943,21 @@ public class ChatAnnotation {
 		return e;
 	}
 	
-	//send chat his messages to client
+	//send chat history messages to client
 	private void getChatHistory(Client userClient) throws Exception {
 		//get the copy/list of chat elements from the group this client is joining
+		//Read-only operation & iterator; Doesnt need to be synchronized
 		ArrayList<Element> chatHis = fileLogger.getLoggedClientMessages();
 		//loop through loggedMessages and send anything from the same group
 		for (int i=0; i<chatHis.size(); i++) {
-			Element chatMsg = (Element) chatHis.get(i).cloneNode(true);
+			//Element chatMsg = (Element) chatHis.get(i).cloneNode(true);
+			Element chatMsg = (Element) chatHis.get(i);
 			//If chat isnt from same group, skip message
-			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")))
+			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) 
+					|| !chatMsg.getAttribute("type").equals("chat"))  //only get chat messages
 				continue;
-			if (!chatMsg.getAttribute("type").equals("chat")) continue; //only get chat messages
 			chatMsg.setAttribute("chatHistory", "chatHistory"); //add extra value for fancy purposes
+			
 			System.out.println("Chat History message copy:"+convertXMLtoString(chatMsg));
 			session.getBasicRemote().sendText(convertXMLtoString(chatMsg));
 		}
@@ -945,7 +969,8 @@ public class ChatAnnotation {
 		System.out.println("Sending list of group members for group "+groupID);
 		//Cant use an attribute so nodes will do
 		String msg = "<message type='lGroupMembers'>";
-		HashSet<Client> group = groupManager.getGroup(groupID);
+		//HashSet<Client> group = groupManager.getGroup(groupID);
+		Set<Client> group = groupManager.getGroup(groupID);
 		
 		for (Client c : group) {
 			msg = msg.concat("<member senderColor='"+c.chatColor.toString()+"'>"
@@ -958,8 +983,6 @@ public class ChatAnnotation {
 		for (Client c : group) {
 			c.session.getBasicRemote().sendText(msg);
 		}
-		//session.getBasicRemote().sendText(msg);
-
 		
 	}
 }
