@@ -31,6 +31,9 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -62,8 +65,9 @@ import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 import util.HTMLFilter;
 import util.MessageType;
 
+@WebListener
 @ServerEndpoint(value = "/{path}")
-public class ChatAnnotation {
+public class ChatAnnotation implements ServletContextListener{
 
 	private static final Log log = LogFactory.getLog(ChatAnnotation.class);
 
@@ -74,12 +78,14 @@ public class ChatAnnotation {
 	//private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
 	private static final ArrayList<Session> connectedSessions = new ArrayList<Session>();
 	private static final ArrayList<Client> userList = new ArrayList<Client>();
-	private static FileLogger fileLogger;// = new FileLogger();
 	
+	private static FileLogger fileLogger;// = new FileLogger();
 	private static GroupManager groupManager;
 
-	// private static String adminID = null;
 	private static boolean adminCreatedGroups = false;
+
+	private static int groupIteration = 0;
+	private static String logPath = "log\\";
 	//private static Hashtable<Integer, HashSet<String>> groupTable = new Hashtable<Integer, HashSet<String>>();
 
 	// create color vector to assign colors to members of each chat group
@@ -351,10 +357,11 @@ public class ChatAnnotation {
 			if(numGroups == 0) return; //Ignore invalid messages
 			
 			groupManager = new GroupManager(numGroups, instructor);
+			
 			//End Filelogger and recreate new one
-			if (fileLogger!=null)
-				fileLogger.destroy();
-			fileLogger = new FileLogger();
+			if (fileLogger!=null) fileLogger.destroy();
+			fileLogger = new FileLogger(numGroups, new Date(), ++groupIteration,
+					logPath, instructor);
 			//Remember to stop timer (causes memory leak?)
 			adminCreatedGroups = true;
 			
@@ -968,7 +975,7 @@ public class ChatAnnotation {
 		//For UI purposes only
 		System.out.println("Sending list of group members for group "+groupID);
 		//Cant use an attribute so nodes will do
-		String msg = "<message type='lGroupMembers'>";
+		String msg = "<message type='lGroupMembers' groupNum='"+groupID+"'>";
 		//HashSet<Client> group = groupManager.getGroup(groupID);
 		Set<Client> group = groupManager.getGroup(groupID);
 		
@@ -985,4 +992,22 @@ public class ChatAnnotation {
 		}
 		
 	}
+	
+	@Override
+	public void contextDestroyed(ServletContextEvent arg0)
+	  {
+	    System.out.println("Destroying server");
+	    fileLogger.destroy(); //save files on server exit
+	  }
+	  
+	@Override
+	  public void contextInitialized(ServletContextEvent sce)
+	  {
+	    System.out.println("Init stuff"); //called when server context is made
+	    
+	    String initLogPath = sce.getServletContext().getInitParameter("logPath");
+	    //iternary operator; fancy way of saying use default if initLogPath is empty
+	    logPath = (initLogPath == null) || (initLogPath.equals("")) ? logPath : initLogPath;
+	    System.out.println("logPath initialized to: " + logPath);
+	  }
 }

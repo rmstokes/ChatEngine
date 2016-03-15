@@ -35,7 +35,11 @@
         <welcome-file>chat.htm</welcome-file>
         <welcome-file>chat.jsp</welcome-file>
  </welcome-file-list>
-  
-  
-  
+ <context-param>
+ 	<param-name>logPath</param-name>
+ 	<param-value>C:\Users\MiloticMaster\Desktop\Chat test</param-value>
+ </context-param>
+
+
+
 </web-app>
