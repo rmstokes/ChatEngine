@@ -1,7 +1,5 @@
 package websocket.chat;
 
-import java.io.File;
-
 /*This is the File logging class for the Chat server.
  * The class will be reset if the groups are reset
  * 
@@ -17,24 +15,15 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import websocket.chat.ChatAnnotation;
 
 public class FileLogger extends TimerTask {
 	
-	private static long FILE_UPDATE_TIME = 1000*20; //Run every minute
+	private static long FILE_UPDATE_TIME = 1000*60; //Run every minute
 	
 	//Variables that holds ALL client messages - Not a buffer
 	//Find the best data structure for this, 1 large xml file or an array of xml elements?
@@ -90,12 +79,6 @@ public class FileLogger extends TimerTask {
 		}
 
 		System.out.println("#/------------------------------------#/");
-		try { 
-			saveXML();
-		} catch (Exception e) {
-			System.out.println("file x "+e.getMessage());
-			e.printStackTrace();
-		}
 	}
 	
 	public void destroy() {
@@ -103,38 +86,4 @@ public class FileLogger extends TimerTask {
 		fileTimer.cancel(); //Stop timer
 	}
 
-	public void saveXML() throws Exception {
-		  
-		  //create new document builder
-		  DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		  DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-		  
-		  Document doc = documentBuilder.newDocument();
-		  //ROOT ELEMENT
-		  Element woozlog = doc.createElement("woozlog"); 
-		  doc.appendChild(woozlog);
-		  
-		  //for loop
-		  	//all elements in loggedClientMessages
-		  	//save doc
-		  for (Element e : loggedClientMessages) {
-			  Node ne = doc.importNode(e, true);
-			  woozlog.appendChild(ne);
-		  }
-		  
-		  //elements into xml file will go here
-		  //Element element = doc.createElement("example");
-		  //doc.appendChild(element);
-		  
-		  
-		  //write to file
-		  TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		  Transformer transformer = transformerFactory.newTransformer();
-		  DOMSource source = new DOMSource(doc);
-		  StreamResult streamresult = new StreamResult(new File("C:\\Users\\MiloticMaster\\Desktop\\Chat test\\chats.xml"));
-		  
-		  transformer.transform(source, streamresult);
-
-		  
-		 }
 }
