@@ -51,7 +51,7 @@ public class FileLogger extends TimerTask {
 	private final int groupNum;
 	private final int groupIteration;
 	
-	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
 	private final Date startDate;
 	
 	private final String instructor;
@@ -111,7 +111,15 @@ public class FileLogger extends TimerTask {
 	}
 	
 	public void saveXML() throws Exception {
+		
 		Date endDate = new Date(); //Date for time of saving xml
+		
+		if (loggedClientMessages.size()==fileCounter) {
+			System.out.println("No new messages have been logged - "+serverDateFormatter.format(endDate));
+			return;
+		}
+		
+		fileCounter = loggedClientMessages.size();
 	    
 	    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 	    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -164,7 +172,9 @@ public class FileLogger extends TimerTask {
 	      filename = filename.replaceAll(" ", "_"); //replace space with _
 	      
 	      new File(this.logPath).mkdir(); //create new file directory if DNE
-	      StreamResult streamresult = new StreamResult(new File(this.logPath + filename));
+	      File logFile = new File(this.logPath + filename);
+	      logFile.setReadable(true); //make the logFile readable from linux
+	      StreamResult streamresult = new StreamResult(logFile);
 	      
 	      transformer.transform(source, streamresult);
 	    }
