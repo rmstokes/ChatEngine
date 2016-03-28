@@ -151,12 +151,12 @@ public class FileLogger extends TimerTask {
 	    Transformer transformer = transformerFactory.newTransformer();
 	    
 	    System.out.println("Saving to path " + this.logPath);
-	    DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 	    
 	    //save xml file for each group
 	    for (int i = 0; i < this.groupNum; i++)  {
 	      DOMSource source = new DOMSource(docs[i]);
-	      String filename = "Chatlog_" + this.groupIteration + "_Group" + (i + 1) + " " + df.format(this.startDate) + ".xml";
+	      String filename = "Chatlog_Iter_" + this.groupIteration + "_Group" + (i + 1) + " " + df.format(this.startDate) + ".xml";
 	      
 	      this.logPath = this.logPath.replaceAll("\\\\+", "\\\\"); //gotta DOUBLE DELIMIT on windows
 	      filename = filename.replaceAll("\\/", "-"); //get rid of / in date

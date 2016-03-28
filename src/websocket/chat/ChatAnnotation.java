@@ -72,7 +72,7 @@ public class ChatAnnotation implements ServletContextListener{
 	private static final Log log = LogFactory.getLog(ChatAnnotation.class);
 
 	//private static final String GUEST_PREFIX = "Guest";
-	//private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSXXX");
+	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
 	//private static final AtomicInteger connectionIds = new AtomicInteger(0);
 	
 	//private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
@@ -114,15 +114,15 @@ public class ChatAnnotation implements ServletContextListener{
 		// path argument identifies which client page is on other end
 		// for 'landing' page connections add the ChatAnnotation object to
 		// static list.
-		System.out.println("inside start - opened Websocket Connection at /"+path);
+		System.out.println("Inside start - opened Websocket Connection at /"+path);
 		//System.out.println("path: " + path);
 		
 		this.session = session;
-		System.out.println("current sessionID: " + session.getId());
+		System.out.println("Current sessionID: " + session.getId());
 		
 		switch (path) {
 		case "admin":
-			System.out.println("admin connected.");
+			System.out.println("Admin page connected.");
 			//Send information about groups (num, exists) so the admin/login page can inform
 			//the user and act properly
 			sendXMLCheckGroups(session.getId());
@@ -134,7 +134,7 @@ public class ChatAnnotation implements ServletContextListener{
 		case "login":
 			// if admin has not created groups then don't allow client to
 			// connect.
-			System.out.println("login page connected.");
+			System.out.println("Login page connected.");
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
@@ -144,15 +144,15 @@ public class ChatAnnotation implements ServletContextListener{
 		case "chat":
 			// if admin has not created groups then don't allow client to
 			// connect.
-			System.out.println("chat page connected.");
-			System.out.println("adminCreatedGroups: " + adminCreatedGroups);
+			System.out.println("Chat page connected.");
+			System.out.println("AdminCreatedGroups: " + adminCreatedGroups);
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
 			//connections.add(this);
 			return;
 		case "landing":
-			System.out.println("landing page connected.");
+			System.out.println("Landing page connected.");
 			// save connections originating from landing page.
 			//connections.add(this);
 			return;
@@ -165,7 +165,7 @@ public class ChatAnnotation implements ServletContextListener{
 
 	@OnClose
 	public void end(Session session, @PathParam("path") String path) throws Exception {
-		System.out.println("inside end method... Closing webSocket @ "+path);
+		System.out.println("Inside end method... Closing webSocket @ "+path);
 		//connections.remove(this);
 		synchronized (connectedSessions) {
 			connectedSessions.remove(this.session);
@@ -200,7 +200,7 @@ public class ChatAnnotation implements ServletContextListener{
 			//Element exitMsg = getQuickElement("message");
 			Element exitMsg = doc.createElement("message");
 			exitMsg.setAttribute("type", "alert");
-			exitMsg.setAttribute("senderID", this.userClient.permID);
+			exitMsg.setAttribute("senderID", "Wooz2");
 			exitMsg.setAttribute("groupNumber", Integer.toString(bGroupID));
 			exitMsg.setAttribute("senderColor", userClient.chatColor.toString());
 			exitMsg.setAttribute("sendername", userClient.username);
@@ -211,8 +211,8 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			if(group.size()==0) {
 				//need to log the room exit, but not broadcast cause group is empty
-				long dateTimestamp = new Date().getTime();
-				exitMsg.setAttribute("timestamp", Long.toString(dateTimestamp));
+				//long dateTimestamp = new Date().getTime();
+				exitMsg.setAttribute("timestamp", serverDateFormatter.format(new Date()));
 				synchronized (fileLogger.getLoggedClientMessages()) {
 					fileLogger.captureMessage(exitMsg);
 				}
@@ -271,7 +271,7 @@ public class ChatAnnotation implements ServletContextListener{
 		builder = factory.newDocumentBuilder();
 		StringReader sr = new StringReader(message);
 		InputSource is = new InputSource(sr);
-		Document doc = builder.parse(is); //& crashes here
+		Document doc = builder.parse(is); //& crashes here *fixed client side
 
 		// get message type
 		Element element = doc.getDocumentElement();
@@ -436,7 +436,7 @@ public class ChatAnnotation implements ServletContextListener{
 			//its a little easier to add things to it programmatically
 			Element broadMsg = doc.createElement("message");
 			broadMsg.setAttribute("type", "alert");
-			broadMsg.setAttribute("senderID", senderID);
+			broadMsg.setAttribute("senderID", "Wooz2"); //Server name
 			broadMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
 			//sending senderColor/name for client side beautification
 			broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
@@ -680,13 +680,14 @@ public class ChatAnnotation implements ServletContextListener{
 		}
 		
 		//Capture message in FileLogger here
-		long dateTimestamp = new Date().getTime();
+		//long dateTimestamp = new Date().getTime();
+		String dateTimestamp = serverDateFormatter.format(new Date());
 		//String dateTimestamp = serverDateFormatter.format(new Date());
 		//DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
 		//dateTimestamp = df.format(new Date());
 		
 		//Time in milliseconds is the easiest to translate in JS without losing important information
-		msg.setAttribute("timestamp", Long.toString(dateTimestamp));
+		msg.setAttribute("timestamp", dateTimestamp);
 		synchronized (fileLogger.getLoggedClientMessages()) {
 			fileLogger.captureMessage(msg);
 		}
@@ -702,10 +703,10 @@ public class ChatAnnotation implements ServletContextListener{
 		String xmlStr = convertXMLtoString(msg);
 		//synchronized (group) {
 		for (Client gClient : group) {
-			try { 
+			try {
 				//synchronized (gClient) { //
 					gClient.session.getBasicRemote().sendText(xmlStr);
-					System.out.println("Broadcast to groupMember -> " +gClient.toString());
+					System.out.println("Broadcast to groupMember -> " +gClient.username+" "+gClient.toString());
 				//}
 			//a ton of error handling for lost messages
 			} catch (Exception e) {
@@ -723,7 +724,7 @@ public class ChatAnnotation implements ServletContextListener{
 				Element disconnectMsg = doc.createElement("message");
 				
 				disconnectMsg.setAttribute("type", "alert");
-				disconnectMsg.setAttribute("senderId", "Server Info");
+				disconnectMsg.setAttribute("senderID", "Wooz2"); //send server name
 				disconnectMsg.setAttribute("groupNumber", Integer.toString(groupID));
 				//disconnectMsg.setAttribute("senderColor", GroupManager.SERVER_COLOR.toString());
 				disconnectMsg.appendChild(doc.createElement("text"));
@@ -902,7 +903,7 @@ public class ChatAnnotation implements ServletContextListener{
 	private void sendXMLCheckGroups(String senderID) throws IOException {
 		String groups = adminCreatedGroups ? Integer.toString(groupManager.getNumOfGroups()) : "Not Created";
 		System.out.println("Sent Group Info - num: "+groups+" to "+connectedSessions.size()+" clients");
-		String msg = "<message type='checkGroups' checkGroups='" + groups + "' senderID='" + senderID +"'></message>";
+		String msg = "<message type='checkGroups' checkGroups='" + groups + "' iteration='"+groupIteration+"' senderID='" + senderID +"'></message>";
 		session.getBasicRemote().sendText(msg);
 	}
 	
@@ -961,7 +962,7 @@ public class ChatAnnotation implements ServletContextListener{
 			Element chatMsg = (Element) chatHis.get(i);
 			//If chat isnt from same group, skip message
 			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) 
-					|| !chatMsg.getAttribute("type").equals("chat"))  //only get chat messages
+					|| chatMsg.getAttribute("type").equals("typing"))  //get everything thats not typing
 				continue;
 			chatMsg.setAttribute("chatHistory", "chatHistory"); //add extra value for fancy purposes
 			
@@ -1003,7 +1004,7 @@ public class ChatAnnotation implements ServletContextListener{
 	@Override
 	  public void contextInitialized(ServletContextEvent sce)
 	  {
-	    System.out.println("Init stuff"); //called when server context is made
+	    System.out.println("Init server"); //called when server context is made
 	    
 	    String initLogPath = sce.getServletContext().getInitParameter("logPath");
 	    //iternary operator; fancy way of saying use default if initLogPath is empty

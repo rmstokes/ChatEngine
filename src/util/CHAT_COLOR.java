@@ -29,7 +29,7 @@ public enum CHAT_COLOR {
 	SandyBrown, //Brown Yellow like
 	SeaGreen, //Forest Green
 	SteelBlue, //Blue blue blue
-	SpringGreen, //Leaf Green
+	//SpringGreen, //Leaf Green (this is a little bright
 	//Tomato, //Pale Red
 	
 }

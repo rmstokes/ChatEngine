@@ -17,14 +17,22 @@
 -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>Chat (ALPHA)</title>
+    <title>Chat (Beta)</title>
     <style type="text/css"><![CDATA[
+    	body {
+    	 	background-image: url("portalWall.png");
+  			background-repeat: no-repeat;
+  			background-size: 1530px 1000px;
+  			background-position: 0px 0px;
+  		}
+    	
         input#chat {
             width: 410px
         }
 
         #console-container {
             width: 500px;
+            background-color: white;
         }
 
         #console {
@@ -71,8 +79,16 @@
         	//background-color:red; 
         	border-style: outset;
         }
+        
+        .material-icons.md { font-size: 16px; }
+        
+        .material-icons.md.pink { color: pink }
+        
+        .material-icons.md.emo { color:black  }
     ]]></style>
     
+    <!-- grabbing the Google Material Icons for some basic pictures -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"></link>
     <script src="utility.js" type="text/javascript"></script>
     <script type="application/javascript"><![CDATA[
         "use strict";
@@ -97,11 +113,15 @@
         Chat.socket = null;
         
         var host = '';
+        var chatAlertPast = false;
         
         
-        var TYPING_BGC = '#ebf2f9';
-        var USER_BGC = 'SeaShell';
+        //var TYPING_BGC = '#ebf2f9';
+        var TYPING_BGC = 'Lavender';
+        //var USER_BGC = 'SeaShell';
+        var USER_BGC = 'LavenderBlush';
         var CHAT_HISTORY_BGC = 'LightGoldenRodYellow';
+        var CHAT_HISTORY_DBGC = 'Beige';
 
         Chat.connect = (function(host) {
             if ('WebSocket' in window) {
@@ -169,14 +189,16 @@
                 
                 var textNode; //this thing is the cause of so many issues
                 var innerText = '';
-                if (xmlDoc.getElementsByTagName('text')!==undefined) {
+                if (xmlDoc.getElementsByTagName('text')!==undefined) { //error handling for textNode
                 	textNode = xmlDoc.getElementsByTagName('text')[0];
                 	if (textNode.childNodes[0]!==undefined) {
-                		innerText = textNode.childNodes[0].nodeValue;
+                		//innerText = textNode.childNodes[0].nodeValue;
+                		innerText = textNode.textContent;
                 		
                 		
         				//Properly REparse & out of text otherwise XML Parser WILL CRASH
         				innerText = innerText.replace(/&/gm, '&amp;');
+        				innerText = innerText.replace(/</gm, '&lt;');
                 	}
                 }      
        			
@@ -185,17 +207,19 @@
                 var userLabel = messageNode.getAttribute('sendername')+": ";
                 userLabel = "<b>"+userLabel+"</b>";
                 
-                //Parse a simplified date from the server timestamp on broadcastGroup
-                var serverTS = new Date();
-                serverTS.setTime(messageNode.getAttribute('timestamp'));
-                var timestamp = serverTS.getHours().pad(2)+":"+serverTS.getMinutes().pad(2)+":"
-                	+serverTS.getSeconds().pad(2)+"."+serverTS.getMilliseconds().pad(3);
+                //Parse a date string and then pull time string for that (sorry no AM/PM)
+                var serverTS = messageNode.getAttribute('timestamp');
+                var timestamp = serverTS.match(/_(\S+)/)[1];
+                //var serverTS = new Date();
+                //serverTS.setTime(messageNode.getAttribute('timestamp'));
+                //var timestamp = serverTS.getHours().pad(2)+":"+serverTS.getMinutes().pad(2)+":"
+                //	+serverTS.getSeconds().pad(2)+"."+serverTS.getMilliseconds().pad(3);
                 timestamp = '<div>'+timestamp+'</div>';
                 //var timestamp = messageNode.getAttribute('timestamp');
                 
                 var console = document.getElementById('console'); //get console
                 var newline = document.createElement('br'); //get break tag
-                var paragraph = document.getElementById(senderID);
+                var paragraph = document.getElementById(senderID); //get para if already created
                 
                 var chatText = userLabel + innerText + timestamp;
                 //var chatText = userLabel + innerText;
@@ -235,6 +259,24 @@
                  		paragraph.style.wordWrap = 'break-word';
                  		paragraph.style.color = senderColor;
                  		paragraph.style.backgroundColor = USER_BGC;
+                 		
+                 		//do some fancy emoticon replacement
+                 		
+                 		chatText = chatText.replace(/:D/g, '<i class="material-icons md">&#xE7F2;</i>'); //grin face :D
+                 		chatText = chatText.replace(/:\)/g, '<i class="material-icons md">&#xE813;</i>'); //smiley face :)
+                 		chatText = chatText.replace(/xD/g, '<i class="material-icons md">&#xE815;</i>'); //excited face xD
+                 		chatText = chatText.replace(/XD/g, '<i class="material-icons md">&#xE815;</i>'); //excited face xD
+                 		
+                 		chatText = chatText.replace(/:\(/g, '<i class="material-icons md">&#xE811;</i>'); //frowny face :(
+                 		chatText = chatText.replace(/D:/g, '<i class="material-icons md">&#xE7F3;</i>'); //shock face D:
+                 		chatText = chatText.replace(/Dx/g, '<i class="material-icons md">&#xE814;</i>'); //rip face Dx
+                 		chatText = chatText.replace(/DX/g, '<i class="material-icons md">&#xE814;</i>'); //rip face Dx
+                 		
+                 		chatText = chatText.replace(/:\|/g, '<i class="material-icons md">&#xE812;</i>'); //neutral face :|
+                 		
+                 		chatText = chatText.replace(/&lt;3/g, '<i class="material-icons md pink">favorite</i>'); //heart <3
+                 		
+                 		chatText = chatText.replace(/\^\^/g, '<i class="material-icons md">&#xE55D;</i>'); //above ^^
                  		paragraph.innerHTML = chatText;
                  		
                  		//If chat history object, change BG
@@ -254,6 +296,7 @@
                  } else if (messageType == 'alert') {
                  	//server message from no user in particular; using console.log
                  	//For join/leave group, do some fancy formatting on username
+                 	if (messageNode.getAttribute("chatHistory")!=undefined) chatAlertPast = true;
                  	var usernameString = messageNode.getAttribute('sendername');
                  	innerText = innerText.replace(usernameString, '<span style="color: '+senderColor+'; font-weight: bold;" >'+usernameString+'</span>');
                  	Console.log(innerText+timestamp);
@@ -264,9 +307,6 @@
                  //Scroll to bottom on console
                  console.scrollTop = console.scrollHeight;
                  
-                 //Set Group Name
-                 var groupNum = messageNode.getAttribute("groupNumber");
-                 document.getElementById('groupName').innerHTML = "Group "+groupNum;
              };
                  			
 			
@@ -286,7 +326,10 @@
         	}
         	
         	//Properly parse & out of text otherwise XML Parser WILL CRASH
+        	//Parsing some invalid Unicode from text string to prevent crashes
         	message = message.replace(/&/gm, '&amp;');
+        	message = message.replace(/</gm, '&lt;');
+        	 	
         	
         	var xml = '<message type="'+chatType+'" senderID="'+clientID+'">'+       
                 '<chat>'+
@@ -306,6 +349,7 @@
             var p = document.createElement('p');
             p.style.wordWrap = 'break-word';
             p.innerHTML = message;
+            if (chatAlertPast) p.style.backgroundColor = CHAT_HISTORY_DBGC;
             console.appendChild(p);
             //For sake of chat history refreshes, think we should keep this, also it does work in regular chat
             /*while (console.childNodes.length > 25) {
@@ -343,7 +387,7 @@
         	for (var i=0; i<users.length; i++) {
         		var userP = document.createElement('p');
         		var userColor = users[i].getAttribute('senderColor');
-        		var username = users[i].innerHTML;
+        		var username = users[i].textContent;
         	
         		userP.style.color = 'Snow';
         		userP.style.backgroundColor = userColor;
@@ -355,6 +399,11 @@
         		
         		userSideBar.appendChild(userP);
         	}
+        	
+        	
+            //Set Group Name
+            var groupNum = messageNode.getAttribute("groupNum");
+            document.getElementById('groupName').innerHTML = "Group "+groupNum;
         }
                        
                 
