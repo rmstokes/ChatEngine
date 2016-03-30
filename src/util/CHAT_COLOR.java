@@ -8,7 +8,7 @@ public enum CHAT_COLOR {
 	//Aquamarine, //Sea Water colour
 	Black, 
 	Blue, //Regular blue
-	BlueViolet, //Mid Blue Purple
+	//BlueViolet, //Mid Blue Purple
 	Brown, //Just Brown
 	BurlyWood, //Light wood brown
 	Coral, //Light orange+red

@@ -37,7 +37,7 @@
 
             Chat.socket.onopen = function () {
                 //Login special access for clientID
-        		if (clientID == null || clientID == "") {
+        		/*if (clientID == null || clientID == "") {
         			var xml = '<message type="setUserType">'+
             		'<text>PermIDGet</text>'+
             		'</message>';
@@ -45,9 +45,11 @@
             		//Chat.socket.send(xml); //Assume 100% success and let server side validate on connect
             		//Give it a second
         			//setTimeout(function () {util_permIDCheck();}, 100);
-        			 
-        			
+        			         			
        			}
+        		*/
+        		
+        		util_setUserClient();
             };
 
             Chat.socket.onclose = function () {
@@ -94,15 +96,18 @@
                 		//generate number of groups to join, groupNum = checkGroups
                 		var groupPicker = document.getElementById("groupSelection");
                 		var groupNum = Number(checkGroups);
+                		var groupOff = Number(messageNode.getAttribute('groupOffset')); 
+                		groupNum += groupOff;
                 		
-                		//Remove extras (if groups < 4)
-                		while (groupPicker.length > groupNum) {
+                		//Just remove everything cause offset if unreliable
+                		while (groupPicker.length > 0) {
                 			groupPicker.remove(groupPicker.length-1);
                 		}
-                		//Add if less than
-                		for (var i=groupPicker.length; i<groupNum; i++) {
+                		//Add groups until we reach max
+                		for (var i=groupOff; i<groupNum; i++) {
                 			var groupOpt = document.createElement('option');
                 			groupOpt.text = "Group "+(i+1);
+                			groupOpt.value = (i+1);
                 			groupPicker.add(groupOpt);
                 		}
                 		document.getElementById("joinBtn").disabled = false;

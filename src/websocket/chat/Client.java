@@ -22,5 +22,12 @@ public class Client {
 	public String getPermID() {
 		return permID;
 	}
+	
+	public String IDString () {
+		if (username!=null)
+			return username + " ["+permID+"]";
+		else 
+			return this.toString()+ " ["+permID+"]";
+	}
 
 }

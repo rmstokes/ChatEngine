@@ -40,6 +40,7 @@
 
             Chat.socket.onopen = function () {
                 //connection opened with server
+                util_setUserClient();
             };
 
             Chat.socket.onclose = function () {
@@ -66,7 +67,8 @@
                 } else if (messageType == 'checkGroups') {
                 	var checkGroups = messageNode.getAttribute('checkGroups');
                 	var checkGroupHTML = document.getElementById("checkGroupPara");
-                	checkGroupHTML.innerHTML = "Groups = "+checkGroups;
+                	var groupOff = messageNode.getAttribute('groupOffset');
+                	checkGroupHTML.innerHTML = "GroupNum: "+checkGroups+" <br/> Offset: "+groupOff;
                 	if (checkGroups == "Not Created") {
                 		checkGroupHTML.style.backgroundColor = "Navy";
                 		adminGroupsCreated = false;
@@ -120,8 +122,9 @@
           //send xml message to server to create groups.          
           var numGroups = document.getElementById('groupCount').value;
           var instruct = document.getElementById('instruct').value;
+          var groupOff = document.getElementById('groupOffset').value;
           //alert('numGroups: '+numGroups);
-          var xml = '<message type="groupCreation" senderID="'+clientID+'" instructor="'+instruct+'">'+
+          var xml = '<message type="groupCreation" senderID="'+clientID+'" instructor="'+instruct+'" groupOffset="'+groupOff+'">'+
           '<text>'+numGroups+'</text>'+
           '</message>';
           Chat.socket.send(xml);
@@ -155,13 +158,18 @@
         <option value="8">8</option>
         <option value="9">9</option>
         <option value="10">10</option>        
-      </select>
+      </select> 
+      <br/>
+      Group Offset: <input type='number' min='0' value='0' id='groupOffset'/><br/>
     <button onclick='createGroups()'>Create</button>
     <br/>
     <button id="loginBtn" onclick='util_webRedirect("login")' disabled="">Go to Login Page</button>
     <br/>
     <br/>
     <button id="adminMonitorBtn" onclick='adminMonitor()' disabled="">Go to Admin Chat Monitor</button>
+    <br/>
+    <br/>
+    <input type='color'/>
     
     
   </div>

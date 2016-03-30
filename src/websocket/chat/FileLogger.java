@@ -48,25 +48,28 @@ public class FileLogger extends TimerTask {
 	private static final Log log = LogFactory.getLog(FileLogger.class);
 	private static Timer fileTimer;
 	
+	private final GroupManager gManage;
 	private final int groupNum;
 	private final int groupIteration;
 	
 	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
-	private final Date startDate;
+	//private final Date startDate;
 	
-	private final String instructor;
+	//private final String instructor;
 	private boolean destroy = false;
 	private String logPath;
 	
-	public FileLogger(int groupNum, Date date, int groupIt, String logPath, String instruct) {
-		System.out.println("FileLogger constructor "+new Date().toString());
+	public FileLogger(GroupManager gm, int groupIt, String logPath) {
+		//int groupNum, Date date, int groupIt, String logPath, String instruct
+		System.out.println("FileLogger constructor @ "+logPath+" Iter:"+groupIt);
 		fileTimer = new Timer();
 		fileTimer.schedule(this, FILE_UPDATE_TIME, FILE_UPDATE_TIME);
 		
-		this.groupNum = groupNum;
-	    this.startDate = date;
+		this.gManage = gm;
+		this.groupNum = gm.getNumOfGroups();
+	    //this.startDate = date;
 	    this.groupIteration = groupIt;
-	    this.instructor = instruct;
+	    //this.instructor = instruct;
 	    this.logPath = logPath;
 	}
 	
@@ -75,7 +78,7 @@ public class FileLogger extends TimerTask {
 		try {
 			//add server timestamp to this xml element
 			loggedClientMessages.add(e);
-			System.out.println("Captured client message");
+			System.out.print("Captured broadcast ->");
 			return true;
 		} catch (Error err) {
 			log.error(err);
@@ -93,33 +96,43 @@ public class FileLogger extends TimerTask {
 	
 	public void destroy () {
 		destroy = true;
-		run(); //save xml for the last time
 		fileTimer.cancel(); //remove timer
+		run(); //save xml for the last time
+		System.out.println("Final logs saved, Server Shutdown");
 	}
 	
 	public void run () {
 		//Here check the fileCounter and save new messages to file
 		
-		System.out.println("File Save Date: "+new Date().toString());
+		System.out.println("File Save Start: "+new Date().toString());
 		
 		try {
 			saveXML();
 		} catch (Exception e) {
 			System.out.println("Problem saving XML");
+			fileCounter = 0; //if file not saved- try again
 		}
 
 	}
 	
 	public void saveXML() throws Exception {
+
+	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss"); //File format date string
+		
+	    //So it sleeps for 1-8mins constantly
+	    //To reach max sleep, it must run for 36mins without file updates
+	    int sleepTime = 1;
+		while (loggedClientMessages.size()==fileCounter) {
+			System.out.println("No new messages have been logged - "+df.format(new Date()));
+			if (destroy) 
+				break; //ignore this message
+			Thread.sleep(1000*60*sleepTime); //sleep
+			sleepTime = sleepTime>8 ? 8 : ++sleepTime;
+			//return;
+		}
+		fileCounter = loggedClientMessages.size();
 		
 		Date endDate = new Date(); //Date for time of saving xml
-		
-		if (loggedClientMessages.size()==fileCounter) {
-			System.out.println("No new messages have been logged - "+serverDateFormatter.format(endDate));
-			return;
-		}
-		
-		fileCounter = loggedClientMessages.size();
 	    
 	    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 	    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -135,10 +148,11 @@ public class FileLogger extends TimerTask {
 	      root[i] = docs[i].createElement("woozlog");
 	      
 	      //Add data for each file
+	      //root[i].setAttribute("GroupIteration", Integer.toString(this.groupIteration));
 	      root[i].setAttribute("GroupIteration", Integer.toString(this.groupIteration));
-	      root[i].setAttribute("GroupName", "Group " + i);
-	      root[i].setAttribute("Instructor", this.instructor);
-	      root[i].setAttribute("StartTime", serverDateFormatter.format(this.startDate));
+	      root[i].setAttribute("GroupName", "Group " + gManage.getGroupOffID(i+1));
+	      root[i].setAttribute("Instructor", this.gManage.instructor);
+	      root[i].setAttribute("StartTime", serverDateFormatter.format(this.gManage.timeOfGroupCreation));
 	      if (this.destroy) {
 	        root[i].setAttribute("EndTime", serverDateFormatter.format(endDate));
 	      } else {
@@ -150,30 +164,37 @@ public class FileLogger extends TimerTask {
 	    //Loop through each message, add to corresponding document
 	    for (Element e : this.loggedClientMessages) {
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
-	      Node ne = docs[groupID].importNode(e, true);
-	      root[groupID].appendChild(ne);
+	      int indexID = groupID - gManage.groupOffset;
+	      Node ne = docs[indexID].importNode(e, true);
+	      root[indexID].appendChild(ne);
 	    }
 	    
 	    
 	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	    Transformer transformer = transformerFactory.newTransformer();
 	    
-	    System.out.println("Saving to path " + this.logPath);
-	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+	    System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
 	    
 	    //save xml file for each group
 	    for (int i = 0; i < this.groupNum; i++)  {
 	      DOMSource source = new DOMSource(docs[i]);
-	      String filename = "Chatlog_Iter_" + this.groupIteration + "_Group" + (i + 1) + " " + df.format(this.startDate) + ".xml";
+	      String filename = "Chatlog_Iter_" + this.groupIteration + "_Group" + gManage.getGroupOffID(i+1) + " " + df.format(gManage.timeOfGroupCreation) + ".xml";
 	      
 	      this.logPath = this.logPath.replaceAll("\\\\+", "\\\\"); //gotta DOUBLE DELIMIT on windows
 	      filename = filename.replaceAll("\\/", "-"); //get rid of / in date
 	      filename = filename.replaceAll(":", "-"); //get rid of : in time
 	      filename = filename.replaceAll(" ", "_"); //replace space with _
 	      
-	      new File(this.logPath).mkdir(); //create new file directory if DNE
-	      File logFile = new File(this.logPath + filename);
-	      logFile.setReadable(true); //make the logFile readable from linux
+	      String fileSep = System.getProperty("file.separator");
+	      String logPathDir = this.logPath + "GroupIter_"+groupIteration+"_"+df.format(gManage.timeOfGroupCreation)+"_"+gManage.instructor+fileSep;
+	      
+	      logPathDir = logPathDir.replaceAll(" ", "_"); //space can sneak in with instructor
+	      File logPathFile = new File(logPathDir); 
+	      logPathFile.mkdir(); //create new file directory if DNE 
+	      logPathFile.setReadable(true, false);
+	      
+	      File logFile = new File(logPathDir + filename);
+	      logFile.setReadable(true, false); //make the logFile readable from linux
 	      StreamResult streamresult = new StreamResult(logFile);
 	      
 	      transformer.transform(source, streamresult);

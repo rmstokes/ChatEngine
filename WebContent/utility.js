@@ -68,3 +68,10 @@ function util_permIDCheck() {
 function util_close() {
 	alert("An error occurred. The websocket was closed.");
 }
+
+function util_setUserClient() {
+	var xml = '<message type="userClientGet" senderID="'+clientID+'">'+
+    //'<text>'+numGroups+'</text>'+
+    '</message>';
+	Chat.socket.send(xml)
+}

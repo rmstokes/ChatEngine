@@ -18,8 +18,9 @@ public class GroupManager {
 	 */
 	private static final Log log = LogFactory.getLog(FileLogger.class);
 	
-	public String instructor;
+	public final String instructor;
 	public Date timeOfGroupCreation;
+	public final int groupOffset;
 	public static CHAT_COLOR TA_COLOR = CHAT_COLOR.Red;
 	public static CHAT_COLOR SERVER_COLOR = CHAT_COLOR.Black;
 	
@@ -29,12 +30,12 @@ public class GroupManager {
 	//CopyOnWrite also means that broadcasts dont need to be synchronized
 	private ConcurrentHashMap<Integer, CopyOnWriteArraySet<Client> > groupTable = new ConcurrentHashMap<Integer, CopyOnWriteArraySet<Client> >();
 	
-	public GroupManager(int numGroups) {
-		this(numGroups, "Unknown Instructor");
+	public GroupManager(int numGroups, int groupOffset) {
+		this(numGroups, "Unknown_Instructor", groupOffset);
 	}
 	
-	public GroupManager(int numGroups, String instructor) {
-		System.out.println("Group Manager constructor: no - "+numGroups + " Instructor: "+instructor); 
+	public GroupManager(int numGroups, String instructor, int groupOffset) {
+		System.out.println("Group Manager Constructor: Num:"+numGroups + " Group Offset:"+groupOffset +" Instructor: "+instructor); 
 		
 		//Populate group list
 		for (int key = 1; key <= numGroups; key++) {
@@ -44,14 +45,14 @@ public class GroupManager {
 		}
 		
 		this.instructor = instructor;
+		this.groupOffset = groupOffset;
 		
 		timeOfGroupCreation = new Date();
 		
 	}
 	
 	public boolean joinGroup(int groupNo, Client user) {
-		//HashSet<Client> group = groupTable.get(groupNo);
-		CopyOnWriteArraySet<Client> group = groupTable.get(groupNo);
+		Set<Client> group = getGroup(groupNo);
 		try {
 			return group.add(user);
 		} catch (Error e) {
@@ -62,7 +63,6 @@ public class GroupManager {
 	}
 	
 	public boolean assignChatColor(Client user) {
-		//if (user==null) return false;
 		if (user.username.startsWith("TA") ) {
 			//Will later have a better identifier if I add a password feature
 			//and client a privilege variable
@@ -73,8 +73,7 @@ public class GroupManager {
 		//Choose color value at random
 		CHAT_COLOR[] chatColorArr = CHAT_COLOR.values();
 		boolean[] recordArr = new boolean[chatColorArr.length];
-		//HashSet<Client> group = groupTable.get(user.groupID);
-		Set<Client> group = groupTable.get(user.groupID);
+		Set<Client> group = getGroup(user.groupID);
 		
 		for (Client groupMem : group) { //get currently used color values
 			if (groupMem==user) continue;
@@ -83,6 +82,7 @@ public class GroupManager {
 		//exclude TA color & Server color
 		recordArr[TA_COLOR.ordinal()] = true;
 		recordArr[SERVER_COLOR.ordinal()] = true;
+		
 		for (int i=0; i<chatColorArr.length; i++) {
 			int rand = (int)(Math.random()*chatColorArr.length);
 			if (!recordArr[rand]) {
@@ -97,13 +97,17 @@ public class GroupManager {
 		return user.chatColor!=null;
 	}
 	
-	//public synchronized HashSet<Client> getGroup(int groupNo) {
+	//This is normalized for groupOffset
 	public Set<Client> getGroup(int groupNo) {
-		return groupTable.get(groupNo);
+		return groupTable.get(groupNo-groupOffset);
 	}
 	
 	public int getNumOfGroups() {
 		return groupTable.size();
+	}
+	
+	public int getGroupOffID(int groupID) {
+		return groupID + groupOffset;
 	}
 	
 
