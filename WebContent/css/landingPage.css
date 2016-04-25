@@ -3,8 +3,11 @@
 body {
   /*background-color:#9999CC;*/
   background-color: #CCCCFF;
-  background-image: url("robot.jpg");
+  background-image: url("../img/robot.jpg");
   background-position: 0px 0px;
   background-size: 1530px 1000px;
 }   
 
+button {
+	font-size: 100%;
+}

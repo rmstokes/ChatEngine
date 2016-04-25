@@ -73,7 +73,7 @@ public class FileLogger extends TimerTask {
 	    this.logPath = logPath;
 	}
 	
-	//Incomplete-
+	
 	public boolean captureMessage(Element e) {
 		try {
 			//add server timestamp to this xml element
@@ -98,7 +98,7 @@ public class FileLogger extends TimerTask {
 		destroy = true;
 		fileTimer.cancel(); //remove timer
 		run(); //save xml for the last time
-		System.out.println("Final logs saved, Server Shutdown");
+		System.out.println("Final logs saved, FileLogger Shutdown");
 	}
 	
 	public void run () {
@@ -109,7 +109,7 @@ public class FileLogger extends TimerTask {
 		try {
 			saveXML();
 		} catch (Exception e) {
-			System.out.println("Problem saving XML");
+			System.out.println("Problem saving XML "+e.getMessage()+" "+e.toString());
 			fileCounter = 0; //if file not saved- try again
 		}
 
@@ -127,7 +127,7 @@ public class FileLogger extends TimerTask {
 			if (destroy) 
 				break; //ignore this message
 			Thread.sleep(1000*60*sleepTime); //sleep
-			sleepTime = sleepTime>8 ? 8 : ++sleepTime;
+			sleepTime = sleepTime>10 ? 10 : ++sleepTime;
 			//return;
 		}
 		fileCounter = loggedClientMessages.size();
@@ -162,9 +162,13 @@ public class FileLogger extends TimerTask {
 	    }
 	    
 	    //Loop through each message, add to corresponding document
-	    for (Element e : this.loggedClientMessages) {
+	    //for (Element e : this.loggedClientMessages) {
+	    int logSize = loggedClientMessages.size();
+	    for (int i=0; i<logSize; i++) {
+	      Element e = loggedClientMessages.get(i);
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
 	      int indexID = groupID - gManage.groupOffset;
+	      if(indexID<0 || indexID>this.groupNum) return;
 	      Node ne = docs[indexID].importNode(e, true);
 	      root[indexID].appendChild(ne);
 	    }
@@ -191,10 +195,13 @@ public class FileLogger extends TimerTask {
 	      logPathDir = logPathDir.replaceAll(" ", "_"); //space can sneak in with instructor
 	      File logPathFile = new File(logPathDir); 
 	      logPathFile.mkdir(); //create new file directory if DNE 
-	      logPathFile.setReadable(true, false);
+	      logPathFile.setExecutable(true, false); //This gives linux dir read/execute perm so kimlab can read root dirs
+	      logPathFile.setReadable(true, false); //So kimlab can view the dir & contents, but cannot edit it
+	      //Final permissions should be 755 rwxr-xr-x
 	      
 	      File logFile = new File(logPathDir + filename);
 	      logFile.setReadable(true, false); //make the logFile readable from linux
+	      //Final permissions should be 644 rw-r--r--
 	      StreamResult streamresult = new StreamResult(logFile);
 	      
 	      transformer.transform(source, streamresult);

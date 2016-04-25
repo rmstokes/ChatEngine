@@ -61,6 +61,7 @@ function util_alert(value) {
 }
 
 function util_permIDCheck() {
+    console.log("clientID is "+clientID);
 	if(window.name=="" || window.name == null)
 		util_noPermID();
 }
@@ -74,4 +75,16 @@ function util_setUserClient() {
     //'<text>'+numGroups+'</text>'+
     '</message>';
 	Chat.socket.send(xml)
+}
+
+function util_closeSocket() {
+	if (Chat.socket.readyState==1) //if socket is open
+		Chat.socket.close();
+}
+
+function util_changeIcon(webSocketConnected) {
+	if (webSocketConnected)
+		document.getElementById("titleIcon").href = "img/chatbubble-working.png";
+	else
+		document.getElementById("titleIcon").href = "img/chatbubble-outline.png";
 }

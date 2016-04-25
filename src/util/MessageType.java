@@ -14,7 +14,23 @@ public class MessageType {
 	
 	public static final String Chat_JoinChat = "joinChat";
 	
+	public static final String Chat_LeaveChat = "leaveChat";
+	
+	public static final String Chat_ReconnectChat = "reconnectChat";
+	
 	public static final String Chat_Typing = "typing";
 	
 	public static final String Chat_Chat = "chat";
+	
+	public static final String AdminMonitor_Login = "adminMonitorLogin";
+	
+	public static final String AdminMonitor_Logout = "adminMonitorLogout";
+	
+	public static final String AdminMonitor_Status = "adminMonitorStatus";
+	
+	public static final String AdminMonitor_Update = "adminMonitorUpdate";
+	
+	public static final String AdminMonitor_TypeChat = "adminMonitorTypeChat";
+
+	//public static final String AdminMonitor_Chat = "adminMonitorChat";
 }

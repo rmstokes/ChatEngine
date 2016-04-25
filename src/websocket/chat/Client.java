@@ -8,9 +8,10 @@ public class Client {
 	
 	public final String permID;
 	public String sessionID;
+	public boolean isAdmin = false;
 
 	public String username;
-	public int groupID;
+	public int groupID = -1; //default means never joined a group
 	public CHAT_COLOR chatColor;
 	public Session session;
 	

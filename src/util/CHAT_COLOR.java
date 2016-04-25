@@ -11,8 +11,7 @@ public enum CHAT_COLOR {
 	//BlueViolet, //Mid Blue Purple
 	Brown, //Just Brown
 	BurlyWood, //Light wood brown
-	Coral, //Light orange+red
-	Crimson, //Blood Red
+	//Coral, //Light orange+red  - too close to tomato
 	DarkCyan, //Teal dark blue
 	DarkOrange, //Orange
 	DarkViolet, //Dark Purple but still purple not blue
@@ -24,12 +23,16 @@ public enum CHAT_COLOR {
 	LimeGreen, //Green as it gets - also too bright
 	OliveDrab, //Olive
 	Orange, //Pale orange
-	//OrangeRed, //Red Orange in that order
-	Red, //<- See left
 	SandyBrown, //Brown Yellow like
 	SeaGreen, //Forest Green
 	SteelBlue, //Blue blue blue
 	//SpringGreen, //Leaf Green (this is a little bright
-	//Tomato, //Pale Red
+	
+	
+	//TA COLOURS
+	Red, //<- See left
+	Tomato, //Pale Red
+	Crimson, //Blood Red
+	//OrangeRed,  //Red Orange in that order
 	
 }

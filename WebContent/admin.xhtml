@@ -6,137 +6,10 @@
 
   <head>
     <title>Admin Page</title>
-    <link rel="stylesheet" type="text/css" href="admin.css"/>
-    
-    <script src="utility.js"></script>
-     <script type="application/javascript"><![CDATA[
-        "use strict";
-        var Chat = {};        
-        var clientID = window.name;    
-        util_permIDCheck();    
-        /*if (clientID == null){
-          //send xml message to server to get a new sessionID.
-          alert('clientID is null');
-          var xml = '<message type="requestID"></message>';
-        }*/
-        
-        Chat.socket = null;
-        
-        var host = '';
-        var adminGroupsCreated = null;
-        
-        //this function called by Chat.initialize function below
-        Chat.connect = (function(host) {
-            //create websocket if supported by client
-            if ('WebSocket' in window) {
-                Chat.socket = new WebSocket(host);                
-                //alert('admin page client id: '+clientID);                
-            } else if ('MozWebSocket' in window) {
-                Chat.socket = new MozWebSocket(host);                
-            } else {
-                Console.log('Error: WebSocket is not supported by this browser.');
-                return;
-            }
-
-            Chat.socket.onopen = function () {
-                //connection opened with server
-                util_setUserClient();
-            };
-
-            Chat.socket.onclose = function () {
-              //connnection closed with server
-              
-            };
-            //Chat.socket.onclose = util_close();
-
-            Chat.socket.onmessage = function (message) {
-                //message received from server     
-                //if groups have been created then alert user and
-                //provide a way to navigate to the login page
-                              
-                var xml = message.data;
-                var parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(xml,"text/xml");
-                var messageNode = xmlDoc.getElementsByTagName('message')[0];
-                var messageType = messageNode.getAttribute('type'); 
-                if (messageType == 'groupsCreated'){
-                  alert('Groups have been successfully created');
-                  //may want to automatically log admin into all the groups in multiple tabs
-                  
-                  //window.location.href = 'http://'+window.location.host + '/Chat/login.xhtml';
-                } else if (messageType == 'checkGroups') {
-                	var checkGroups = messageNode.getAttribute('checkGroups');
-                	var checkGroupHTML = document.getElementById("checkGroupPara");
-                	var groupOff = messageNode.getAttribute('groupOffset');
-                	checkGroupHTML.innerHTML = "GroupNum: "+checkGroups+" <br/> Offset: "+groupOff;
-                	if (checkGroups == "Not Created") {
-                		checkGroupHTML.style.backgroundColor = "Navy";
-                		adminGroupsCreated = false;
-                	} else {
-                		checkGroupHTML.style.backgroundColor = "LightGreen";
-                		adminGroupsCreated = true;
-                	}
-                	if (adminGroupsCreated) {
-                		//document.getElementById("adminMonitorBtn").disabled = false;
-                		document.getElementById("loginBtn").disabled = false;
-                	}
-                } else if (messageType == 'redirect'){
-                	util_redirect(messageNode);
-                } else if (messageType == 'noPermID'){
-                	util_noPermID();
-                } else if (messageType == 'alert'){
-                	var msgtext = messageNode.childNodes[0].nodeValue;
-                	util_alert(msgtext);
-                } else {
-                	alert("Could not parse server message: \n"+
-                		message.data);
-                }
-                
-                
-            }; //end onmessage
-        }); //end Chat.connect()
-
-        /*Chat.initialize = function() {
-            if (window.location.protocol == 'http:') {
-                Chat.connect('ws://' + window.location.host + '/Chat/admin');
-            } else {
-                Chat.connect('wss://' + window.location.host + '/Chat/admin');
-            }
-        } */       
-
-             
-        
-		Chat.initialize = util_webSocketConnect;
-        Chat.initialize();
-		//Chat.initialize("admin");
-        
-        function createGroups( ){
-        	
-        	if (adminGroupsCreated) {
-        	var adminOverwrite = confirm("A list of groups already exist. Do you want to overwrite them? \n"+
-        			"This will reset the group documentation.");
-        			if(!adminOverwrite) {
-        				return;
-        			}
-        	}
-          //send xml message to server to create groups.          
-          var numGroups = document.getElementById('groupCount').value;
-          var instruct = document.getElementById('instruct').value;
-          var groupOff = document.getElementById('groupOffset').value;
-          //alert('numGroups: '+numGroups);
-          var xml = '<message type="groupCreation" senderID="'+clientID+'" instructor="'+instruct+'" groupOffset="'+groupOff+'">'+
-          '<text>'+numGroups+'</text>'+
-          '</message>';
-          Chat.socket.send(xml);
-        }
-        
-
-    ]]>
-        
-        
-    
-    </script>  
+    <link rel="stylesheet" type="text/css" href="css/admin.css"/>
+    <link id="titleIcon" href="img/chatbubble-outline.png" rel="shortcut icon"/>
   </head>
+  
   <body>
   <div>
     <h1>Welcome to Instructor Administrative Page</h1>
@@ -144,9 +17,14 @@
   <br/>
   <div>
     <!-- <p> Please Designate Number of Groups </p> -->
-    <p id="checkGroupPara" style="background-color:GRAY; float:right; color:white"> Waiting for server </p>
-    Username <input type='text' id='instruct'/><br/>
-    Number of Groups <select id='groupCount'>
+    <p id="checkGroupPara" style="background-color:GRAY; float:right; color:snow; padding:3px"> Waiting for server </p>
+    <label title="This string is saved in the log directory, use this to easily separate logs">
+    Instructor: <input type='text' id='instruct'/><br/>
+    </label>
+    <br/>
+    
+    <label>
+    Number of Groups    <select id='groupCount'>
       <!-- max number of groups is 10 for now -->
         <option value="1">1</option>
         <option value="2">2</option>
@@ -157,27 +35,44 @@
         <option value="7">7</option>
         <option value="8">8</option>
         <option value="9">9</option>
-        <option value="10">10</option>        
-      </select> 
-      <br/>
-      Group Offset: <input type='number' min='0' value='0' id='groupOffset'/><br/>
-    <button onclick='createGroups()'>Create</button>
+        <option value="10">10</option>     
+        <option value="11">11</option>  
+        <option value="12">12</option>     
+    </select> 
     <br/>
-    <button id="loginBtn" onclick='util_webRedirect("login")' disabled="">Go to Login Page</button>
+    </label>
+    <br/>
+    
+    <label title="Start the number of groups from this value +1 Eg. offset of 10, groups start at 11">
+    Group Offset: <input type='number' min='0' value='0' id='groupOffset'/><br/>
+    </label>	
+    <br/>
+    
+    <button onclick='createGroups()'>Create Groups</button>
     <br/>
     <br/>
-    <button id="adminMonitorBtn" onclick='adminMonitor()' disabled="">Go to Admin Chat Monitor</button>
+    
+    <button id="loginBtn" title="Login in directly to a single chatroom" 
+    	onclick='util_webRedirect("login")' disabled="">Go to Login Page</button>
     <br/>
     <br/>
+    
+    <button id="adminMonitorBtn" title="Monitor multiple chatrooms on 1 page"
+    	onclick='util_webRedirect("adminMonitor")' disabled="">Go to Admin Chat Monitor</button>
+    <br/>
+    <br/>
+    
     <input type='color'/>
     
     
   </div>
   
-  <div id='main_picture'>
-    <!-- <img id='robot_hand' src="robot_hand.jpg" alt="Image Not Available" style="width:800px;height:400px;"/> -->
-  </div>
+  <!-- <div id='main_picture'>
+     <img id='robot_hand' src="robot_hand.jpg" alt="Image Not Available" style="width:800px;height:400px;"/> 
+  </div> -->
   </body>
-
+  
+  <script src="js/utility.js"></script>
+  <script src="js/adminJS.js"></script>
 
 </html>

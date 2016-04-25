@@ -1,0 +1,178 @@
+body {
+	background-image: url("../img/portalWall.png");
+	background-repeat: repeat;
+	background-size: 1530px 1000px;
+	background-position: 0px 0px;
+}
+
+#AMGroupTable th {
+	color:Gold; 
+	background:Gray;
+}
+
+.userTable {
+	border-color:black;
+	color: GhostWhite;
+	background-color: rgba(100,100,100,0.7);
+}
+
+.userTable th {
+	color: Gold;
+	background-color: rgba(0,0,0,0.1);
+}
+
+td, th {
+	padding: 3px;
+}
+
+.chatRow td {
+	padding: 0px 15px 0px 3px;
+}
+
+tr:nth-child(even) {
+	background-color: rgba(0,0,0,0.16);
+}
+
+.userTable tr:nth-child(even) {
+	background-color: rgba(0,0,0,0.3);
+}
+
+td input {
+	font-size: 100%;
+}
+
+.chatRow {
+	vertical-align:top;
+}
+.chatRow td {
+	border: 2px dotted black;
+	/*border-top: 2px dotted black;*/
+}
+
+input#chat {
+	width: 80%
+}
+
+input.chat {
+	width: 80%
+}
+
+button {
+	font-size: 100%;
+}
+
+#console-container {
+	/*width: 500px;*/
+	width: 80%;
+	background-color: White;
+	font-size: 18px;
+	min-width: 400px;
+}
+
+.console-container {
+	width: 95%;
+	background-color: White;
+	font-size: 18px;
+	min-width: 400px;
+}
+
+#console {
+	border: 1px solid #CCCCCC;
+	border-right-color: #999999;
+	border-bottom-color: #999999;
+	height: 400px;
+	overflow-y: scroll;
+	padding: 5px;
+	/*width: 100%;*/
+	min-width: 400px;
+}
+
+.chatConsole {
+	border: 1px solid #CCCCCC;
+	border-right-color: #999999;
+	border-bottom-color: #999999;
+	height: 400px;
+	overflow-y: scroll;
+	padding: 5px;
+	/*width: 100%;*/
+	min-width: 400px;
+}
+
+#console p {
+	padding: 0;
+	margin: 0;
+	word-wrap: break-word;
+	/* Testing some chat room changes
+    padding-top: 1px;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    */
+}
+
+.chatConsole p {
+	padding: 0;
+	margin: 0;
+	word-wrap: break-word;
+}
+
+#console p br {
+	clear: both;
+}
+
+.chatConsole p br {
+	clear: both;
+}
+
+#console p div {
+	/*This is the timestamp */
+	color: black;
+	float: right;
+	display: inline-block;
+	font-size: 13px;
+}
+
+.chatConsole p div {
+	color: black;
+	float: right;
+	display: inline-block;
+	font-size: 13px;
+}
+
+#console p div.chatLine {
+	/*This is a line break for chat*/
+	float: none;
+	display: block;
+	min-height: 2px;
+}
+
+.chatConsole p div.chatLine{
+	float: none;
+	display: block;
+	min-height: 2px;
+}
+
+#
+h1 {
+	font-family: "serif";
+	font-weight: bold;
+}
+
+div p.username {
+	font-weight: bold;
+	color: black; //
+	background-color: red;
+	border-style: outset;
+}
+
+.material-icons.md {
+	font-size: 16px;
+}
+
+.material-icons.md.pink {
+	color: pink
+}
+
+.material-icons.md.emo {
+	color: black
+}

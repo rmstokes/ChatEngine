@@ -9,9 +9,10 @@ This is the page that users will see when they first input the url.
 
   <head>
     <title>Landing Page</title>
-    <link rel="stylesheet" type="text/css" href="landingPage.css"/>
-    
-    <script src="utility.js"></script>
+    <link id="titleIcon" href="img/chatbubble-outline.png" rel="shortcut icon"/>
+    <link rel="stylesheet" type="text/css" href="css/landingPage.css"/>
+     
+    <script src="js/utility.js"></script>
     <script type="application/javascript"><![CDATA[ 
         "use strict";
         var Chat = {};
@@ -19,6 +20,7 @@ This is the page that users will see when they first input the url.
         Chat.socket = null;
         
         var host = '';
+        window.name = "";
 
         Chat.connect = (function(host) {
         //this function is called when Chat object is initialized
@@ -26,6 +28,7 @@ This is the page that users will see when they first input the url.
             
             //window.host = host;
             //util_webSocketCheck();
+            
              //create websocket object if browser supports it
             if ('WebSocket' in window) {
                 Chat.socket = new WebSocket(host);                 
@@ -38,12 +41,13 @@ This is the page that users will see when they first input the url.
             }
 
             Chat.socket.onopen = function () {
+            	util_changeIcon(true);
                 //connection opened
             };
 
             Chat.socket.onclose = function () {
+            	util_changeIcon(false);
                 //connection closed
-                
             };
             
             //Chat.socket.onclose = util_close();
@@ -110,6 +114,7 @@ This is the page that users will see when they first input the url.
         
 		Chat.initialize = util_webSocketConnect;
         Chat.initialize('landing');
+		window.onunload = util_closeSocket();
         //Chat.initialize();
                 
         
@@ -133,11 +138,14 @@ This is the page that users will see when they first input the url.
   </head>
   <body>
     <h1>Computer Mediated Problem Solving</h1>
-    <div id=''>
+    <p style="color:Blue">Try not to use <strong>refresh</strong> or <strong>back</strong> <br/> to change pages while on this site</p>
+    <p>Students go to <strong>Login</strong></p>
+    <p>TA's go to <strong>Admin Monitor</strong></p>
+    <div>
       <p>Select Desired Function:</p>
       <select id='userType'>
-        <option>Login</option>
-        <option>Admin</option>
+        <option title="Students login from here">Login</option>
+        <option title="Use to create new groups/log files">Admin</option>
         <option>Admin Monitor</option>
       </select>
       <button onclick='setUserType()'>Submit</button>
