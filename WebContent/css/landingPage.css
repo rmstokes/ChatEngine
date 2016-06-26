@@ -1,13 +1,73 @@
-
-
 body {
-  /*background-color:#9999CC;*/
-  background-color: #CCCCFF;
-  background-image: url("../img/robot.jpg");
-  background-position: 0px 0px;
-  background-size: 1530px 1000px;
-}   
+	margin: 0;
+}
 
-button {
+.redBold {
+	font-size: 110%;
+	color: red;
+}
+
+.blueBold {
+	font-size: 110%;
+	color: blue;
+}
+
+.greenBold {
+	font-size: 110%;
+	color: forestgreen;
+}
+
+h2 {
+  font-size: 270%;
+  font-family: Tahoma, serif;
+  padding: 0.1em 1em;
+  margin: 0;
+  background-color: blue;
+  color: snow;
+  text-shadow: 2px 2px darkblue;
+  transition: all 2s;
+  text-align: left;
+}
+
+h2:hover {
+  background-color: gold;
+  text-shadow: 0.1em 0.2em darkgoldenrod;
+  transition: all 1s ease-out;
+}
+
+h1 {
+  padding: 1em;
+  font-size:  235%;
+}
+
+a {
+	text-decoration: none;
 	font-size: 100%;
+	color: snow;
+	padding: 10px 30px;
+	background-color: forestgreen;
+	border: 2px solid transparent;
+	margin-top: 3em;
+	display: inline-block;
+  	transition: all, 0s;
+/* 	margin: 1em; */
+}
+a:hover {
+  transition: all, 0.5s;
+  background: lightgreen;
+  color: white
+}
+a:active {
+  transition: all, 0s;
+  background-color: green;
+  color: white;
+}
+select {
+    text-align: center;
+    height: 2em;
+    border-radius: 3px;
+    border: medium none;
+    font-size: 100%;
+    width: 10em;
+    margin: 1em;
 }

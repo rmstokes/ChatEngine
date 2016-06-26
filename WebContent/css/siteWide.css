@@ -1,0 +1,151 @@
+
+h2 {
+	font-size: 270%;
+  font-family: Tahoma, serif;
+/*   padding: 0.1em; */
+  margin: 0;
+/*   background-color: blue; */
+  color: snow;
+  text-shadow: 2px 2px black;
+/*   transition: all 2s; */
+  text-align: left;
+}
+
+h2 span {
+/* 	padding: 0.1em 1em; */
+	position: absolute;
+	right: 10px;
+	font-size:70%;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+#headerDiv {
+	padding: 0.3em;
+	position: relative;
+}
+
+#webSocketGfx {
+	min-width: 100px;
+	min-height: 50px;
+	position: absolute;
+	left: 0;
+}
+
+.circleBase {
+	border-radius: 50%;
+	width: 20%;
+	height: 40%;
+	background-color: slateblue;
+	position: absolute;
+}
+
+#clientGfx {
+	left: 15%;
+	top: 35%;
+}
+
+#serverGfx {
+	left: 70%;
+	top: 35%;
+}
+
+.activeWS {
+	background-color: greenYellow;
+	transition: background-color 0.5s ease-in;
+}
+
+#serverGfx.disconnectWS {
+	background-color:orangered;
+	transition: background-color 0.5s ease-in;
+}
+
+.ping {
+	background-color: staleblue;
+	width: 10%;
+	height: 20%;
+	left:20%;
+	top: 44%;
+	animation-delay: 0.5s
+}
+
+.pingPong {
+	background-color: greenYellow;
+	animation: 1.5s ease-in-out 0.5s infinite alternate pingPongAnim;
+}
+
+.reconnect {
+	animation: 2s ease-in 1s infinite reconnectAnim;
+}
+
+.unResponsive {
+	animation: 1.5s ease-in 1s infinite unResponsiveAnim;
+}
+
+@keyframes pingPongAnim { from {transform: translate(0px,0px);} to {transform: translate(55px,0px);} }
+
+@keyframes reconnectAnim {	0% {transform: translate(0px,0px); background-color:greenYellow; opacity:0}
+							30% {transform: translate(10px,0px); background-color:red; opacity:1} 
+							70% {transform: translate(50px,0px); background-color:yellow;}
+							100% {transform: translate(55px,0px); background-color:red; opacity:1}}
+
+@keyframes unResponsiveAnim {
+		0% {background-color:greenYellow; opacity:1; transform: translate(0px,0px);}
+		70% {background-color:yellow; opacity:1; transform: translate(44px,5px);
+	      animation-timing-function: ease-out}
+		100% {background-color:orange; opacity:1; transform: translate(30px,10px);}
+}
+
+.navMessage {
+	color: darkblue; 
+	font-size: 90%; 
+	margin: 0px; 
+	padding: 2px 5px; 
+	text-align: left;
+}
+
+
+body {
+  font-size: 16px;
+  text-align: center;
+  font-family: "Trebuchet MS", Helvetica, sans-serif;
+  background-color: #E6E6EA;
+  margin: 0;
+}   
+
+button {
+	font-size: 100%;
+	margin: 10px;
+	padding: 5px 10px;
+	border: 0;
+	transition: all, 0s;
+}
+
+button:not([disabled]):hover, button:not([disabled]):active {
+	cursor: pointer;
+}
+
+button:not([disabled]):hover {
+  transition: all 0.5s;
+  background-color: white;
+}
+
+button:not([disabled]):active {
+  transition: all 0s;
+  background-color: gray;
+}
+
+.bottomRightMsg {
+	text-align: right; 
+	font-size: 80%; 
+	padding: 0% 1%; 
+	margin: 0px;
+}
+
+.UL {
+	text-decoration:underline;
+}
+
+select, input {
+	text-align:center;
+}

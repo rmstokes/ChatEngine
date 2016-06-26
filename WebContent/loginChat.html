@@ -1,0 +1,193 @@
+<!DOCTYPE html> 
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta charset="UTF-8"></meta>
+	<title>Login  Chat (Beta)</title>
+	<link rel="stylesheet" type="text/css" href="css/siteWide.css" />
+	<link rel="stylesheet" type="text/css" href="css/chat.css" />
+	<link rel="stylesheet" type="text/css" href="css/loginChat.css" />
+	<link id="titleIcon" href="img/chatbubble-working.png" rel="shortcut icon" />
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+</head>
+<body>
+
+	<div id="headerDiv">
+		<div id="webSocketGfx">
+			<div id="clientGfx" class="circleBase"></div>
+			<div id="serverGfx" class="circleBase"></div>
+			<div id="pingGfx" class="circleBase ping"></div>
+		</div>
+
+		<h2>Login</h2>
+
+	</div>
+	
+	<p class="navMessage">
+		Try not to use <strong>refresh</strong> or <strong>back</strong> to
+		change pages while on this site
+	</p>
+	<br />
+
+	<div id="bodyDiv">
+	
+	<div id="loginDiv" class="centerDiv">
+		<h1 style="color:slateblue">Login</h1>
+		<label>
+      		<p class="inputLabel">First Name</p>
+      		<input autofocus type='text' id='firstName' placeholder='First Name' tabindex="1"></input>
+      	</label>
+      	
+      	<div style="height:20px"></div>
+      	
+      	<label>
+      		<p  class="inputLabel">Last Name or Initial</p>
+      		<input type='text' placeholder='Last Name/Initial' id='lastName'></input>
+      	</label>
+      	
+      	<div style="height:20px"></div>
+      	
+      	<label>
+      	<p class="inputLabel">Group Number</p>
+      	<select id='groupSelection' style="font-size:120%; text-align:center">
+        	<option value="1">?</option>
+        	<option value="2">??</option>
+        	<option value="3">???</option>
+        	<option value="4">Missingno</option>
+      	</select>
+      	</label>
+      	
+      	<div style="height:30px"></div>
+      	
+      	<button id="joinBtn" style='font-size:130%'>Join</button>
+	</div>
+
+	
+	<div id="infoDiv" class="offRightDiv">
+		<h1>Info Page</h1>
+	
+		<p>If you haven't read this before, <strong>please read this in its entirety!</strong> </p>
+		 
+		<p>If you have read this before, at least skim over the <strong>bold</strong>/<span class="UL">underlined</span> words since the system changes frequently!</p>
+				
+		<p>There are now <strong>2</strong> windows in the chat page. </p>
+		
+		<div style="width:300px; transform:translateX(60%)">
+			<div style="float:left; background-color:orangered; border-radius:5%; width:100px; height:100px"></div>
+			<div style="float:right; background-color:steelblue; border-radius:5%; width:100px; height:100px"></div>
+		</div>
+		
+		<div style="clear:both"></div>
+		
+		<p style="float:right; width:48%"> The <strong style="color:BLUE">Discussion</strong> Window is where you will chat with your other team members.
+			 </p>
+			
+		
+		<p style="float:left; width:48%"> The <strong style="color:RED">Answer</strong> Window is where you will type the <span class="UL">final answer</span>  
+			 for your group. The answer must be <strong>submitted</strong> by the whole group to the TA.
+			 </p>
+			
+		<br style="clear:both"/>
+		
+		<p> When you are ready to <strong>submit</strong> your answer to the TA, all group members must agree and click <strong>Submit</strong> on the sidebar.
+			There is a sidebar on the right that shows your group members and the TA for your group. Those whose names are <span class="UL">blinking</span> are currently ready to
+			 <span class="UL">submit</span> the answer. You can choose to <span class="UL">Submit</span> by clicking your own name OR clicking the
+			<strong>Submit</strong> button. </p>
+			
+		<p> Once the whole group has agreed to <strong>submit</strong>, the <span class="UL">final answer</span> cannot be edited unless everyone <strong>cancels</strong>
+			or the TA <span class="UL">reviews</span> your answer. To cancel a submission, click your name or the <strong>Cancel</strong> button. </p>
+			
+		<p> As soon as the <span class="UL">final answer</span> has been <strong>submitted</strong>, the TA will be alerted. The TA will <span class="UL">review</span> your answer by
+			approving or declining. If approved, you can go to the next question, otherwise you will have to discuss with your team to get the right answer.
+			</p>
+			
+		<p> The aim of this lab is <strong>collaboration</strong>. Remember that you are graded on your <strong>participation</strong>
+		 so make sure to keep involved, ask your team if you are confused and help others if they are. 
+			Keep all communication in the chat, stay focused and have fun!!</p>
+		
+		<button id="infoAcceptBtn">Continue</button>
+	</div>
+
+	
+	<div id="chatDiv" class="offRightDiv">
+		
+		
+		<div>
+			<button id="back_InfoBtn" class="blueBtn">◀ Info</button>
+			<h1 id='groupName' style="">Group X</h1>
+		</div>
+		
+		<div>
+		<div id="answerWindow">
+			
+			<div class="answerContainer">
+				
+				<p class="windowSubtitle">FINAL
+				ANSWER</p>
+				
+				<p id="answerPara" class="answerPara">I am the current final Answer. Bow before the noble pursuit of making up complicated and elongated sentences for the sake of error testing.</p>
+				
+				<div class="prevDiv">
+					<p class="prevHeader">Show Previous Answer</p>
+					<p id="prevPara">Its the final countdown!!</p>
+				</div>
+			</div>
+
+
+			<div style="position:relative">
+				<textarea id="answerInput" rows="10" cols="40" placeholder="Type your final answer here"></textarea>
+				<p id="lockedPara" class="lockedPara">Locked by User Y</p>
+			</div>
+			<button id='submitBtn'>Submit</button>
+		</div>
+		
+		<div id="chatWindow" style="">
+			
+			<div class="chat-container">
+				<p class="windowSubtitle">CHAT</p>
+				<div id="chatConsole" class="chatConsole" ></div>
+			</div>
+
+
+			<div>
+				<input id="chatInput" class="chat" type="text"
+					placeholder="type and press enter to chat" />
+				<button id='chat_button' onclick='sendChat(event)'>Chat</button>
+			</div>
+		</div>
+		</div>
+	</div>
+	
+	<div id="sidebar">
+		<img src="img/WhiteArrow2.png" alt="Right Arrow">
+		<p>Test User</p>
+	</div>
+	
+	
+	</div>
+
+</body>
+
+   <script	  src="https://code.jquery.com/jquery-2.2.4.min.js"
+			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+			  crossorigin="anonymous"></script>
+<script src="js/utility.js" type="text/javascript"></script>
+<script src="js/loginChatJS.js" type="text/javascript"></script>
+</html>

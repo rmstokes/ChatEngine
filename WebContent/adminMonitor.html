@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta charset="UTF-8"></meta>
+    <title>Admin Monitor (Beta)</title>
+	<link rel="stylesheet" type="text/css" href="css/siteWide.css" />
+	<link rel="stylesheet" type="text/css" href="css/chat.css" />
+	<link rel="stylesheet" type="text/css" href="css/adminMonitor.css" />
+     <link id="titleIcon" href="img/chatbubble-working.png" rel="shortcut icon"/>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+     <meta http-equiv="Pragma" content="no-cache"/>
+     <meta http-equiv="Expires" content="0"/>
+</head>
+
+
+<body>
+	<div id="headerDiv">
+		<div id="webSocketGfx">
+			<div id="clientGfx" class="circleBase"></div>
+			<div id="serverGfx" class="circleBase"></div>
+			<div id="pingGfx" class="circleBase ping"></div>
+		</div>
+
+		<h2>Admin Monitor</h2>
+	</div>
+	
+	<p class="navMessage">
+		Try not to use <strong>refresh</strong> or <strong>back</strong> to
+		change pages while on this site
+	</p>
+	<br />
+	
+	<div id="sidebar">
+		<img src="img/WhiteArrow2.png" alt="Right Arrow"/>
+		<table id='AMStatusTable'>
+			<caption style="color: white; font-weight: bold;">Admin Monitor Status</caption>
+			<thead>
+			<tr id='AMGroupHeader'>
+				<th>Group Name</th>
+				<th title="Chat with this group. All the typical functions of chatting are available.">
+				Chat</th>
+				<th title="Monitor this group. Places you in the group discreetly.
+			You cannot chat with the group and they cannot see your presence.">
+					Monitor</th>
+			</tr>
+			</thead>
+			<tbody id='AMStatusTBody'>
+				<tr id='GXAMGroupInfo'>
+					<td>Group X</td>
+					<td> 	<input type='checkbox' id='CBgroupChat' disabled="true"/>
+							<label for='CBgroupChat' class='chat'>Chat</label>
+					 </td>
+					<td> 	<input type='checkbox' id='CBgroupMonitor' disabled="true"/>
+							<label for='CBgroupMonitor' class='monitor'>Monitor</label>
+					 </td>
+					 
+				</tr>
+			</tbody>
+			
+		</table>
+	</div>
+	
+	<div id="bodyDiv">
+	
+		<div id="loginDiv"> 
+			<h1 style="color:staleblue">Login</h1>
+			
+			<label for='username' title='This is your chat username'>Username</label>
+			<br/>
+			<input autofocus='true' type='text' id='usernameAM' placeholder='Username'></input>
+			
+      		<div style="height:20px"></div>
+      		
+      		<button id="loginBtn" disabled="true">Login</button>
+		</div>
+		
+		<div id="usernameDiv">
+			<p>Username: <span id="usernameSpan">Admin Monitor</span></p>
+		</div>
+	
+	</div>
+
+<br/>
+
+<div id="answerAlert">
+	<p><span>Group <span id="answerAlertGroupID">X</span></span> just submitted an answer!</p>
+	<button id="answerLink">Review Answer</button>
+</div>
+
+<audio id="answerAlarm" src="audio/MM_Tatl_Hey.wav" preload="auto"></audio>
+
+<div id="chatStartMarker"></div>
+
+<div id="GXGroupWindow" class="groupWindow">
+	<input type="checkbox" id="windowType"/>
+	<label for="windowType" class="windowToggle">Show Answer</label>
+	<span style="display:inline-block; min-width:50px"></span>
+	<span class="groupHeader">Group X</span>
+	<br style="clear:both"/>
+	
+	<div id="answerWindow" class='answerWindow'>
+		<div class="answerContainer">
+			<p class="windowSubtitle">FINAL
+			ANSWER</p>
+			<p id="answerPara" class="answerPara">I am the current final Answer. Bow before the noble pursuit of making up complicated and elongated sentences for the sake of error testing.</p>
+		</div>
+		<div id='answerInteract' class='answerInteract'>
+			<button id='answerCorrect' class='answerCorrect' onclick='review(event)' disabled="">✔</button>
+			<button id='answerWrong' class='answerWrong' onclick='review(event)' disabled="">✘</button>
+		</div>
+	</div>
+	
+	<div id="chatWindow" class='chatWindow'>
+		<div class="chat-container">
+			<p class="windowSubtitle">CHAT</p>
+			<div id="chatConsole" class="chatConsole" ></div>
+		</div>
+
+		<div id="chatInteract" class='chatInteract'>
+			<input id="chatInput" class="chat" type="text"
+				placeholder="type and press enter to chat" />
+			<button id='chat_button' onclick='sendChat(event)'>Chat</button>
+		</div>
+	</div>
+
+	
+	<div class='statWindow'>
+		<p>Stats Pending</p>
+	</div>
+</div>
+
+<div id="chatEndMarker"></div>
+
+<!-- 
+<table id="chatRoomTable" width="100%" style="padding:5px" cellpadding="3px">
+
+<tr id="chatRow1" class="chatRow">
+	<td align="center" id="GXChat">
+		 <div id="userContainer1" style="float:right; font-weight:bold"></div>
+    	<h2 id="GXgroupName" align='center' style="background:inherit">Group X</h2>
+    	<div class="console-container" id="GXconsole-container">
+        	<div class="chatConsole" id="GXconsole"/>
+    	</div>
+    	<p style='padding:3px' id="GXchatInterface">
+        	<input class="chat" id="GXchat" type="text" placeholder="type and press enter to chat" />
+        	<button id='GXchat_button' >Chat</button>
+    	</p>
+    	
+    	<table border="3px" style='border-color:black; color:GhostWhite; background-color:rgba(100,100,100,0.7)' id="GXuserTable" class="userTable">
+    		<tr align='center' id="GXuserTableHeader">
+    			<th title="Username">User</th>
+    			<th title="Number of typing messages sent">Typing</th>
+    			<th title="Number of chat messages sent">Chat</th>
+    			<th title="Participation determined by total typing and chat messages">Participation</th>
+    		</tr>
+    		<tr align='center' id="GXuserTableUser">
+    			<td>User X</td>
+    			<td>100</td>
+    			<td>10</td>
+    			<td>1</td>
+    		</tr>
+    	</table>
+    	<br/>
+	</td>
+</tr>
+<tr id="chatRow2" class="chatRow">
+</tr>
+<tr id="chatRow3" class="chatRow"/>
+<tr id="chatRow4" class="chatRow"/>
+</table>
+
+
+-->
+
+
+</body>
+
+<script	  src="https://code.jquery.com/jquery-2.2.4.min.js"
+			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+			  crossorigin="anonymous"></script>
+<script src="js/utility.js" type="text/javascript"></script>
+<script src="js/adminMonitorJS.js" type="text/javascript"></script>
+</html>

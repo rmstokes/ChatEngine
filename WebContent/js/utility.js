@@ -19,6 +19,10 @@ function util_getHostPath() {
 	return window.location.host + serverPath;
 }
 
+function util_getServerPath() {
+	return window.location.pathname.match(/^(\/\w*\/)/)[0];
+}
+
 //Used to connect to the right path for Websocket; page = currentPage
 //Ignore error, due to default argument
 function util_webSocketConnect(page) {
@@ -36,6 +40,30 @@ function util_webSocketConnect(page) {
      }
 }
 
+function util_openSocket (){
+	var serverPath = window.location.pathname.match(/^(.*)\./)[1];
+	var wspath;
+	 if (window.location.protocol == 'http:') {            
+         wspath = 'ws://' + window.location.host + serverPath;
+     } else {
+         wspath = 'wss://' + window.location.host + serverPath;
+    }
+	 
+	if ('WebSocket' in window) {
+		Chat.socket = new WebSocket(wspath);
+	} else if ('MozWebSocket' in window) {
+		Chat.socket = new MozWebSocket(wspath);
+	} else {
+		console.log('Error: WebSocket is not supported by this browser.');
+		return;
+	}
+}
+
+function util_closeSocket() {
+	if (Chat.socket.readyState==1) //if socket is open
+		Chat.socket.close();
+}
+
 function util_webSocketCheck() {
 	//create websocket object if browser supports it
     if ('WebSocket' in window) {
@@ -44,7 +72,7 @@ function util_webSocketCheck() {
         Chat.socket = new MozWebSocket(host);                   
     } else {
         //browser doesn't support websocket
-        Console.log('Error: WebSocket is not supported by this browser.');
+        alert('Error: WebSocket is not supported by this browser.');
         return;
     }
 }
@@ -66,25 +94,40 @@ function util_permIDCheck() {
 		util_noPermID();
 }
 
-function util_close() {
-	alert("An error occurred. The websocket was closed.");
-}
-
 function util_setUserClient() {
 	var xml = '<message type="userClientGet" senderID="'+clientID+'">'+
     //'<text>'+numGroups+'</text>'+
     '</message>';
-	Chat.socket.send(xml)
+	Chat.socket.send(xml);
 }
 
-function util_closeSocket() {
-	if (Chat.socket.readyState==1) //if socket is open
-		Chat.socket.close();
+function util_affirmUserClient() {
+	var xml = '<message type="userClientAffirm" senderID="'+clientID+'">'+
+    //'<text>'+numGroups+'</text>'+
+    '</message>';
+	Chat.socket.send(xml);
 }
 
-function util_changeIcon(webSocketConnected) {
-	if (webSocketConnected)
-		document.getElementById("titleIcon").href = "img/chatbubble-working.png";
-	else
-		document.getElementById("titleIcon").href = "img/chatbubble-outline.png";
+function util_setPermID(permID) {
+	clientID = permID;
+	window.name = permID;
+}
+
+function util_chatHighlightAlert (alertText) {
+	alertText = alertText.replace(/submit\w*/gi, 
+			'<span style="color:green;">$&</span>');
+	
+	alertText = alertText.replace(/withdraw\w*/gi, 
+			'<span style="color:slateblue;">$&</span>');
+	
+	alertText = alertText.replace(/review\w*/gi, 
+			'<span style="color:salmon;">$&</span>');
+	
+	alertText = alertText.replace(/wrong\w*/gi, 
+		'<span style="color:red; font-weight: bold;">$&</span>');
+
+	alertText = alertText.replace(/correct\w*/gi, 
+			'<span style="color:green; font-weight: bold;">$&</span>');
+	
+	return alertText;
 }

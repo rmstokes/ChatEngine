@@ -18,22 +18,16 @@ package websocket.chat;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -55,10 +49,8 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.ls.DOMImplementationLS;
@@ -68,7 +60,6 @@ import org.xml.sax.InputSource;
 import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 
 import util.GroupInfoObject;
-import util.HTMLFilter;
 import util.MessageType;
 
 @WebListener
@@ -79,30 +70,22 @@ public class ChatAnnotation implements ServletContextListener{
 
 	//private static final String GUEST_PREFIX = "Guest";
 	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
-	//private static final AtomicInteger connectionIds = new AtomicInteger(0);
+	private static final DateFormat timeDifferenceFormatter = new SimpleDateFormat("HH:mm:ss.SSS");
+	private static final Date serverStartTime = new Date();
 	
 	//private static final Set<ChatAnnotation> connections = new CopyOnWriteArraySet<>();
 	private static final ArrayList<Session> connectedSessions = new ArrayList<Session>();
 	private static final ArrayList<Client> userList = new ArrayList<Client>();
 	
-	private static FileLogger fileLogger;// = new FileLogger();
-	private static GroupManager groupManager;
+	public static FileLogger fileLogger;// = new FileLogger();
+	public static GroupManager groupManager; //note- made this public for FileLogger to delete reference
 	private static Timer userCullTimer;
 
-	private static boolean adminCreatedGroups = false;
+	//private static boolean adminCreatedGroups = false;
 
 	private static int groupIteration = 0;
+	//private static int uniqueServerID = new java.util.Random(new Date().getTime()).nextInt();
 	private static String logPath = "log\\";
-	//private static Hashtable<Integer, HashSet<String>> groupTable = new Hashtable<Integer, HashSet<String>>();
-
-	// create color vector to assign colors to members of each chat group
-	// format: HashTable<Group#, Hashtable<color, count>> ex. Group 1: red->1;
-	// Group1: blue->0
-	//private static Hashtable<Integer, Hashtable<String, Integer>> colorVector = new Hashtable<Integer, Hashtable<String, Integer>>();
-
-	// create clientColor variable to store username color for each client
-	//private static Hashtable<String, String> clientColor = new Hashtable<String, String>();
-	
 	
 	//private String nickname;
 	private Session session;
@@ -110,45 +93,39 @@ public class ChatAnnotation implements ServletContextListener{
 	private Integer[] AMLineCounter;
 
 	public ChatAnnotation() {
-		// a new ChatAnnotation object is created for every Client page that
+		// a new ChatAnnotation object is created for every time a WEBSOCKET that
 		// connects to server.
 		//System.out.println("Chat Annotation Constructor");
 	}
 
 	@OnOpen
 	public void start(Session session, @PathParam("path") String path) throws Exception {
-		// onopen called when client side websocket initiates connection to this
-		// server.
+		// onopen called when client side websocket initiates connection to this server.
 		// path argument identifies which client page is on other end
-		// for 'landing' page connections add the ChatAnnotation object to
-		// static list.
 		System.out.println("Opened Websocket @ /"+path+" by sID-"+session.getId());
-		//System.out.println("path: " + path);
 		
 		this.session = session;
-		//System.out.println("Current sessionID: " + session.getId());
-		
+		//WATCH OUT FOR FALL THROUGH
 		switch (path) {
-		case "landing":
-			// Do nothing
-			return;
-		case "adminMonitor":
-			//If user is already logged as an admin, send their status
-			//if (userClient.isAdmin)
-				//sendAMStatus(groupManager.getAMStatus(userClient));
 		case "admin":
-		case "login": //fall through- they both do the same thing
-		//case "adminMonitor":
-			//Send information about groups (num, exists) so the admin/login page can inform
-			//the user and act properly
-			sendXMLCheckGroups(session.getId());
+			sendXMLGroupSetInfo(session);
+			break;
+
+		case "login": 
+		case "chat": //outdated now
+			break;
+			
+		case "adminMonitor":
+		case "loginChat":
+			sendXMLGroupInfo(session);
 		
-		//FALL THROUGH	
-		case "chat": //chat doesn't need group information, only the connectedSessions
+			//session.setMaxIdleTimeout(1000*60);
+			//System.out.println("Set timeout to: "+session.getMaxIdleTimeout());
+			
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
-			//connections.add(this);
+			//System.out.println("path "+session.getPathParameters().toString());
 			return;
 		default:
 			return;
@@ -207,6 +184,7 @@ public class ChatAnnotation implements ServletContextListener{
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document doc = builder.newDocument();
+			
 			Element exitMsg = doc.createElement("message");
 			exitMsg.setAttribute("type", "alert");
 			exitMsg.setAttribute("senderID", "Wooz2");
@@ -250,136 +228,92 @@ public class ChatAnnotation implements ServletContextListener{
 
 		String senderID = null; 
 		
-		if (messageType.equals(MessageType.Landing_SetUserType)) {
-			//From Landing page- Set user type based on client input
-			senderID = session.getId();
-			
-			//Set the permanent ID of the client here; add to number of recent users
-			this.userClient = new Client(senderID);
-			System.out.println("SET permID: "+userClient.permID+" -> "+ userClient.toString());
-			userList.add(this.userClient);
-			
-			String userType = element.getTextContent();
-			switch (userType) {
-			case "Login":
-				//go to the student login page
-				sendXMLRedirect("login", userClient.getPermID());
-				return;
-				
-			case "Admin":
-				//go to admin page
-				sendXMLRedirect("admin", userClient.getPermID());
-				return;
-			case "Admin Monitor":
-				//go to the adminMonitor page
-				sendXMLRedirect("adminMonitor", userClient.getPermID());
-				return;
-			default:
-				System.out.println("Invalid userType input");
-				return;
-			}
-		}
-		
-		//If there is no Permanent ID, redirect client to Landing now, 
-		//no future webpages should work without a permID assigned from landing page
 		//Get the senderID and Client and link to this ChatAnnotation class
-		if (userClient==null) { //Only retrieved once when the user accesses advanced functions
-			senderID = element.getAttribute("senderID");
-				
-			//Use senderID to find Client and connect to class
-			//Read-only operation
-			for (int i=0; i<userList.size(); i++) {
-				Client user = userList.get(i);
-				if (user.permID.equals(senderID)) {
-					this.userClient = user;
-					break;
-				}
-			}
-					
-			//If it can't find a client for this user, kick back to landing to make new one
-			//If the server is restarted but browser window isnt closed, this happens a lot
-			if (senderID=="" || senderID==null || userClient == null) {
-				sendXMLMessage(MessageType.Util_NoPermID, "NaN");
-				System.out.println("No ID found for user sID"+session.getId());
-				return;
-			}
-			//Stop outdated clients from stealing IDs
-			//So its possible for a websocket to dc, reconnect using a different websocket
-			//and try to reconnect using that socket. Problem is the server doesnt know the dc websocket is
-			//destroyed- so it will deny the user and force them to make a new ID.
-			//I'm overriding the possibility of an outdated client stealing an ID now that the userClient culler
-			//is activate with the hope that removal of old users will allow reconnection to take over
-			if (userClient.session!=null) {
-				if (userClient.session.isOpen() && messageType.equals(MessageType.Chat_ReconnectChat)) {
-					System.out.println("Reconnecting user asking for an open session");
-					//continue execution
-				} else if(userClient.session.isOpen()) {
-					//outdated ID, force user to remake ID
-					System.out.println("Outdated ID or stealing ID -sID"+session.getId());
-					sendXMLMessage(MessageType.Util_NoPermID, "NaN");
-					return;
-				}
-			}
-				
-			//Get current session ID
-			userClient.sessionID = this.session.getId();
-			//Save the session too- easier to retrieve for group broadcast
-			userClient.session = this.session;
-		}
+		senderID = element.getAttribute("senderID");
 		
-		//I'll use userClient from now on to refer to the client computer instead of ID
-		
-		//Dummy message to set the userClient on connect
-		if (messageType.equals(MessageType.UserClientSet)) {
-			System.out.println("Confirmed userClient-"+userClient.IDString());
-			if (userClient.isAdmin && path.equals("adminMonitor")) {
-				Boolean[] serverAMStatus = groupManager.getAMStatus(userClient);
-				if (serverAMStatus == null) { //psuedo login
-					groupManager.addAdminMonitor(userClient);
-					AMLineCounter = new Integer[groupManager.getNumOfGroups()];
-					for(int i=0; i<AMLineCounter.length; i++) 
-						AMLineCounter[i] = 0; //have to init this
-					serverAMStatus = groupManager.getAMStatus(userClient);
-				}
-				sendAMStatus(serverAMStatus);
-				for (int i=0; i<groupManager.getNumOfGroups(); i++) {
-					if (serverAMStatus[2*i+1]) {//user is chatting
-						userClient.groupID = i+groupManager.groupOffset+1;
-						sendChatHistory(userClient, 0);  
+		if(messageType.equals(MessageType.UserClientAffirm)) {
+			//If a clientID is included, confirm it the userClient and send it
+			//Else create a new userClient
+			
+			//Use senderID to find userClient and link userClient
+			if (senderID!="") {
+				int userListSize = userList.size(); //set before for is run
+				for (int i=0; i<userListSize; i++) {
+					Client user = userList.get(i);
+					if (user.permID.equals(senderID)) {
+						this.userClient = user;
+						System.out.println("CONFIRM permID: "+userClient.permID+" -> "+ userClient.toString());
+						sendXMLMessage("permIDConfirm", userClient.permID);
+						break;
 					}
 				}
 			}
+			
+			//if no userClient was found (and by default senderID is empty)
+			if (userClient==null) {
+				if (senderID!="") {
+					System.out.print("Outdated PermID-"+senderID+" ");
+				}
+				this.userClient = new Client(session.getId(), new SimpleDateFormat("-HHmmssSS").format(serverStartTime) );
+				//senderID = userClient.permID;
+				System.out.println("AFFIRM permID: "+userClient.permID+" -> "+ userClient.toString());
+				userList.add(this.userClient);
+				sendXMLMessage("permIDSet", userClient.permID);
+			}
+			
+			userClient.sessionID = this.session.getId();
+			userClient.session = this.session;
 			return;
 		}
 		
+		//userClient AND senderID MUST/ARE be set after this point
 		if (messageType.equals(MessageType.Admin_GroupCreation)) {
 			//From ADMIN page, called when accessing group creation
 			
 			int numGroups = Integer.parseInt(element.getTextContent());
 			int groupOffset = Integer.parseInt(element.getAttribute("groupOffset"));
-			String instructor = element.getAttribute("instructor");
+			String logName = element.getAttribute("logName");
 			
-			if(numGroups == 0) return; //Ignore invalid messages
+			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
 			
 			if (groupManager!=null) groupManager.destroy();
-			groupManager = new GroupManager(numGroups, instructor, groupOffset);
+			groupManager = new GroupManager(numGroups, groupOffset, logName);
 			
 			//End Filelogger and recreate new one
 			if (fileLogger!=null) fileLogger.destroy();
 			fileLogger = new FileLogger(groupManager, ++groupIteration, logPath);
 			
-			adminCreatedGroups = true;
+			//adminCreatedGroups = true;
 			
-			broadcastCheckGroups(); //Broadcast change of groups to all users
-			sendXMLMessage("groupsCreated", userClient.permID); //just additional confirmation for admin page
+			//broadcastCheckGroups(); //Broadcast change of groups to all users
+			for (int i=0; i<connectedSessions.size(); i++) {
+				sendXMLGroupInfo(connectedSessions.get(i));
+			}
+			sendXMLGroupSetInfo(this.session);
+			//sendXMLMessage("groupsCreated", userClient.permID); //just additional confirmation for admin page
 			return;
 			
+		} else if (messageType.equals(MessageType.Admin_GroupDeletion)) {
+			//Destroy the current groupManager and fileLogger
+			if (groupManager!=null) groupManager.destroy();
+			groupManager = null;
+			if (fileLogger!=null) fileLogger.destroy();
+			fileLogger = null;
+			//adminCreatedGroups = false;
+			
+			//update all clients
+			for (int i=0; i<connectedSessions.size(); i++) {
+				sendXMLGroupInfo(connectedSessions.get(i));
+			}
+			sendXMLGroupSetInfo(this.session);
+			
+			return;
 		}
 		
 		//Here we'll place Admin Monitor functions. AM needs work around to get around certain 
 		//aspects of how chat & groups work; while keeping all the information to make AM useful but anonymous
 		//This means AM will supply its group information- but also receive info from groups 
-		if (messageType.equals(MessageType.AdminMonitor_Login)) {
+		else if (messageType.equals(MessageType.AdminMonitor_Login)) {
 			//Logging in as an Admin Monitor- set up admin functions to this userClient
 			String username = element.getTextContent();
 			userClient.username = username;
@@ -389,146 +323,80 @@ public class ChatAnnotation implements ServletContextListener{
 				sendAMStatus(groupManager.getAMStatus(userClient));
 				return;
 			}
-			//userClient.isAdmin = true; done in GroupManager
+			
 			groupManager.addAdminMonitor(userClient);
-			AMLineCounter = new Integer[groupManager.getNumOfGroups()];
-			for(int i=0; i<AMLineCounter.length; i++) 
-				AMLineCounter[i] = 0; //have to init this
-			Boolean[] AMStatus = groupManager.getAMStatus(userClient);
-			sendAMStatus(AMStatus);
+			sendAMStatus(groupManager.getAMStatus(userClient));
 			
 			System.out.println("User: "+userClient.IDString()+" on sID-"+session.getId()+" is an Admin Monitor");
 			return;
 		} else if (messageType.equals(MessageType.AdminMonitor_Status)) {
 			//Client updating its admin Monitor info
-			if (!groupManager.checkIfAdminMonitor(userClient)) {
+			if (!userClient.isAdmin) {
 				this.sendXMLMessage("alertWebPage", senderID, "User is not an Admin- Please Login");
 				return;
 			}
 			
 			//Chat/Group login & logout are handled here- 
-			Boolean[] clientAMStatus = new Boolean[groupManager.getNumOfGroups()*2];
-			Boolean[] serverAMStatus = groupManager.getAMStatus(userClient);
-			NodeList ne = element.getChildNodes(); //xml from client
+			int[] serverAMStatus = groupManager.getAMStatus(userClient);
+			int[] clientAMStatus = serverAMStatus.clone(); //deep clone hopefully
 			
-			//ne length is the number of groups- not changing it though
-			for (int i=0; i<ne.getLength(); i++) {
-				Element ee = (Element)ne.item(i);
-				clientAMStatus[2*i] = Boolean.parseBoolean(ee.getAttribute("monitor"));
-				clientAMStatus[2*i+1] = Boolean.parseBoolean(ee.getAttribute("chat"));
-				if (clientAMStatus[2*i]&&clientAMStatus[2*i+1]) {
-					clientAMStatus[2*i] = serverAMStatus[2*i]; //if invalid, negate change
-					clientAMStatus[2*i+1] = serverAMStatus[2*i+1];
-				}
-			}
+			int groupID = Integer.parseInt(element.getAttribute("groupID"));
+			clientAMStatus[groupManager.getGroupNo(groupID)] = Integer.parseInt(element.getTextContent());
 				
 			//Send info so client can prepare the chat window
-			groupManager.setAMStatus(userClient, clientAMStatus); //serverStatus is still saved
+			groupManager.setAMStatus(userClient, clientAMStatus); //serverStatus popped off here
 			sendAMStatus(clientAMStatus);
 			
-			for (int i=0; i<ne.getLength(); i++) {
-				//If chat has been enabled, add user to group- joinGroup & loginChat
-				if (clientAMStatus[2*i+1] && !serverAMStatus[2*i+1]) {
-					//Assume invalid groups cannot be sent
-					userClient.groupID = i+groupManager.groupOffset+1; //Set groupID here- consistent with joinGroup for this block
-					groupManager.assignChatColor(userClient);
-					groupManager.joinGroup(userClient.groupID, userClient);
-					System.out.print("currID: "+userClient.sessionID+" -> User AM "+userClient.IDString()+" -> joinChat->Group "+userClient.groupID);
-					Element broadMsg = doc.createElement("message");
-					broadMsg.setAttribute("type", "alert");
-					broadMsg.setAttribute("senderID", "Wooz2"); //Server name
-					broadMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
-					broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
-					broadMsg.setAttribute("senderName", userClient.username);
-					broadMsg.appendChild(doc.createElement("text"));
-					broadMsg.getFirstChild().setTextContent(userClient.username +" has joined the group.");
+			/**************************************************
+			 * Start processing based on changed state
+			 **************************************************/
+			int groupNo = groupManager.getGroupNo(groupID);
+			int currAMStat = clientAMStatus[groupNo];
+			int pastAMStat = serverAMStatus[groupNo];
+			if (currAMStat == pastAMStat) return;
+			if (pastAMStat==GroupManager.AM_NONE) { //Going into group
+				userClient.groupID = groupID;
+				groupManager.assignChatColor(userClient);
+				sendChatHistory(userClient, 0, false);
+				groupManager.joinGroup(groupID, userClient);
 					
-					sendChatHistory(userClient, AMLineCounter[i]);
-					broadcastGroup(broadMsg, userClient.groupID);
-					sendGroupMembers(userClient.groupID);
-				} else if (!clientAMStatus[2*i+1] && serverAMStatus[2*i+1]) {
-					//exit chat, leaveChat
-					AMLineCounter[i] = fileLogger.getLoggedClientMessages().size();//update size here
-					int bGroupID = i+groupManager.groupOffset+1;
-					Set<Client> group = groupManager.getGroup(bGroupID);
-					if (group==null)
-						return;
-					group.remove(userClient);
-					Element exitMsg = doc.createElement("message");
-					exitMsg.setAttribute("type", "alert");
-					exitMsg.setAttribute("senderID", "Wooz2");
-					exitMsg.setAttribute("groupNumber", Integer.toString(bGroupID));
-					exitMsg.setAttribute("senderColor", userClient.chatColor.toString());
-					exitMsg.setAttribute("senderName", userClient.username);
-					exitMsg.appendChild(doc.createElement("text"));
-					exitMsg.getFirstChild().setTextContent(userClient.username+" has left the group.");
-					
-					if (group.size()==0) {
-						exitMsg.setAttribute("timestamp", serverDateFormatter.format(new Date()));
-						synchronized (fileLogger.getLoggedClientMessages()) {
-							fileLogger.captureMessage(exitMsg);
-						}
-					} else {
-						broadcastGroup(exitMsg, bGroupID);
-						sendGroupMembers(bGroupID); //update group members
-					}
-					System.out.println("Leaving chat AM: PermID: "+userClient.IDString() +" -> group "+userClient.groupID);
-				}//end of chat stuff
+				System.out.print("User AM "+userClient.IDString()+" -> Group "+groupID);
 				
-				//If not monitoring/chatting, gotta reset the logCounters cause client has cleared info
-				if (!clientAMStatus[2*i]&&!clientAMStatus[2*i+1])
-					AMLineCounter[i] = 0;
-			} //end of loop over each monitored/chat group
+			} else if (currAMStat==GroupManager.AM_NONE) { //leaving group
+				
+				int bGroupID = groupID;
+				Set<Client> group = groupManager.getGroup(bGroupID);
+				if (group==null)
+					return;
+				group.remove(userClient);
+				System.out.println("User AM: "+userClient.IDString() +" -> Left Group "+groupID);
+			}
+			
+			if (pastAMStat==GroupManager.AM_CHAT) //if leaving chat
+				sendExitMessage(doc, userClient, groupID);
+			else if (currAMStat==GroupManager.AM_CHAT) { //send chat connect msg
+				userClient.groupID = groupID;
+				sendEnterMessage(doc, userClient);
+			}
 			
 			System.out.println("AM User: "+userClient.IDString()+" has updated its AM Status");
-		} else if (messageType.equals(MessageType.AdminMonitor_Update)) {
-			//Client needs an update on Monitor status and on Group statistics
-			if (!groupManager.checkIfAdminMonitor(userClient)) {
-				sendXMLMessage("alertWebPage", senderID, "User is not an Admin- Please Login");
-				return;
-			}
 			
-			Boolean[] serverAMStatus = groupManager.getAMStatus(userClient);
-			//Gotta create new AMLineCounter if it doesnt exist- can happen if user logins in and then refreshes
-			if (AMLineCounter==null) {
-				AMLineCounter = new Integer[groupManager.getNumOfGroups()];
-				for(int i=0; i<AMLineCounter.length; i++) 
-					AMLineCounter[i] = 0;
-			}
-			//For every group being monitored OR chat, send group statistics
-			for (int i=0; i<groupManager.getNumOfGroups(); i++) {
-				if (serverAMStatus[2*i]||serverAMStatus[2*i+1]) {
-					sendGroupStatistics(userClient, groupStatistics(userClient, fileLogger.getLoggedClientMessages().size()));
-					
-					if (serverAMStatus[2*i]) {	//For every group being monitored, send adminChatHistory.
-						int currLine = AMLineCounter[i];
-						userClient.groupID = i+groupManager.groupOffset+1;
-						AMLineCounter[i] = sendChatHistory(userClient, currLine);
-						userClient.groupID = -2; //control
-					}
-				}
-			}
-		}
-		
-		if (messageType.equals(MessageType.Login_JoinGroup)) {
+		//Standard functions for Student/Login/Chat users
+		} else if (messageType.equals(MessageType.Login_JoinGroup)) {
 			//FROM LOGIN PAGE, add user to group
-			//Init the userClient to add to group, but dont add the userClient to the group until they
-			//connect through the chat page. Because if a broadcast is sent to the old Session, it will disconnect
 			
 			int groupNumber = Integer.parseInt(element.getTextContent());
 			System.out.println("Join group message: PermID "+userClient.IDString()+" -> ("+groupNumber+")");
 
 			//If no groups, send alert to tell user
-			if (!adminCreatedGroups) {
-				sendXMLMessage("alert", userClient.permID,
+			if (fileLogger==null) {
+				sendXMLMessage("webAlert", userClient.permID,
 						"No groups have currently been created. Please wait until an Admin creates groups to join.");
-				System.out.println("joinGroup failed: No groups exist.");
 				return;
-			}
-			
-			//Test for invalid group Number
-			if(groupNumber<=groupManager.groupOffset || groupNumber>groupManager.groupOffset+groupManager.getNumOfGroups()) {
-				sendXMLMessage("alert", userClient.permID, "Group ID is invalid, sent "+groupNumber);
+			}	//Test for invalid group Number
+			else if(groupNumber<=groupManager.groupOffset || groupNumber>groupManager.groupOffset+groupManager.groupTotal) {
+				sendXMLMessage("webAlert", userClient.permID, "Group ID is invalid, sent "+groupNumber);
+				return;
 			}
 			
 			//If successful, initialize groupMember info, then send them to chat page
@@ -537,45 +405,20 @@ public class ChatAnnotation implements ServletContextListener{
 			groupManager.assignChatColor(userClient);
 			
 			System.out.println("User: "+userClient.IDString()+"-> Group: "+userClient.groupID+"-> color: "+userClient.chatColor.toString());
-			sendXMLMessage("displayChat", userClient.permID);
-			return;
 			
-		} else if (messageType.equals(MessageType.Chat_JoinChat)||messageType.equals(MessageType.Chat_ReconnectChat)) {
-			//Redirect to login if no groups exist
-			if (!adminCreatedGroups) {
-				sendXMLMessage("alert", userClient.permID, 
-						"Could not join Chat, no groups exist. \n Redirecting you to the login page.");
-				sendXMLRedirect("login", userClient.permID);
+			boolean	joinGroupSuccess = groupManager.joinGroup(userClient.groupID, userClient);
+			if (!joinGroupSuccess) {
+				sendXMLMessage("webAlert", userClient.permID, "Could not join Group. Please contact an admin.");
 				return;
 			}
 			
-			//User either sent a leaveChat, or did not join group
-			if (userClient.groupID==0 || userClient.groupID==-1) {
-				System.out.println("User: "+userClient.IDString()+" has invalid groupID ("+userClient.groupID+") on server");
-				sendXMLRedirect("login", userClient.permID);
-				return;
-			}
+			sendXMLMessage("displayChat", userClient.permID); //for loginChat.html to display chat
 			
-			//New user joining the chat room of group X
-			System.out.print("currID: "+userClient.sessionID+" -> User "+userClient.IDString()+" -> ");
-			if (messageType.equals(MessageType.Chat_ReconnectChat))
-				System.out.println("reconnectChat->Group "+userClient.groupID);
-			else if (messageType.equals(MessageType.Chat_JoinChat))
-				System.out.println("joinChat->Group "+userClient.groupID);
+			sendChatHistory(userClient, 0, true);
+			sendGroupAnswerStatus(userClient.groupID);
+			sendEnterMessage(doc, userClient);
 			
-			//Must join group after websocket @Chat is open, otherwise disconnect can occur
-			boolean joinGroupErr;
-			joinGroupErr = groupManager.joinGroup(userClient.groupID, userClient); //cant add duplicates
-			if (!joinGroupErr) {
-				sendXMLMessage("alert", userClient.permID, 
-						"Could not join Group "+userClient.groupID+". Please ask for assistance.");
-				System.out.println("Could not add user "+userClient.IDString()+" to group "+userClient.groupID);
-				return;
-			}
-			
-			//Instead of making a literal text string, we will create an Element because
-			//its a little easier to add things to it programmatically
-			Element broadMsg = doc.createElement("message");
+			/*Element broadMsg = doc.createElement("message");
 			broadMsg.setAttribute("type", "alert");
 			broadMsg.setAttribute("senderID", "Wooz2"); //Server name
 			broadMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
@@ -583,23 +426,15 @@ public class ChatAnnotation implements ServletContextListener{
 			broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
 			broadMsg.setAttribute("senderName", userClient.username);
 			broadMsg.appendChild(doc.createElement("text"));
+			broadMsg.getFirstChild().setTextContent(userClient.username +" has joined the group.");
 			
-			if (messageType.equals(MessageType.Chat_ReconnectChat)) {
-				broadMsg.getFirstChild().setTextContent(userClient.username +" has reconnected to the group.");
-				System.out.println("User "+userClient.IDString()+" reconnected to chat for Group "+userClient.groupID);
-			} else if (messageType.equals(MessageType.Chat_JoinChat)){
-				broadMsg.getFirstChild().setTextContent(userClient.username +" has joined the group.");
-				System.out.println("User "+userClient.IDString()+" joined chat for Group "+userClient.groupID);
-			}
-
-			//getChatHistory and send to client
-			sendChatHistory(userClient, 0);
-			
-			//Then broadcast joinMessage to user
+			sendChatHistory(userClient, 0, true);
 			broadcastGroup(broadMsg, userClient.groupID);
-			
-			//Send list of group members
 			sendGroupMembers(userClient.groupID);
+			*/
+			return;
+			
+		} else if (messageType.equals(MessageType.Chat_JoinChat)||messageType.equals(MessageType.Chat_ReconnectChat)) {
 			
 		} else if (messageType.equals(MessageType.Chat_LeaveChat)) {
 			//Graceful exit from chat websocket
@@ -608,6 +443,10 @@ public class ChatAnnotation implements ServletContextListener{
 				return; //User doesnt have a clientID, shouldnt be on page
 			} else if (userClient.groupID==0) { //0 means user has not joined a group
 				System.out.println(userClient.getPermID()+" has not joined a group.");
+				return;
+			} else if (groupManager==null) {
+				System.out.println("There are no groups created to be left.");
+				return;
 			}
 			
 			System.out.println("Leaving chat: PermID: "+userClient.IDString() +" -> group "+userClient.groupID);
@@ -620,10 +459,9 @@ public class ChatAnnotation implements ServletContextListener{
 				return;
 			group.remove(userClient);
 			
+			sendExitMessage(doc, userClient, bGroupID);
+			/*
 			//Tell users about exit from chat
-			//DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			//DocumentBuilder builder = factory.newDocumentBuilder();
-			//Document doc = builder.newDocument();
 			Element exitMsg = doc.createElement("message");
 			exitMsg.setAttribute("type", "alert");
 			exitMsg.setAttribute("senderID", "Wooz2");
@@ -635,19 +473,16 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			if (group.size()==0) {
 				//need to log the room exit, but not broadcast cause group is empty
-				//long dateTimestamp = new Date().getTime();
-				//System.out.println("Group "+bGroupID+" is empty");
 				exitMsg.setAttribute("timestamp", serverDateFormatter.format(new Date()));
 				synchronized (fileLogger.getLoggedClientMessages()) {
 					fileLogger.captureMessage(exitMsg);
 				}
 				System.out.println(" Leave chat for "+userClient.IDString()+" not broadcast to empty group");
-				//return;
 			} else {
 				broadcastGroup(exitMsg, bGroupID);
 				sendGroupMembers(bGroupID); //update group members
-				//return;
 			}
+			*/
 			//userClient.session.close(); //Attempt to close connection from server side
 		 
 		} else if (messageType.equals(MessageType.Chat_Typing) || messageType.equals(MessageType.Chat_Chat)) {
@@ -659,7 +494,6 @@ public class ChatAnnotation implements ServletContextListener{
 				return;
 			}
 			//Add groupMember information to element - senderID is already there
-			//Could add this stuff in broadcast method... but interferes with alert chat msgType...
 			//Timestamp will be added in broadcastGroup method
 			element.setAttribute("senderName", userClient.username);
 			element.setAttribute("senderColor", userClient.chatColor.toString());
@@ -667,10 +501,93 @@ public class ChatAnnotation implements ServletContextListener{
 				element.setAttribute("groupNumber", Integer.toString(userClient.groupID));
 			element.setAttribute("sessionID", userClient.sessionID);
 			
-			//System.out.println("Broadcasting Chat/Typing Message: "+convertXMLtoString(element));
 			//In order to work with adminMonitors, we need to parse the groupNumber from the groupNumber attribute
 			int groupSend = Integer.parseInt(element.getAttribute("groupNumber"));
 			broadcastGroup(element, groupSend);
+			return;
+		} else if (messageType.equals(MessageType.Answer_Type)) {
+			//Send message to group like typing event
+			//int groupID = Integer.parseInt(element.getAttribute("groupNumber"));
+			if (groupManager.getAnswerLock(userClient.groupID)) {
+				System.out.println("Answer is locked-Group "+userClient.groupID);
+				return;
+			}
+			groupManager.setAnswer(userClient.groupID, element.getTextContent());
+			
+			element.setAttribute("senderName", userClient.username);
+			element.setAttribute("senderColor", userClient.chatColor.toString());
+			element.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			//element.setAttribute("sessionID", userClient.sessionID);
+			
+			broadcastGroup(element, userClient.groupID);
+			return;
+		} else if (messageType.equals(MessageType.Answer_Status)) {
+			userClient.answerStatus = Boolean.parseBoolean(element.getAttribute("status"));
+			System.out.println("User "+userClient.IDString()+" changed status to "+userClient.answerStatus);
+			
+			//send message based on answerLock & status
+			Element ansMsg = doc.createElement("message"); 
+			ansMsg.setAttribute("type", "alert");
+			ansMsg.setAttribute("senderName", userClient.username);
+			ansMsg.setAttribute("senderID", userClient.permID);
+			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			ansMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			ansMsg.appendChild(doc.createElement("text"));
+			if (!groupManager.getAnswerLock(userClient.groupID)) {
+				if (userClient.answerStatus)
+					ansMsg.getFirstChild().setTextContent(userClient.username+" is ready to submit the answer!");
+				else 
+					ansMsg.getFirstChild().setTextContent(userClient.username+" has cancelled their submission.");
+			} else {
+				if (userClient.answerStatus)
+					ansMsg.getFirstChild().setTextContent(userClient.username+" would like to withdraw the submission!");
+				else 
+					ansMsg.getFirstChild().setTextContent(userClient.username+" would like to continue with the submission.");
+			}
+			
+			broadcastGroup(ansMsg, userClient.groupID);
+			sendGroupAnswerStatus(userClient.groupID); //send full update on answerStatus
+			return;
+			
+		} else if (messageType.equals(MessageType.Answer_UnderReview)) {
+			int groupID = Integer.parseInt(element.getAttribute("groupNumber")); 
+			
+			Element ansMsg = doc.createElement("message"); 
+			ansMsg.setAttribute("type", "alert");
+			ansMsg.setAttribute("senderID", userClient.permID);
+			ansMsg.setAttribute("senderName", userClient.username);
+			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			ansMsg.setAttribute("groupNumber", Integer.toString(groupID));
+			ansMsg.appendChild(doc.createElement("text"));
+			ansMsg.getFirstChild().setTextContent(userClient.username+" is currently reviewing your answer!");
+			
+			broadcastGroup(ansMsg, groupID);
+			return;
+		} else if (messageType.equals(MessageType.Answer_Review)) {
+			int groupID = Integer.parseInt(element.getAttribute("groupNumber"));
+			String answerReview = element.getAttribute("answerReview");
+			
+			Set<Client> group = groupManager.getGroup(groupID);
+			for (Client c : group) {
+				c.answerStatus = false;
+			}
+			
+			int groupNo = groupManager.getGroupNo(groupID);
+			groupManager.answerLock[groupNo] = false;
+			groupManager.prevAnswer[groupNo] = groupManager.answer[groupNo]; 
+			
+
+			Element ansMsg = doc.createElement("message"); 
+			ansMsg.setAttribute("type", "alert");
+			ansMsg.setAttribute("senderID", userClient.permID);
+			ansMsg.setAttribute("senderName", userClient.username);
+			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			ansMsg.setAttribute("groupNumber", Integer.toString(groupID));
+			ansMsg.appendChild(doc.createElement("text"));
+			ansMsg.getFirstChild().setTextContent(userClient.username+" has marked your answer as "+answerReview+"!");
+			
+			sendGroupAnswerStatus(groupID);
+			broadcastGroup(ansMsg, groupID);
 			return;
 		}
 		//END OF REFACTORING
@@ -688,20 +605,15 @@ public class ChatAnnotation implements ServletContextListener{
 		//attributes we have to derive from it
 		//Assume ChatAnnotation has added the necessary elements
 		
-		if (groupID==0) {
+		/*if (groupID==0) {
 			System.out.println("Invalid groupID = 0");
 			session.close();
 			return; //There's an issue where refreshing the page removes the user from the group
 			//but only after a chat message, should be resolved now
-		}
+		}*/
 		
 		//Capture message in FileLogger here
-		//long dateTimestamp = new Date().getTime();
 		String dateTimestamp = serverDateFormatter.format(new Date());
-		//String dateTimestamp = serverDateFormatter.format(new Date());
-		//DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
-		//dateTimestamp = df.format(new Date());
-		
 		msg.setAttribute("timestamp", dateTimestamp);
 		synchronized (fileLogger.getLoggedClientMessages()) {
 			fileLogger.captureMessage(msg);
@@ -711,13 +623,16 @@ public class ChatAnnotation implements ServletContextListener{
 		
 		Set<Client> group = groupManager.getGroup(groupID);
 		
+		if (group.size()==0) {
+			System.out.println("Message not broadcast to empty group.");
+			return;
+		}
+		
 		//Get each client and push message to them
 		String xmlStr = convertXMLtoString(msg);
-		//synchronized (group) {
 		System.out.print("Broadcast to group ("+groupID+ ") : ");
 		for (Client gClient : group) {
 			try {
-				//Websockets is actually thread-safe, meaning this does not need to be locked
 				//It should throw a IllegalStateException should this fail
 				synchronized (gClient.session) {
 				if (gClient.session.isOpen()) {
@@ -746,7 +661,7 @@ public class ChatAnnotation implements ServletContextListener{
 				disconnectMsg.setAttribute("type", "alert");
 				disconnectMsg.setAttribute("senderID", "Wooz2"); //send server name
 				disconnectMsg.setAttribute("groupNumber", Integer.toString(groupID));
-				//disconnectMsg.setAttribute("senderColor", GroupManager.SERVER_COLOR.toString());
+				disconnectMsg.setAttribute("senderColor", gClient.chatColor.toString());
 				disconnectMsg.appendChild(doc.createElement("text"));
 				disconnectMsg.getFirstChild().setTextContent(gClient.username + " has disconnected from the group. (Msg)");
 				broadcastGroup(disconnectMsg, groupID);
@@ -754,8 +669,6 @@ public class ChatAnnotation implements ServletContextListener{
 			}//end of try catch		
 		}//end of for - for each group Member
 		System.out.println();
-		//}//end of synchronized group
-		
 		
 	} //End of broadcastGroup
 		
@@ -777,16 +690,134 @@ public class ChatAnnotation implements ServletContextListener{
 		//return msg;
 	}
 	
-	//Message to send data about group. Can integrate with regular msg but requires client side changes too
-	private void sendXMLCheckGroups(String senderID) throws IOException {
-		String groups = adminCreatedGroups ? Integer.toString(groupManager.getNumOfGroups()) : "Not Created";
-		int groupOffset = adminCreatedGroups ? groupManager.groupOffset : 0;
-		System.out.println("Sent Group Info - num: "+groups+" to sID-"+session.getId());
-		String msg = "<message type='checkGroups' groupOffset='"+groupOffset+"' checkGroups='" + groups + "' iteration='"+groupIteration+"' senderID='" + senderID +"'></message>";
-		session.getBasicRemote().sendText(msg);
+	//Message about server and group info.
+	private void sendXMLGroupSetInfo (Session sendSession) throws Exception {
+		
+		Element e = DocumentBuilderFactory.newInstance()
+						.newDocumentBuilder().newDocument().createElement("message");
+		
+		e.setAttribute("type", "groupSetInfo");
+		
+		if (groupManager==null) {
+			e.setAttribute("setStatus", "FALSE");
+			e.setAttribute("groupOffset", "#");
+			e.setAttribute("groupTotal", "#");
+			e.setAttribute("setStartTime", "##:##:##:###");
+			e.setAttribute("logName", "NO DATA");
+		} else {
+			e.setAttribute("setStatus", "TRUE");
+			e.setAttribute("groupOffset", Integer.toString(groupManager.groupOffset));
+			e.setAttribute("groupTotal", Integer.toString(groupManager.groupTotal));
+			//Date createDiff = new Date(new Date().getTime() - groupManager.setCreateDate.getTime() ); 
+			e.setAttribute("setStartTime", serverDateFormatter.format(groupManager.setCreateDate));
+			e.setAttribute("logName", groupManager.logName);
+		}
+		
+		if (fileLogger==null) {
+			e.setAttribute("logSaveLast", "##:##:##:###");
+		} else {
+			if (fileLogger.endDate==null)
+				e.setAttribute("logSaveLast", "Not Saved");
+			else {
+				e.setAttribute("logSaveLast", serverDateFormatter.format(fileLogger.endDate));
+			}
+		}
+		
+		e.setAttribute("serverStartTime", serverDateFormatter.format(serverStartTime));
+		sendSession.getBasicRemote().sendText(convertXMLtoString(e));
 	}
 	
-	private void sendAMStatus(Boolean[] AMStatus) throws Exception {
+	private void sendXMLGroupInfo (Session sendSession) throws Exception {
+		Element e = DocumentBuilderFactory.newInstance()
+				.newDocumentBuilder().newDocument().createElement("message");
+
+		e.setAttribute("type", "groupInfo");
+		
+		if (groupManager==null) {
+			e.setAttribute("setStatus", "FALSE");
+			e.setAttribute("groupOffset", "#");
+			e.setAttribute("groupTotal", "#");
+		} else {
+			e.setAttribute("setStatus", "TRUE");
+			e.setAttribute("groupOffset", Integer.toString(groupManager.groupOffset));
+			e.setAttribute("groupTotal", Integer.toString(groupManager.groupTotal));
+		}
+		sendSession.getBasicRemote().sendText(convertXMLtoString(e));
+	}
+	
+	private void sendGroupAnswerStatus(int groupID) throws Exception {
+		Set<Client> group = groupManager.getGroup(groupID);
+		if (group.size()==0) //shouldn't be called with no group members
+			return;
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		
+		Element e = doc.createElement("message");
+		e.setAttribute("type", "AnswerGroupStatus");
+		//e.setAttribute("answerLock", Boolean.toString(groupManager.answerLock[groupManager.getGroupNo(groupID)]));
+		e.setAttribute("groupNumber", Integer.toString(groupID));
+		
+		Element ea = doc.createElement("answer");
+		ea.setTextContent(groupManager.answer[groupManager.getGroupNo(groupID)]);
+		e.appendChild(ea);
+		
+		Element epa = doc.createElement("prevAnswer");
+		epa.setTextContent(groupManager.prevAnswer[groupManager.getGroupNo(groupID)]);
+		e.appendChild(epa);
+		
+		boolean allTrue = true;
+		//Search through all group members that are not admins
+		for (Client c : group) {
+			if (c.isAdmin)
+				continue;
+			if (!c.answerStatus)
+				allTrue = false;
+		}
+		
+		if (allTrue) {
+			//invert
+			groupManager.answerLock[groupManager.getGroupNo(groupID)] = 
+					!groupManager.answerLock[groupManager.getGroupNo(groupID)];
+			for (Client c : group) {
+				//if admin, send answerAlert
+				if (c.isAdmin && groupManager.answerLock[groupManager.getGroupNo(groupID)]) {
+					String answerAlert = "<message type='answerAlert' groupNumber='"+groupID+"'/>";
+					c.session.getBasicRemote().sendText(answerAlert);
+				}
+				c.answerStatus = false;
+			}
+			
+			Element answerStatMsg = doc.createElement("message");
+			answerStatMsg.setAttribute("type", "alert");
+			answerStatMsg.setAttribute("senderID", "Wooz2"); //send server name
+			answerStatMsg.setAttribute("groupNumber", Integer.toString(groupID));
+			answerStatMsg.appendChild(doc.createElement("text"));
+			if (groupManager.answerLock[groupManager.getGroupNo(groupID)])
+				answerStatMsg.getFirstChild().setTextContent("The current Answer has been submitted and locked!");
+			else 
+				answerStatMsg.getFirstChild().setTextContent("The current Answer has been withdrawn and can be edited!");
+			
+			broadcastGroup(answerStatMsg, groupID);
+		}
+		
+		//do this after answer check
+		e.setAttribute("answerLock", Boolean.toString(groupManager.answerLock[groupManager.getGroupNo(groupID)]));
+		for (Client c : group) {
+			if (c.isAdmin)
+				continue;
+			Element ec = doc.createElement("member");
+			ec.setAttribute("senderID", c.permID);
+			ec.setTextContent(Boolean.toString(c.answerStatus));
+			e.appendChild(ec);
+		}
+		
+		for (Client c : group) 
+			c.session.getBasicRemote().sendText(convertXMLtoString(e));
+	}
+	
+	private void sendAMStatus(int[] AMStatus) throws Exception {
 		//helper function to format AMStatus for client to process
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -796,12 +827,14 @@ public class ChatAnnotation implements ServletContextListener{
 		e.setAttribute("type", "AMStatus");
 		e.setAttribute("senderName", userClient.username);
 		e.setAttribute("senderID", userClient.permID);
-		e.setAttribute("groupNum", Integer.toString(groupManager.getNumOfGroups()));
+		e.setAttribute("groupNum", Integer.toString(groupManager.groupTotal));
 		e.setAttribute("groupOffset", Integer.toString(groupManager.groupOffset));
-		for (int i=0; i<AMStatus.length; i+=2) {
+		
+		for (int i=0; i<AMStatus.length; i++) {
+			int groupID = groupManager.getGroupNo(i);
 			Element er = doc.createElement("groupAMInfo");
-			er.setAttribute("monitor", Boolean.toString(AMStatus[i]));
-			er.setAttribute("chat", Boolean.toString(AMStatus[i+1]));
+			er.setAttribute("groupID", Integer.toString(groupID));
+			er.setTextContent(Integer.toString(AMStatus[i]));
 			e.appendChild(er);
 		}
 		
@@ -809,24 +842,7 @@ public class ChatAnnotation implements ServletContextListener{
 		synchronized (session) {
 			session.getBasicRemote().sendText(convertXMLtoString(e));
 		}
-		System.out.println("Sent updated AM Status to user "+userClient.IDString());
-	}
-	
-	//Send to all clients currently connected to server
-	private void broadcastCheckGroups() throws IOException {
-		String groups = adminCreatedGroups ? Integer.toString(groupManager.getNumOfGroups()) : "Not Created";
-		int groupOffset = adminCreatedGroups ? groupManager.groupOffset : 0;
-		String msg = "<message type='checkGroups' groupOffset='"+groupOffset+"' checkGroups='" + groups + "' senderID='Wooz2 Broadcast'></message>";
-		//send to everyone
-		synchronized (connectedSessions) {
-		for (Session s : connectedSessions) {
-			if (!s.isOpen()) continue;
-			//synchronized (s) {
-			s.getBasicRemote().sendText(msg);
-			//}
-		}
-		}//end of synchronized
-		System.out.println("Broadcast Group Info - num: "+groups+" to "+connectedSessions.size()+" clients");
+		System.out.println("Sent Updated AM Status to user "+userClient.IDString());
 	}
 	
 	//XML to String
@@ -850,7 +866,7 @@ public class ChatAnnotation implements ServletContextListener{
 	}
 	
 	//send chat history messages to client
-	private int sendChatHistory(Client userClient, int startLog) throws Exception {
+	private int sendChatHistory(Client userClient, int startLog, boolean lock) throws Exception {
 		//get the copy/list of chat elements from the group this client is joining
 		//Read-only operation & iterator; Doesnt need to be synchronized
 		ArrayList<Element> chatHis = fileLogger.getLoggedClientMessages();
@@ -859,9 +875,9 @@ public class ChatAnnotation implements ServletContextListener{
 		HashMap<String, Element> elemChat = new HashMap<String, Element>();
 		
 		//Read-only operation
-		int chatHisSize;
-		for (int i=startLog; i<chatHis.size(); i++) {
-			Element chatMsg = (Element) chatHis.get(i);
+		int chatHisSize = chatHis.size();
+		for (int i=startLog; i<chatHisSize; i++) {
+			Element chatMsg = (Element) chatHis.get(i).cloneNode(true); //Need to clone node otherwise reference will pick up chatHistory attrib
 			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) )
 			//		|| chatMsg.getAttribute("type").equals("typing"))  //get everything thats not typing
 				continue;
@@ -875,8 +891,10 @@ public class ChatAnnotation implements ServletContextListener{
 			synchronized (session) {
 				session.getBasicRemote().sendText(convertXMLtoString(chatMsg));
 			}
+			if (lock)
+				chatHisSize = chatHis.size(); //update this
 		}
-		chatHisSize = chatHis.size(); //Hopefully the time between the for check and this assignment is very low
+		//chatHisSize = chatHis.size(); //Hopefully the time between the for check and this assignment is very low
 		
 		//Look through the buffer for valid typing messages
 		for (Element chatMsg : elemChat.values()) {
@@ -896,14 +914,38 @@ public class ChatAnnotation implements ServletContextListener{
 		//For UI purposes only
 		System.out.println("Sending list of group members for group "+groupID);
 		//Cant use an attribute so nodes will do
-		String msg = "<message type='lGroupMembers' groupNumber='"+groupID+"'>";
+		String msg = "<message type='lGroupMembers' groupID='"+groupID+"'>";
 		//HashSet<Client> group = groupManager.getGroup(groupID);
 		Set<Client> group = groupManager.getGroup(groupID);
 		
+		String memList = ""; //regular group members
+		String AMChatList = ""; //Admins that are chatting
+		String AMMonitorList = ""; //Admins that are monitoring
+		
 		for (Client c : group) {
-			msg = msg.concat("<member senderColor='"+c.chatColor.toString()+"'>"
+			//filter out admin Monitors
+			if (c.isAdmin) {
+				if (groupManager.getAMGroupStatus(c, groupID)==GroupManager.AM_MONITOR) {
+					AMMonitorList = AMMonitorList.concat("<member senderID='"+c.permID+"' senderColor='"+c.chatColor.toString()+"'>"
+						+c.username+"</member>");
+					continue;
+				}
+				
+				AMChatList = AMChatList.concat("<member senderID='"+c.permID+"' senderColor='"+c.chatColor.toString()+"'>"
+						+c.username+"</member>");
+				continue;
+			}
+				
+			
+			memList = memList.concat("<member senderID='"+c.permID+"' senderColor='"+c.chatColor.toString()+"'>"
 					+c.username+"</member>");
+			/*msg = msg.concat("<member senderColor='"+c.chatColor.toString()+"'>"
+					+c.username+"</member>");
+					*/
 		}
+		
+		msg = msg.concat(AMChatList); //add Admins first
+		msg = msg.concat(memList);
 		msg = msg.concat("</message>");
 
 		System.out.println("Sending "+msg);
@@ -914,7 +956,7 @@ public class ChatAnnotation implements ServletContextListener{
 		
 	}
 	
-	public synchronized ArrayList<GroupInfoObject> groupStatistics(Client user, int logFileCounter) {
+	/*public synchronized ArrayList<GroupInfoObject> groupStatistics(Client user, int logFileCounter) throws Exception {
 		//only update the groups the user is looking for, to the number of logs sent
 		HashMap<Integer, Boolean> groupCheckTable = new HashMap<Integer, Boolean>();
 		ArrayList<GroupInfoObject> returnGroup = new ArrayList<GroupInfoObject>();
@@ -990,7 +1032,7 @@ public class ChatAnnotation implements ServletContextListener{
 		}
 		
 		return returnGroup;
-	}
+	}*/
 	
 	public void sendGroupStatistics(Client userClient, ArrayList<GroupInfoObject> gio) throws Exception {
 		//Parse the arrayList into a xml object to send to the AM
@@ -1031,6 +1073,40 @@ public class ChatAnnotation implements ServletContextListener{
 		
 	}
 	
+	public Element sendExitMessage(Document doc, Client userClient, int bGroupID) throws Exception {
+		//int bGroupID = userClient.groupID;
+		Element exitMsg = doc.createElement("message");
+		exitMsg.setAttribute("type", "alert");
+		exitMsg.setAttribute("senderID", "Wooz2");
+		exitMsg.setAttribute("groupNumber", Integer.toString(bGroupID));
+		exitMsg.setAttribute("senderColor", userClient.chatColor.toString());
+		exitMsg.setAttribute("senderName", userClient.username);
+		exitMsg.appendChild(doc.createElement("text"));
+		exitMsg.getFirstChild().setTextContent(userClient.username+" has left the group.");
+		
+		//Set<Client> group = groupManager.getGroup(bGroupID);
+		broadcastGroup(exitMsg, bGroupID);
+		sendGroupMembers(bGroupID); //update group members
+		
+		return exitMsg;
+		//System.out.println("Leaving chat AM: PermID: "+userClient.IDString() +" -> group "+userClient.groupID);
+	}
+	
+	public Element sendEnterMessage(Document doc, Client userClient) throws Exception {
+		Element broadMsg = doc.createElement("message");
+		broadMsg.setAttribute("type", "alert");
+		broadMsg.setAttribute("senderID", "Wooz2"); //Server name
+		broadMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+		broadMsg.setAttribute("senderColor", userClient.chatColor.toString());
+		broadMsg.setAttribute("senderName", userClient.username);
+		broadMsg.appendChild(doc.createElement("text"));
+		broadMsg.getFirstChild().setTextContent(userClient.username +" has joined the group.");
+		
+		broadcastGroup(broadMsg, userClient.groupID);
+		sendGroupMembers(userClient.groupID);
+		return broadMsg;
+	}
+	
 	
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0)
@@ -1038,6 +1114,8 @@ public class ChatAnnotation implements ServletContextListener{
 	    System.out.println("Destroying server");
 	    if(userCullTimer!=null)
 	    	userCullTimer.cancel();
+	    if (groupManager!=null)
+	    	groupManager.destroy();
 	    if(fileLogger!=null)
 	    	fileLogger.destroy(); //save files on server exit
 	  }
@@ -1045,7 +1123,7 @@ public class ChatAnnotation implements ServletContextListener{
 	@Override
 	  public void contextInitialized(ServletContextEvent sce)
 	  {
-	    System.out.println("Init server"); //called when server context is made
+	    System.out.println("Initialing chat server"); //called when server context is made
 	    
 	    String initLogPath = sce.getServletContext().getInitParameter("logPath");
 	    //iternary operator; fancy way of saying use default if initLogPath is empty
@@ -1059,6 +1137,8 @@ public class ChatAnnotation implements ServletContextListener{
 	    userCullTimer = new Timer();
 	    userCullTimer.schedule(new UserClientCullerClass(this.userList), UserClientCullerClass.userCullTime,
 	    		UserClientCullerClass.userCullTime);
+	    
+	    
 	  }
 }
 
@@ -1066,7 +1146,7 @@ public class ChatAnnotation implements ServletContextListener{
 class UserClientCullerClass extends TimerTask {
 	
 	public ArrayList<Client> userList;
-	public static int userCullTime = 1000*60*4;
+	public static int userCullTime = 1000*60*5;
 	public static int userReconnectTime = 1000*60*2;
 	
 	public UserClientCullerClass (ArrayList<Client> userL) {
@@ -1084,7 +1164,7 @@ class UserClientCullerClass extends TimerTask {
 			}
 		} //end of for loop
 		try {
-			Thread.sleep(userReconnectTime); //Give the user approx. 2 mins to reconnect
+			Thread.sleep(userReconnectTime); //Give the user time reconnect
 		} catch (Exception e) {
 			System.out.println("Error occurred while sleeping in userCull Class");
 			System.out.println(e.getMessage());

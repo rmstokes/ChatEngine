@@ -1,18 +1,204 @@
+h2 {
+/* 	background-color: red; */
+	 text-shadow: 2px 2px darkblue;
+	 margin-left: 100px;
+}
 
-body {
-  
-  background-image: url('../img/molecule.jpg');  
-  background-repeat: no-repeat;
-  background-size: 1530px 1000px;
-  background-position: 0px 0px;
-  background-color: #CCCCFF;
-  
+#bodyDiv {
+	margin: 0 10px;
+	position: relative;
+}
+
+#headerDiv {
+	background-color: blue;
+}
+
+input, select {
+	margin: 17.5px;
+	font-size:100%;
+}
+
+#createSetDiv {
+	background-color: rgba(0, 100, 0, 0.35);
+	border-radius: 5px;
+	padding: 10px;
+}
+
+#currentSetDiv {
+	transition: background-color, 2s;
+	background-color: rgba(100, 100, 100, 0.35);
+	padding: 10px;
+	border-radius: 5px;
+}
+
+#currentSetDiv.TRUE {
+	background-color: rgba(0, 0, 180, 0.35);
+}
+
+#currentSetDiv.FALSE {
+	background-color: rgba(200, 0, 0, 0.35);
+}
+
+h1 {
+	font-size: 150%;
+	font-weight:bold;
+	color: snow;
+	margin: 10px;
+	text-shadow: 1px 1px black,
+				-1px 1px black,
+				1px -1px black,
+				-1px -1px black;
+}
+
+h3 {
+	font-size: 110%;
+	font-weight:bold;
+	margin-bottom: 0px;
+	margin-top: 15px;
+}
+
+h3.yellow {
+	color: gold;
+	cursor: help;
+}
+
+span.highlight {
+	font-weight: bold;
+    background-color: yellow;
+    border-radius: 10%;
+    padding: 2px;
 }
 
 
+.divRow {
+	overflow:auto;
+	background-color:inherit;
+	border-radius: inherit;
+	margin: 5px;
+}
 
-button {
-	max-height: 50px;
+.halfDiv {
+	width: 50%;
+	box-sizing: border-box;
+}
+
+.leftF {
+	float:left;
+}
+
+.rightF {
+	float:right;
+}
+
+.serverNum {
+	font-size: 140%;
+	text-decoration: italic;
+	background-color:snow;
+	border-radius:20px;
+/* 	display: inline-block; */
+	padding: 10px 20px;
+	margin: 10px 20px;
+}
+
+.serverText {
+	font-size: 120%;
+	background-color: snow;
+	padding: 10px;
+	margin: 15px 10px;
+	border-radius: 20px;
+}
+
+.serverTime {
 	font-size: 100%;
-	max-width: 200px;
+	font-weight: bold;
+	background-color: snow;
+	padding: 10px;
+	margin: 15px 10px;
+	border-radius: 20px;
+}
+
+.navH2 {
+	position: absolute;
+/* 	left: 150px; */
+/* 	top:0.1em; */
+}
+
+.navH2 a {
+	padding:0 0.2em; 
+	border-radius:5px; 
+	background-color: slateblue;
+	color:inherit;
+	text-decoration:none;
+	transition: background-color 1.5s;
+}
+
+.navH2 a:hover {
+	background-color: skyblue;
+	transition: background-color 0.5s;
+}
+
+.navH2 a:active {
+	background-color: darkblue;
+	transition: background-color 0s;
+}
+
+button:not([disabled]):hover {
+  transition: all, 0.5s;
+  background: white;
+}
+
+#closeBtn:not([disabled]):hover {
+	background:red;
+	color: white;
+}
+
+#closeBtn:not([disabled]):active {
+	background-color:darkred;
+}
+
+button:not([disabled]):active {
+  transition: all, 0s;
+  background-color: gray;
+}
+
+#fileUploadDiv {
+	padding: 5px;
+	background-color: rgba(100, 0, 100, 0.4);
+	border-radius: 5px;
+	width: 500px;
+}
+
+#fileUploadDiv span {
+	color:white;
+	display:inline-block;
+	width:50px;
+}
+
+#fileUploadDiv input, #fileUploadDiv > p {
+	background-color: snow;
+	border-radius: 10px;
+	margin: 15px 10px;
+}
+
+.dragFile {
+	width: 75px;
+	height: 75px;
+	display:block;
+	border: 4px dashed white;
+/* 	transform: translateX(-50%); */
+/* 	left:50%; */
+/* 	position:relative; */
+	display:inline-block;
+}
+
+.dragFile:hover {
+	background-color: lightgray;
+}
+
+.dragFile p {
+	pointer-events:none;
+	position:relative;
+/* 	top:50%; */
+/* 	transform:translateY(50%); */
+	color:snow;
 }

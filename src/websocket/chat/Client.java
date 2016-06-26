@@ -8,15 +8,17 @@ public class Client {
 	
 	public final String permID;
 	public String sessionID;
-	public boolean isAdmin = false;
+	public Session session;
+	
+	public boolean isAdmin = false; //designates admin
+	public boolean answerStatus = false; //used for answer (student)
 
 	public String username;
 	public int groupID = -1; //default means never joined a group
 	public CHAT_COLOR chatColor;
-	public Session session;
 	
-	public Client (String senderID) {
-		permID = senderID;
+	public Client (String senderID, String serverID) {
+		permID = senderID+serverID;
 		sessionID = senderID; //Not necessary
 	}
 	
@@ -26,7 +28,7 @@ public class Client {
 	
 	public String IDString () {
 		if (username!=null)
-			return username + " ["+permID+"]";
+			return username + " ["+permID+"]"+ "{"+session.getId()+"}";
 		else 
 			return this.toString()+ " ["+permID+"]";
 	}

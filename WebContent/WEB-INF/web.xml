@@ -30,7 +30,7 @@
   -->
  
  <welcome-file-list>
-        <welcome-file>landingPage.xhtml</welcome-file>
+        <welcome-file>landingPage.html</welcome-file>
         <welcome-file>chat.xhtml</welcome-file>
         <welcome-file>chat.htm</welcome-file>
         <welcome-file>chat.jsp</welcome-file>

@@ -1,0 +1,279 @@
+#headerDiv {
+	background-color: #cd6e5a;
+}
+
+h2 {
+	text-shadow: 2px 2px darkred;
+	margin-left: 100px;
+}
+
+h1 {
+	font-size: 250%;
+	font-weight: bold;
+	color: darkred;
+}
+
+#bodyDiv {
+}
+
+#sidebar {
+	position: absolute;
+	top: 30%;
+	background-color: rgba(00, 00, 200, 0.6);
+/* 	min-width: 25px; */
+	width: 235;
+	min-height:50px;
+	padding:0.5em 1.5em;
+	padding-right: 30px;
+	padding-top: 1em;
+	border-radius: 0% 14px 14px 0%;
+	transition: transform 1s;
+	transform: translateX(-260px);
+	z-index: 1;
+/* 	cursor: pointer; */
+}
+
+#sidebar:hover {
+	transition: transform 0.5s;
+	transform: translateX(0px) !important;
+}
+
+#sidebar table {
+	border-collapse: collapse;
+	empty-cells: show;
+	background-color: yellowgreen;
+	
+}
+
+#sidebar thead {
+/* 	background-color: rgba(255, 255, 255, 0.4); */
+	background-color: gray;
+	color: yellow;
+	border-bottom: 2px solid black;
+}
+
+#sidebar th {
+	padding: 3px 5px;
+	border-right: 2px solid black;
+	cursor: help;
+}
+
+#sidebar th:last-child {
+	border-right:none;
+}
+
+#sidebar img {
+	position:absolute;
+	right:0px;
+	padding-right:8px;
+	cursor: pointer;
+}
+
+#sidebar td input[type="checkbox"] {
+	display:none;
+}
+#sidebar td input + label {
+	background-color:gray;
+	padding: 1px 5px;
+	color:snow;
+	font-weight: bold;
+	transition: background-color 1s;
+	cursor:pointer;
+	border: 2px black outset;
+}
+#sidebar td input + label:hover {
+	background-color:lightgray;
+	border-color: lightgray;
+}
+#sidebar td input:disabled + label {
+	background-color: #9c9c9c;
+	border-color: #9c9c9c;
+	border-style: solid;
+}
+#sidebar td input:checked + label.monitor {
+	background-color: crimson;
+	border-color: crimson;
+	border-style: inset;
+	transition: background-color 0.2s;
+}
+#sidebar td input:checked + label.chat {
+	background-color: green;
+	border-color: green;
+	border-style: inset;
+	transition: background-color 0.2s;
+}
+#sidebar td input:checked + label.waiting {
+	animation: 0.5s ease-in-out infinite alternate blinking;
+}
+
+@keyframes blinking { from {} to {background-color: white;} }
+
+#loginDiv {
+/* 	position: absolute;  */
+/* 	left: 50%;  */
+	transform: translateX(50%);
+/* 	display:none; */
+	width: 480px;
+	background-color: rgba(0,0,255,0.1);
+	border-radius: 20px;
+	margin: 0.5em 1em;
+	box-sizing: border-box;
+	padding:10px;
+	padding-bottom: 30px;
+	overflow:hidden;
+	transition: height 2s, padding 2s;
+	height: 250px;
+}
+
+#usernameDiv {
+	background-color: rgba(0,0,255,0.1);
+	margin: 0px 3em;
+	border-radius: 5px;
+	font-size: 130%;
+	overflow:hidden;
+	transition: all 2s;
+	height: 0em;
+}
+
+#usernameSpan {
+	color: red;
+}
+
+button {
+	background-color:lightgreen;
+}
+
+td, th {
+	padding: 3px;
+}
+
+tr:nth-child(even) {
+	background-color: rgba(0,0,0,0.16);
+}
+
+td, input {
+	text-align: center;
+	font-size: 100%;
+}
+
+.groupWindow {
+	padding:5px 20px;
+	background-color: goldenrod;
+	display:inline-block;
+/* 	border: 5px ridge black; */
+	border-radius:10px;
+	margin:1em 1.5em 1em 0.5em;
+	display:inline-block;
+	transition: background-color 1s;
+}
+
+.groupWindow.monitor {
+	background-color: rgba(140, 0, 26, 0.7);
+}
+.groupWindow.chat {
+	background-color: rgba(31, 122, 31, 0.7);
+}
+
+.chat-container, .answerContainer {
+	height: 400px;
+}
+
+.answerContainer, .chat-container {
+	width:425px;
+}
+
+input[type=checkbox], label {
+	cursor: pointer;
+	color:whitesmoke;
+	font-weight: bold;
+}
+
+input:checked ~ div.answerWindow, input ~ div.chatWindow {
+	display:block;
+}
+
+input:checked ~ div.chatWindow, input ~ div.answerWindow {
+	display:none;
+}
+
+#answerAlert {
+	position: fixed;
+	right: 3em;
+	bottom: 0px;
+/* 	background-color: rgba(0, 125, 50, 0.3); */
+	background-color: rebeccapurple;
+	border-top-right-radius: 10px;
+	border-top-left-radius: 10px;
+	padding:1em;
+	transition: transform, 1s;
+	transform: translateY(100%);
+	z-index:10;
+}
+
+#answerAlert p {
+	color:snow;
+	font-weight:bold;
+}
+
+#answerAlert.show {
+	transform: none;
+}
+
+@keyframes whiteBlink {
+	0% {}
+	100% {background-color:white;}
+}
+
+#answerLink {
+	text-decoration: none;
+	background-color: #306bae;
+	color: snow;
+	font-weight: bold;
+	cursor: pointer;
+	padding:0.3em;
+}
+
+#answerLink:hover {
+	background-color: lightgray;
+}
+
+#answerLink:active {
+	background-color: gray;
+}
+
+.groupHeader {
+	font-size: 150%;
+	text-shadow: 2px 2px black;
+	color: snow;
+	font-weight:bold;
+}
+
+.answerInteract {
+	border: 3px outset gray;
+	border-radius: 5px;
+}
+
+.answerCorrect {
+	color: forestgreen;
+}
+
+.answerWrong {
+	color:red;
+}
+
+.answerCorrect, .answerWrong {
+	background-color: ghostwhite;
+	border: 3px solid transparent;
+}
+
+.answerCorrect:disabled, .answerWrong:disabled {
+	background-color:darkgray;
+}
+
+.answerCorrect:not([disabled]):hover {
+	border: 3px solid green;
+}
+
+.answerWrong:not([disabled]):hover {
+	border: 3px solid red;
+}

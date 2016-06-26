@@ -21,13 +21,18 @@ public class GroupManager {
 	 */
 	private static final Log log = LogFactory.getLog(FileLogger.class);
 	
-	public final String instructor;
-	public Date timeOfGroupCreation;
+	public final String logName;
+	public final Date setCreateDate;
 	public final int groupOffset;
+	public final int groupTotal;
 	public static CHAT_COLOR TA_COLOR = CHAT_COLOR.Red;
 	public static CHAT_COLOR TA2_COLOR = CHAT_COLOR.Tomato;
 	public static CHAT_COLOR TA3_COLOR = CHAT_COLOR.Crimson;
 	public static CHAT_COLOR SERVER_COLOR = CHAT_COLOR.Black;
+	
+	public static final int AM_MONITOR = 2;
+	public static final int AM_CHAT = 1;
+	public static final int AM_NONE = 0;
 	
 	//List of Clients for each group
 	//ConcurrentHashMap instead of HashTable cause the latter is deprecated
@@ -35,16 +40,18 @@ public class GroupManager {
 	//CopyOnWrite also means that broadcasts dont need to be synchronized
 	private ConcurrentHashMap<Integer, CopyOnWriteArraySet<Client> > groupTable = new ConcurrentHashMap<Integer, CopyOnWriteArraySet<Client> >();
 	
+	//Answer strings are stored here
+	public String[] answer;
+	public String[] prevAnswer;
+	public boolean[] answerLock;
+	
 	//List of AdminMonitors and their information
-	private ConcurrentHashMap<Client, Boolean[]> adminMonitorTable = new ConcurrentHashMap<Client, Boolean[]>();
+	private ConcurrentHashMap<Client, int[]> adminMonitorTable = new ConcurrentHashMap<Client, int[]>();
+	
 	private ConcurrentHashMap<Integer, GroupInfoObject> groupStatistics = new ConcurrentHashMap<Integer, GroupInfoObject>();
 	
-	public GroupManager(int numGroups, int groupOffset) {
-		this(numGroups, "Unknown_Instructor", groupOffset);
-	}
-	
-	public GroupManager(int numGroups, String instructor, int groupOffset) {
-		System.out.println("Group Manager Constructor: Num:"+numGroups + " Group Offset:"+groupOffset +" Instructor: "+instructor); 
+	public GroupManager(int numGroups, int groupOffset, String logName) {
+		System.out.println("Group Manager Constructor: Group Total:"+numGroups + " Group Offset:"+groupOffset +" Log Name: "+logName); 
 		
 		//Populate group list
 		for (int key = 1; key <= numGroups; key++) {
@@ -54,15 +61,24 @@ public class GroupManager {
 			groupStatistics.put(key, new GroupInfoObject(key));
 		}
 		
-		this.instructor = instructor;
+		this.logName = logName;
 		this.groupOffset = groupOffset;
+		this.groupTotal = numGroups;
 		
-		timeOfGroupCreation = new Date();
+		setCreateDate = new Date();
 		
+		answer = new String[groupTotal];
+		prevAnswer = new String[groupTotal];
+		answerLock = new boolean[groupTotal];
+		
+		for (int i=0; i<groupTotal; i++) {
+			answer[i] = "";
+			prevAnswer[i] = "No answer";
+		}
 	}
 	
-	public boolean joinGroup(int groupNo, Client user) {
-		Set<Client> group = getGroup(groupNo);
+	public boolean joinGroup(int groupID, Client user) {
+		Set<Client> group = getGroup(groupID);
 		try {
 			return group.add(user);
 		} catch (Error e) {
@@ -117,22 +133,22 @@ public class GroupManager {
 	}
 	
 	//This is normalized for groupOffset
-	public Set<Client> getGroup(int groupNo) {
-		return groupTable.get(groupNo-groupOffset);
+	public Set<Client> getGroup(int groupID) {
+		return groupTable.get(groupID-groupOffset);
 	}
 	
-	public int getNumOfGroups() {
-		return groupTable.size();
+	public int getGroupID(int groupNo) {
+		return groupNo + groupOffset+1;
 	}
 	
-	public int getGroupOffID(int groupID) {
-		return groupID + groupOffset;
+	public int getGroupNo(int groupID) {
+		return groupID - groupOffset -1;
 	}
 	
 	//destroy
 	public boolean destroy() {
 		//remove all clients and set groupID to -1
-		for (int i=0; i<getNumOfGroups(); i++) {
+		for (int i=0; i<groupTotal; i++) {
 			Set<Client> group = groupTable.get(i+1);
 			//if (group.size()==0) continue;
 			for (Client uc : group) {
@@ -140,12 +156,13 @@ public class GroupManager {
 				group.remove(uc);
 				//redirect to login
 				try {
-					String xml;
+					/*String xml;
 					if (uc.isAdmin)
 						xml = "<message type='redirect' path='adminMonitor' senderID='" + uc.permID +"'></message>";
 					else
 						xml = "<message type='redirect' path='login' senderID='" + uc.permID +"'></message>";
 					uc.session.getBasicRemote().sendText(xml);
+					*/
 					//uc.session.close(); //Attempt to close the session
 				} catch (Exception e) {
 					System.out.println("Could not remove user from closing group");
@@ -157,8 +174,8 @@ public class GroupManager {
 		
 		//AdminMonitors should already be dropped from each group
 		//Remove adminStatus
-		//for (Client userClient : adminMonitorTable.keySet())
-			//userClient.isAdmin = false;
+		for (Client userClient : adminMonitorTable.keySet())
+			userClient.isAdmin = false;
 		
 		//adminMonitorTable gets dropped so adminMonitors lose their registry
 		/*for (int i=0; i<adminMonitorTable.size(); i++) {
@@ -171,10 +188,9 @@ public class GroupManager {
 	
 	//add new Admin Monitor
 	public boolean addAdminMonitor(Client userClient) {
-		int groupNum = this.getNumOfGroups();
-		Boolean[] monitorTable = new Boolean[groupNum*2]; //2 slots per group
+		int[] monitorTable = new int[groupTotal]; //2 slots per group
 		for (int i=0; i<monitorTable.length; i++)
-			monitorTable[i] = false;
+			monitorTable[i] = 0;
 		
 		try {
 			adminMonitorTable.put(userClient, monitorTable);
@@ -186,17 +202,33 @@ public class GroupManager {
 		}
 	}
 	
-	public boolean checkIfAdminMonitor(Client userClient) {
-		return adminMonitorTable.containsKey(userClient);
-	}
-	
-	//boolean 0=monitor, 1=chat
-	public Boolean[] getAMStatus(Client userClient) {
+	//int 0=none, 1=chat, 2=monitor
+	public int[] getAMStatus(Client userClient) {
 		return adminMonitorTable.get(userClient);
 	}
 	
-	public Boolean[] setAMStatus(Client user, Boolean[] AMStatus) {
-		return adminMonitorTable.put(user, AMStatus);
+	public int[] setAMStatus(Client userClient, int[] AMStatus) {
+		return adminMonitorTable.put(userClient, AMStatus);
+	}
+	
+	public int getAMGroupStatus (Client userClient, int groupID) {
+		return adminMonitorTable.get(userClient)[groupID-this.groupOffset-1];
+	}
+	
+	public boolean getAnswerLock (int groupID) {
+		return answerLock[getGroupNo(groupID)];
+	}
+	
+	public void setAnswerLock (int groupID, boolean value) {
+		answerLock[getGroupNo(groupID)] = value;
+	}
+	
+	public void setAnswer (int groupID, String ans) {
+		answer[getGroupNo(groupID)] = ans;
+	}
+	
+	public void setPreviousAnswer (int groupID, String ans) {
+		prevAnswer[getGroupNo(groupID)] = ans;
 	}
 	
 	public ConcurrentHashMap<Integer, GroupInfoObject> getGroupStats () {

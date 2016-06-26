@@ -32,7 +32,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import websocket.chat.ChatAnnotation;
 
 public class FileLogger extends TimerTask {
 	
@@ -49,11 +48,11 @@ public class FileLogger extends TimerTask {
 	private static Timer fileTimer;
 	
 	private final GroupManager gManage;
-	private final int groupNum;
+	//private final int groupNum;
 	private final int groupIteration;
 	
 	private static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
-	//private final Date startDate;
+	public Date endDate;
 	
 	//private final String instructor;
 	private boolean destroy = false;
@@ -61,12 +60,12 @@ public class FileLogger extends TimerTask {
 	
 	public FileLogger(GroupManager gm, int groupIt, String logPath) {
 		//int groupNum, Date date, int groupIt, String logPath, String instruct
-		System.out.println("FileLogger constructor @ "+logPath+" Iter:"+groupIt);
+		System.out.println("FileLogger constructor @ "+logPath+" Set:"+groupIt);
 		fileTimer = new Timer();
 		fileTimer.schedule(this, FILE_UPDATE_TIME, FILE_UPDATE_TIME);
 		
 		this.gManage = gm;
-		this.groupNum = gm.getNumOfGroups();
+		//this.groupNum = gm.groupTotal;
 	    //this.startDate = date;
 	    this.groupIteration = groupIt;
 	    //this.instructor = instruct;
@@ -115,34 +114,47 @@ public class FileLogger extends TimerTask {
 
 	}
 	
+	private int maxSleep = 5; //mins
 	public void saveXML() throws Exception {
 
 	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss"); //File format date string
 		
-	    //So it sleeps for 1-8mins constantly
-	    //To reach max sleep, it must run for 36mins without file updates
+	    //So it sleeps for 1-5mins
+	    //To close the Set, it must run for 15mins without ANY messages sent
 	    int sleepTime = 1;
+		int actualTime = 0;
 		while (loggedClientMessages.size()==fileCounter) {
-			System.out.println("No new messages have been logged - "+df.format(new Date()));
+			actualTime += sleepTime;
+			
+			System.out.println("No new messages have been logged for "+actualTime+"mins as of - "+df.format(new Date()));
 			if (destroy) 
-				break; //ignore this message
-			Thread.sleep(1000*60*sleepTime); //sleep
-			sleepTime = sleepTime>10 ? 10 : ++sleepTime;
-			//return;
+				break; //ignore this sleep timer
+			
+			if (sleepTime>maxSleep) {
+				System.out.println("No messages have been logged for "+actualTime+"mins. Server will close the Set and save files.");
+				ChatAnnotation.groupManager.destroy();
+				ChatAnnotation.groupManager = null; //destroy reference
+				ChatAnnotation.fileLogger.destroy();
+				ChatAnnotation.fileLogger = null;
+				return;
+			}
+			Thread.sleep(1000*60*sleepTime++); //sleep
+			//sleepTime++;
 		}
+		
 		fileCounter = loggedClientMessages.size();
 		
-		Date endDate = new Date(); //Date for time of saving xml
+		endDate = new Date(); //Date for time of saving xml
 	    
 	    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 	    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 	    
 	    //create documents & root element for each group
-	    Document[] docs = new Document[this.groupNum];
-	    Element[] root = new Element[this.groupNum];
+	    Document[] docs = new Document[gManage.groupTotal];
+	    Element[] root = new Element[gManage.groupTotal];
 	    
 	    //loop and generate new Document + new Root element for xml
-	    for (int i = 0; i < this.groupNum; i++)    {
+	    for (int i = 0; i < gManage.groupTotal; i++)    {
 	      docs[i] = documentBuilder.newDocument();
 	      
 	      root[i] = docs[i].createElement("woozlog");
@@ -150,9 +162,9 @@ public class FileLogger extends TimerTask {
 	      //Add data for each file
 	      //root[i].setAttribute("GroupIteration", Integer.toString(this.groupIteration));
 	      root[i].setAttribute("GroupIteration", Integer.toString(this.groupIteration));
-	      root[i].setAttribute("GroupName", "Group " + gManage.getGroupOffID(i+1));
-	      root[i].setAttribute("Instructor", this.gManage.instructor);
-	      root[i].setAttribute("StartTime", serverDateFormatter.format(this.gManage.timeOfGroupCreation));
+	      root[i].setAttribute("GroupName", "Group " + gManage.getGroupID(i));
+	      root[i].setAttribute("Instructor", this.gManage.logName);
+	      root[i].setAttribute("StartTime", serverDateFormatter.format(this.gManage.setCreateDate));
 	      if (this.destroy) {
 	        root[i].setAttribute("EndTime", serverDateFormatter.format(endDate));
 	      } else {
@@ -168,7 +180,7 @@ public class FileLogger extends TimerTask {
 	      Element e = loggedClientMessages.get(i);
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
 	      int indexID = groupID - gManage.groupOffset;
-	      if(indexID<0 || indexID>this.groupNum) return;
+	      if(indexID<0 || indexID>gManage.groupTotal) return;
 	      Node ne = docs[indexID].importNode(e, true);
 	      root[indexID].appendChild(ne);
 	    }
@@ -176,13 +188,15 @@ public class FileLogger extends TimerTask {
 	    
 	    TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	    Transformer transformer = transformerFactory.newTransformer();
+	    transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+	    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 	    
 	    System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
 	    
 	    //save xml file for each group
-	    for (int i = 0; i < this.groupNum; i++)  {
+	    for (int i = 0; i < gManage.groupTotal; i++)  {
 	      DOMSource source = new DOMSource(docs[i]);
-	      String filename = "Chatlog_Iter_" + this.groupIteration + "_Group" + gManage.getGroupOffID(i+1) + " " + df.format(gManage.timeOfGroupCreation) + ".xml";
+	      String filename = "Chatlog_Group" + gManage.getGroupID(i) + "_" + df.format(gManage.setCreateDate) + ".xml";
 	      
 	      this.logPath = this.logPath.replaceAll("\\\\+", "\\\\"); //gotta DOUBLE DELIMIT on windows
 	      filename = filename.replaceAll("\\/", "-"); //get rid of / in date
@@ -190,7 +204,7 @@ public class FileLogger extends TimerTask {
 	      filename = filename.replaceAll(" ", "_"); //replace space with _
 	      
 	      String fileSep = System.getProperty("file.separator");
-	      String logPathDir = this.logPath + "GroupIter_"+groupIteration+"_"+df.format(gManage.timeOfGroupCreation)+"_"+gManage.instructor+fileSep;
+	      String logPathDir = this.logPath + "SetIter_"+groupIteration+"_"+df.format(gManage.setCreateDate)+"_"+gManage.logName+fileSep;
 	      
 	      logPathDir = logPathDir.replaceAll(" ", "_"); //space can sneak in with instructor
 	      File logPathFile = new File(logPathDir); 
