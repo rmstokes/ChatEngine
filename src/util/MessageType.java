@@ -1,5 +1,7 @@
 package util;
 
+//author: Adrian Anyansi
+
 public class MessageType {
 
 	public static final String UserClientSet = "userClientGet";
@@ -31,6 +33,8 @@ public class MessageType {
 	public static final String AdminMonitor_Logout = "adminMonitorLogout";
 	
 	public static final String AdminMonitor_Status = "adminMonitorUpdateStatus";
+	
+	public static final String AdminMonitor_Leave = "adminMonitorLeave";
 	
 	//public static final String AdminMonitor_Update = "adminMonitorUpdate";
 	

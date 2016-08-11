@@ -34,6 +34,8 @@ util_openSocket();
 		$ ("#serverGfx").removeClass("activeWS");
 		$ ("#pingGfx").removeClass("pingPong");
 		console.log("WebSocket was closed.");
+		
+		$ ('button').attr('disabled', true);
 	};
 
 	Chat.socket.onmessage = function(message) {
@@ -50,6 +52,14 @@ util_openSocket();
 			console.log(messageType+" "+messageNode.getAttribute('senderID'));
 			util_setPermID(messageNode.getAttribute('senderID'));
 			
+		} else if (messageType == 'setClose') {
+			//just copying code from groupInfo when set is closed
+			setCreated = false;
+			$('#closeBtn').attr('disabled');
+			
+			$ ('#serverStatus').text("CLOSED");
+			$ ('#currentSetDiv').removeClass().addClass("CLOSED");
+			return;
 		} else if (messageType == 'groupSetInfo') {
 			var setStatus = messageNode.getAttribute('setStatus');
 			var groupOffset = messageNode.getAttribute('groupOffset');
@@ -68,6 +78,7 @@ util_openSocket();
 			} else {
 				setCreated = false;
 				$('#closeBtn').attr('disabled');
+				return; //leave values there so you can see them
 			}
 			
 			

@@ -22,36 +22,49 @@ var host = '';
 var Scroll_To_Bot = true; // user scrolling up
 //var User_Type_Confirm = null;
 
-var sentLeaveChat = false;
+var sentLeaveChat = false; //user left of his own accord
 var reconnectAttempt = null;
 var reconnectAttemptCounter = 0;
 
 var swapPanel = 0;
 var lastAnswerEdit = 0;
 var groupPrompt = false;
+var SetReset = false; //if user has logged in, go to landingPage (closes webSocket)
 var AnswerStatus = false;
 
 util_openSocket(); //open the webSocket
 
 	Chat.socket.onopen = function() {
-		$ ("#clientGfx").addClass("activeWS");
-		$ ("#serverGfx").addClass("activeWS");
-		$ ("#pingGfx").addClass("pingPong");
+		$ ("#clientGfx").removeClass().addClass("circleBase activeWS");
+		$ ("#serverGfx").removeClass().addClass("circleBase activeWS");
+		$ ("#pingGfx").removeClass().addClass("circleBase ping pingPong");
 		util_affirmUserClient();
 		console.log("WebSocket was opened");
 		
+		$("#chatInput").val("");
 		$("#chatInput")[0].oninput = sendChat;
 		$("#chatInput")[0].onkeydown = sendChat;
 		
 		$("#answerInput")[0].oninput = sendAnswer;
+		
+		//clear chat window for reconnect
+		$(".chatConsole p").remove(); //remove all messages
 	};
 
 	Chat.socket.onclose = function() {
-		$ ("#clientGfx").removeClass("activeWS");
-		$ ("#serverGfx").removeClass("activeWS");
-		$ ("#pingGfx").removeClass("pingPong");
+		$ ("#clientGfx").removeClass().addClass("circleBase");
+		$ ("#serverGfx").removeClass().addClass("circleBase");
+		$ ("#pingGfx").removeClass().addClass("circleBase ping");
 		console.log("WebSocket was closed.");
-				
+		
+		if (!sentLeaveChat) { //did not leave purposely
+			//console.log("Attempting reconnect in 3s");
+			$("#serverGfx").addClass("disconnectWS");
+			$("#pingGfx").addClass("reconnect");
+			
+			setTimeout(util_reconnectSocket, 1000); //reconnect after 1s
+			//util_reconnectSocket(); //self resolving reconnect
+		}
 	};
 
 	Chat.socket.onmessage = function(message) {
@@ -69,17 +82,27 @@ util_openSocket(); //open the webSocket
 			util_setPermID(messageNode.getAttribute('senderID'));
 			return;
 		} else if (messageType=='groupInfo') {
+//			if (SetReset) {
+//				alert("This Set of groups have expired. This page will now reset.");
+//				util_webRedirect("landingPage");
+//				return;
+//			}
 			if (messageNode.getAttribute("setStatus")=="FALSE") {
 				$("#joinBtn").prop("disabled", true);
 				$("#joinBtn").text("Groups Not Created");
 				groupPrompt = true;
-				console.log();
+				//console.log();
 			} else {
 				if (groupPrompt)
 					alert("Groups have been created/updated!");
 				
 				$("#joinBtn").prop("disabled", false);
 				$("#joinBtn").text("Join");
+				
+				$("#joinBtn").click(loginGroup);
+				$("#firstName").keydown(loginShortcut);
+				$("#lastName").keydown(loginShortcut);
+				
 				var groupSelect = $("#groupSelection")[0];
 				var groupTotal = Number(messageNode.getAttribute("groupTotal"));
 				var groupOffset = Number(messageNode.getAttribute("groupOffset"));
@@ -98,7 +121,17 @@ util_openSocket(); //open the webSocket
 			return;
 		} else if (messageType == 'displayChat') {
 			//successful login, go to info page
+			//SetReset = true;
 			changePanel();
+			return;
+		} else if (messageType == 'goToChat') {
+			//during reconnect, force to chat window
+			goToChat();
+			return;
+		} else if (messageType == 'setClose') {
+			//set was closed, send to landing page
+			alert("This Group has expired. The page will now reset.");
+			util_webRedirect("landingPage");
 			return;
 		} else if (messageType == 'lGroupMembers') {
 			var sidebar = $("#sidebar")[0];
@@ -130,8 +163,9 @@ util_openSocket(); //open the webSocket
 		} else if (messageType=='answerType') {
 			var answerText = xmlDoc.getElementsByTagName('text')[0].textContent;
 			$("#answerPara").text(answerText);
-			var senderID = messageNode.getAttribute('senderID'); 
-			if (senderID != clientID) {
+			var senderID = messageNode.getAttribute('senderID');
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (senderID != clientID && !chatHistory) {
 				//lockout user from answer
 				var senderName = messageNode.getAttribute('senderName');
 				var senderColor = messageNode.getAttribute('senderColor');
@@ -203,11 +237,14 @@ util_openSocket(); //open the webSocket
 		//****************************************************
 		//Begin to parse chat messages here
 		//****************************************************
-
+		var chatConsole = document.getElementById('chatConsole');
+		chat_processMessage(messageNode, messageType, chatConsole);
+		
+		/*
 		var textNode; // this thing is the cause of so many issues
 		var innerText = '';
-		if (xmlDoc.getElementsByTagName('text') !== undefined) { // error handling for textNode
-			textNode = xmlDoc.getElementsByTagName('text')[0];
+		if (messageNode.getElementsByTagName('text') !== undefined) { // error handling for textNode
+			textNode = messageNode.getElementsByTagName('text')[0];
 			if (textNode !== undefined && textNode.childNodes[0] !== undefined) {
 				innerText = textNode.textContent;
 
@@ -216,6 +253,7 @@ util_openSocket(); //open the webSocket
 				innerText = innerText.replace(/</gm, '&lt;');
 			}
 		}
+		innerText = chat_replaceEmote(innerText);
 
 		var senderColor = messageNode.getAttribute('senderColor');
 		var senderID = messageNode.getAttribute('senderID');
@@ -296,12 +334,14 @@ util_openSocket(); //open the webSocket
 			paragraph.id = '';
 			paragraph.innerHTML = innerText;
 			paragraph.className = "serverMessage";
+			if (messageNode.getAttribute("chatHistory")!=undefined)
+				paragraph.className += " chatHistoryMessage";
 			paragraph.appendChild(newline);
 			chatLineBreak.style.backgroundColor = SERVER_COLOUR;
 			paragraph.appendChild(chatLineBreak);
 		}
 		
-
+		*/
 		// Scroll to bottom on console if user not scrolled up
 		var scrollCoef = chatConsole.scrollHeight - chatConsole.scrollTop - chatConsole.clientHeight;
 		var scrollMax = chatConsole.scrollHeight - chatConsole.clientHeight;
@@ -335,6 +375,8 @@ function sendChat(event) {
 	var xml = '<message type="' + chatType + '" senderID="' + clientID + '">'
 			+ '<chat>' + '<text>' + message + '</text>' + '</chat>'
 			+ '</message>';
+	
+	//console.log("WS buffer: "+Chat.socket.bufferedAmount);
 	Chat.socket.send(xml);
 };
 
@@ -350,18 +392,6 @@ function sendAnswer(event) {
 		+ '</message>';
 	Chat.socket.send(xml);
 }
-
-window.onbeforeunload = function () {
-	//This is assuming the user has purposely closed the page/refreshed the page.
-	//Send a closeSocket message to the server- the server must know that client disconnect on purpose
-	//Works on all modern browsers except Chrome on close browser
-	if(Chat.socket==null) //If Chat.socket is not loaded, dont run
-		return;
-	var xml = '<message type="leaveChat" senderID="'+clientID+'"/>';
-	Chat.socket.send(xml);
-	sentLeaveChat = true;
-	console.log("beforeunload has run");
-};
 
 function changePanel () {
 //	console.log("swappedPanels "+swapPanel);
@@ -388,6 +418,11 @@ function changePanel () {
 		$("#bodyDiv").animate({scrollTop: 0}, "slow");
 		swapPanel = 1;
 	}
+}
+
+function goToChat () {
+	while (swapPanel!=2)
+		changePanel();
 }
 
 function loginShortcut (event) {
@@ -450,22 +485,57 @@ function captureTab (event) {
 
 	    // put caret at right position again
 	    $(et).get(0).selectionStart =
-	    $(et).get(0).selectionEnd = start+4;// + 1;
+	    	$(et).get(0).selectionEnd = start+4;// + 1;
 	    $(et).trigger("input"); //tab not caught by input since programmable
 	  }
 }
 
+window.onbeforeunload = function () {
+	//This is assuming the user has purposely closed the page/refreshed the page.
+	//Send a closeSocket message to the server- the server must know that client disconnect on purpose
+	if(Chat.socket==null) //If Chat.socket is not loaded, dont run
+		return;
+	
+	//spoof chat event to convert typing event to chat
+	var fakeBtnEvent = {type:"click"};
+	sendChat(fakeBtnEvent);
+	
+	var xml = '<message type="leaveChat" senderID="'+clientID+'"/>';
+	Chat.socket.send(xml);
+	sentLeaveChat = true;
+	console.log("beforeunload has run");
+};
 
 //JS initialization starts here
 
-window.onunload = util_closeSocket();
+//So the mythical solution to prevent Chrome throwing errors on tab close/browser close
+//is to run util_closeSocket on exit, which forces the browser to send WS close msg? I dunno
+//I'm not sniffing packets or anything. If the browser crashes, it still errors but I'm fine with this
+window.onunload = util_closeSocket;
 
-//$("#joinBtn").click(changePanel);
-$("#joinBtn").click(loginGroup);
+var specialStr = "";
+document.onkeypress = function (event) {
+	specialStr = (event.keyCode || event.which) + specialStr;
+	specialStr = specialStr.substr(0, "131221203937393740403838".length);
+	//console.log(specialStr);
+	if (specialStr == "131221203937393740403838") {
+		console.log("Reconnect code activated");
+		//Its the konami code obviously- Adrian Anyansi
+		Chat.socket.close();
+	}
+	
+	
+};
+
+
+$("#loginDiv").css("transition", "left 2s, transform 2s");
+//$("#loginDiv").one("transitionend", function () {
+//	$("#loginDiv").css("transition", "left 2s, transform 2s");
+//	console.log("hu");
+//})
 $("#infoAcceptBtn").click(changePanel);
 $("#back_InfoBtn").click(changePanel);
-$("#firstName").keydown(loginShortcut);
-$("#lastName").keydown(loginShortcut);
+
 $("#bodyDiv").animate({scrollTop: 0}, "slow");
 $("#chatConsole").scroll(function (event) {
 	var scrollCoef = event.target.scrollHeight - event.target.scrollTop - event.target.clientHeight;
@@ -473,3 +543,4 @@ $("#chatConsole").scroll(function (event) {
 });
 $("#submitBtn").click(submitAnswer);
 $("#answerInput").keydown(captureTab);
+populateEmojiTable();

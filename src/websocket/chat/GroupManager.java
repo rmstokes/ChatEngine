@@ -7,10 +7,17 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import javax.websocket.Session;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import util.CHAT_COLOR;
 import util.GroupInfoObject;
@@ -44,6 +51,8 @@ public class GroupManager {
 	public String[] answer;
 	public String[] prevAnswer;
 	public boolean[] answerLock;
+	public long[] answerTypeTime;
+	public String[] answerTypeID;
 	
 	//List of AdminMonitors and their information
 	private ConcurrentHashMap<Client, int[]> adminMonitorTable = new ConcurrentHashMap<Client, int[]>();
@@ -70,10 +79,15 @@ public class GroupManager {
 		answer = new String[groupTotal];
 		prevAnswer = new String[groupTotal];
 		answerLock = new boolean[groupTotal];
+		answerTypeTime = new long[groupTotal]; 
+		answerTypeID = new String[groupTotal];
 		
 		for (int i=0; i<groupTotal; i++) {
 			answer[i] = "";
-			prevAnswer[i] = "No answer";
+			prevAnswer[i] = "System: No answer";
+			//answerLock[i] = false;
+			answerTypeTime[i] = 0;
+			answerTypeID[i] = "";
 		}
 	}
 	
@@ -137,6 +151,10 @@ public class GroupManager {
 		return groupTable.get(groupID-groupOffset);
 	}
 	
+	public Set<Client> getGroupByNo(int groupNo) {
+		return groupTable.get(groupNo+1);
+	}
+	
 	public int getGroupID(int groupNo) {
 		return groupNo + groupOffset+1;
 	}
@@ -147,30 +165,48 @@ public class GroupManager {
 	
 	//destroy
 	public boolean destroy() {
-		//remove all clients and set groupID to -1
-		for (int i=0; i<groupTotal; i++) {
-			Set<Client> group = groupTable.get(i+1);
-			//if (group.size()==0) continue;
-			for (Client uc : group) {
-				uc.groupID = -1; //Not in a group
-				group.remove(uc);
-				//redirect to login
-				try {
-					/*String xml;
-					if (uc.isAdmin)
-						xml = "<message type='redirect' path='adminMonitor' senderID='" + uc.permID +"'></message>";
-					else
-						xml = "<message type='redirect' path='login' senderID='" + uc.permID +"'></message>";
-					uc.session.getBasicRemote().sendText(xml);
-					*/
-					//uc.session.close(); //Attempt to close the session
-				} catch (Exception e) {
-					System.out.println("Could not remove user from closing group");
+		
+		try { //broadcast message for logs & current users
+			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			Element closeGroupMsg = doc.createElement("message");
+			closeGroupMsg.setAttribute("type", "alert");
+			closeGroupMsg.setAttribute("senderID", "Wooz2");
+			closeGroupMsg.setAttribute("timestamp", ChatAnnotation.serverDateFormatter.format(new Date()));
+			closeGroupMsg.appendChild(doc.createElement("text"));
+			closeGroupMsg.getFirstChild().setTextContent("This set has been closed.");
+			
+			for (int i=0; i<groupTotal; i++) {
+				Element groupCloseMsg = (Element) closeGroupMsg.cloneNode(true);
+				groupCloseMsg.setAttribute("groupNumber", Integer.toString(getGroupID(i)));
+				ChatAnnotation.broadcastGroup(groupCloseMsg, getGroupID(i)); //broadcast to groups
+				
+				Set<Client> group = groupTable.get(i+1);
+				for (Client uc : group) {
+					uc.groupID = -1; //-1 means not in a group
+					//Dont need to remove since groups are dropped
 				}
-				//String msg =  "<message type='redirect' path='login' senderID='" + uc.permID +"'></message>";
-				//uc.session.getBasicRemote().sendText(msg);
 			}
+		
+		} catch (Exception pce) {
+			System.out.println("Failed to create closing Group message. (GroupManager)");
 		}
+		
+		try { //send set close message to all clients
+			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			Element setCloseMsg = doc.createElement("message");
+			setCloseMsg.setAttribute("type", "setClose");
+			setCloseMsg.setAttribute("timestamp", ChatAnnotation.serverDateFormatter.format(new Date()));
+			
+			String setCloseStr = ChatAnnotation.convertXMLtoString(setCloseMsg);
+			
+			for (int i=0; i<ChatAnnotation.connectedSessions.size(); i++) {
+				ChatAnnotation.connectedSessions.get(i).getBasicRemote().sendText(setCloseStr);
+			}
+			
+		} catch (Exception e) {
+			System.out.println("Failed to create closing Set message. (GroupManager)");
+		}
+		
 		
 		//AdminMonitors should already be dropped from each group
 		//Remove adminStatus
@@ -202,6 +238,11 @@ public class GroupManager {
 		}
 	}
 	
+	public boolean dropAdminMonitor (Client userClient) {
+		int[] val = adminMonitorTable.remove(userClient);
+		return val!=null;
+	}
+	
 	//int 0=none, 1=chat, 2=monitor
 	public int[] getAMStatus(Client userClient) {
 		return adminMonitorTable.get(userClient);
@@ -217,6 +258,23 @@ public class GroupManager {
 	
 	public boolean getAnswerLock (int groupID) {
 		return answerLock[getGroupNo(groupID)];
+	}
+	
+	//Used to block new users typing in between the 3s interval
+	long answerTimeout= 3*1000; //3 seconds
+	
+	public boolean allowAnswerType (int groupID, String senderID) {
+		int groupNo = getGroupNo(groupID);
+		long timeDiff = System.currentTimeMillis() - answerTypeTime[groupNo];
+		//update the time
+		answerTypeTime[groupNo] = System.currentTimeMillis();
+		
+		boolean answerTypePriority = senderID.equals(answerTypeID[groupNo]) || timeDiff>answerTimeout;
+		
+		if (answerTypePriority) //new typer takes priority if true
+			answerTypeID[groupNo] = senderID;
+		
+		return answerTypePriority;
 	}
 	
 	public void setAnswerLock (int groupID, boolean value) {

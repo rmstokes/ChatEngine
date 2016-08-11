@@ -37,7 +37,11 @@
 			<div id="pingGfx" class="circleBase ping"></div>
 		</div>
 
-		<h2>Admin Monitor</h2>
+		<h2>Admin Monitor
+			<span class="navH2" style="left:460px"><a href="admin.html" >>Admin</a></span>
+			<span style="float: right; top:30px">COMPS</span>
+		</h2>
+		
 	</div>
 	
 	<p class="navMessage">
@@ -99,7 +103,17 @@
 <br/>
 
 <div id="answerAlert">
-	<p><span>Group <span id="answerAlertGroupID">X</span></span> just submitted an answer!</p>
+	<p>Group <span id="answerGroupID">X</span> just submitted an answer!</p>
+	<button id="answerLink">Review Answer</button>
+</div>
+
+<div id="answerAlert" style="right:4em">
+	<p>Group <span id="answerGroupID">X</span> just submitted an answer!</p>
+	<button id="answerLink">Review Answer</button>
+</div>
+
+<div id="answerAlert" style="right:5em">
+	<p>Group <span id="answerGroupID">X</span> just submitted an answer!</p>
 	<button id="answerLink">Review Answer</button>
 </div>
 
@@ -136,6 +150,11 @@
 			<input id="chatInput" class="chat" type="text"
 				placeholder="type and press enter to chat" />
 			<button id='chat_button' onclick='sendChat(event)'>Chat</button>
+			<div class="emoteIcon"><img src="img/emojiOne-Svg/1f600.svg" alt="EmoteIconDoNotCopy"/></div>
+				<div class=emoteTablePadding></div>
+				<ul class="emoteTable" ondragstart="return false">
+				</ul>
+				<div class="emoteSpeak"></div>
 		</div>
 	</div>
 
@@ -195,5 +214,6 @@
 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
 			  crossorigin="anonymous"></script>
 <script src="js/utility.js" type="text/javascript"></script>
+<script src="js/chat.js" type="text/javascript"></script>
 <script src="js/adminMonitorJS.js" type="text/javascript"></script>
 </html>

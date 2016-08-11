@@ -3,12 +3,14 @@ package websocket.chat;
 import javax.websocket.Session;
 
 import util.CHAT_COLOR;
+import util.ErrorCode;
 
 public class Client {
 	
 	public final String permID;
 	public String sessionID;
 	public Session session;
+	public ErrorCode errorCode = ErrorCode.None;
 	
 	public boolean isAdmin = false; //designates admin
 	public boolean answerStatus = false; //used for answer (student)

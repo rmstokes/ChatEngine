@@ -7,26 +7,43 @@ public enum CHAT_COLOR {
 	//Removed Red colors to reserve for TA's
 	//Aquamarine, //Sea Water colour
 	Black, 
+	
 	Blue, //Regular blue
+	DarkCyan, //Teal dark blue
 	//BlueViolet, //Mid Blue Purple
+	DodgerBlue, //Baby Blue
+	//LightSkyBlue, //Pale pale blue
+	SteelBlue, //Blue blue blue
+	SlateBlue, //Blue violet
+//	Dendrox {
+//		@Override
+//		public String toString() {
+//			return "#CFACF7";
+//		}
+//	}, //Dendrox from Twitch- too light, doesn't show up
+	
 	Brown, //Just Brown
 	BurlyWood, //Light wood brown
-	//Coral, //Light orange+red  - too close to tomato
-	DarkCyan, //Teal dark blue
-	DarkOrange, //Orange
+	RosyBrown, //Brown and purple like
+	SandyBrown, //Brown Yellow like
+	
+	
 	DarkViolet, //Dark Purple but still purple not blue
 	DeepPink, //Deep pink
-	DodgerBlue, //Baby Blue
+	Plum, //pale violet
+	
 	//Gold, //Yellow but readable - too bright on white 
 	GoldenRod, //City; Yellow shade of brown
-	//LightSkyBlue, //Pale pale blue
-	LimeGreen, //Green as it gets - also too bright
-	OliveDrab, //Olive
 	Orange, //Pale orange
-	SandyBrown, //Brown Yellow like
+	//Coral, //Light orange+red  - too close to tomato
+	//DarkOrange, //Orange (too close to Orange)
+	
+	LimeGreen, //Green as it gets - also too bright
+	OliveDrab, //Olive green
 	SeaGreen, //Forest Green
-	SteelBlue, //Blue blue blue
+	DarkSeaGreen, //Washed out green like
 	//SpringGreen, //Leaf Green (this is a little bright
+	
 	
 	
 	//TA COLOURS
@@ -35,4 +52,15 @@ public enum CHAT_COLOR {
 	Crimson, //Blood Red
 	//OrangeRed,  //Red Orange in that order
 	
+	;//end of enum values
+	
+	
+//	@Override
+//	public String toString() {
+//		if (this.name().equals("Dendrox")) {
+//			return "#CFACF7";
+//		} else {
+//			return super.toString();
+//		}
+//	}
 }

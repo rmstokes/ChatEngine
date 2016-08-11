@@ -7,14 +7,19 @@ body {
 	color: red;
 }
 
+.maroonBold {
+	font-size: 105%;
+	color: burgundy;
+}
+
 .blueBold {
 	font-size: 110%;
 	color: blue;
 }
 
 .greenBold {
-	font-size: 110%;
-	color: forestgreen;
+	font-size: 105%;
+	color: LimeGreen;
 }
 
 h2 {

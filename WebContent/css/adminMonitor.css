@@ -2,6 +2,31 @@
 	background-color: #cd6e5a;
 }
 
+.navH2 {
+	position: absolute;
+/* 	left: 150px; */
+/* 	top:0.1em; */
+}
+
+.navH2 a {
+	padding:0 0.2em; 
+	border-radius:5px; 
+	background-color: crimson;
+	color:inherit;
+	text-decoration:none;
+	transition: background-color 1.5s;
+}
+
+.navH2 a:hover {
+	background-color: salmon;
+	transition: background-color 0.5s;
+}
+
+.navH2 a:active {
+	background-color: darkred;
+	transition: background-color 0s;
+}
+
 h2 {
 	text-shadow: 2px 2px darkred;
 	margin-left: 100px;
@@ -111,12 +136,12 @@ h1 {
 #loginDiv {
 /* 	position: absolute;  */
 /* 	left: 50%;  */
-	transform: translateX(50%);
+/* 	transform: translateX(50%); */
 /* 	display:none; */
 	width: 480px;
 	background-color: rgba(0,0,255,0.1);
 	border-radius: 20px;
-	margin: 0.5em 1em;
+	margin: 0.5em auto;
 	box-sizing: border-box;
 	padding:10px;
 	padding-bottom: 30px;
@@ -165,6 +190,7 @@ td, input {
 	margin:1em 1.5em 1em 0.5em;
 	display:inline-block;
 	transition: background-color 1s;
+	position: relative;
 }
 
 .groupWindow.monitor {
@@ -182,10 +208,17 @@ td, input {
 	width:425px;
 }
 
-input[type=checkbox], label {
+input[type=checkbox] + label {
 	cursor: pointer;
 	color:whitesmoke;
 	font-weight: bold;
+	padding:2px;
+	border-radius:5px;
+}
+
+input:checked + label.windowToggle {
+	color:black;
+	background-color:whitesmoke;
 }
 
 input:checked ~ div.answerWindow, input ~ div.chatWindow {
@@ -196,7 +229,8 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 	display:none;
 }
 
-#answerAlert {
+/* #answerAlert */
+[id^=answerAlert] {
 	position: fixed;
 	right: 3em;
 	bottom: 0px;
@@ -208,14 +242,17 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 	transition: transform, 1s;
 	transform: translateY(100%);
 	z-index:10;
+	border-right: 3px hotpink solid;
 }
 
-#answerAlert p {
+/* #answerAlert */
+[id^=answerAlert] p {
 	color:snow;
 	font-weight:bold;
 }
 
-#answerAlert.show {
+/* #answerAlert */
+[id^=answerAlert].show {
 	transform: none;
 }
 
@@ -224,7 +261,8 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 	100% {background-color:white;}
 }
 
-#answerLink {
+/* #answerLink */
+[id^=answerLink] {
 	text-decoration: none;
 	background-color: #306bae;
 	color: snow;
@@ -249,8 +287,9 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 }
 
 .answerInteract {
-	border: 3px outset gray;
+	border: 3px outset whitesmoke;
 	border-radius: 5px;
+	padding: 5px;
 }
 
 .answerCorrect {
@@ -264,6 +303,10 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 .answerCorrect, .answerWrong {
 	background-color: ghostwhite;
 	border: 3px solid transparent;
+	font-weight:bold;
+	padding:0px 5px;
+	font-size:150%;
+	margin: 0px 10px;
 }
 
 .answerCorrect:disabled, .answerWrong:disabled {
@@ -272,8 +315,12 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 
 .answerCorrect:not([disabled]):hover {
 	border: 3px solid green;
+	background-color:green;
+	color:white;
 }
 
 .answerWrong:not([disabled]):hover {
 	border: 3px solid red;
+	background-color:red;
+	color:white;
 }

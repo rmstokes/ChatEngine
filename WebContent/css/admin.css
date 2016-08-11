@@ -10,7 +10,7 @@ h2 {
 }
 
 #headerDiv {
-	background-color: blue;
+	background-color: rebeccapurple;
 }
 
 input, select {
@@ -37,6 +37,10 @@ input, select {
 
 #currentSetDiv.FALSE {
 	background-color: rgba(200, 0, 0, 0.35);
+}
+
+#currentSetDiv.CLOSED {
+	background-color: rgba(100, 100, 100, 0.7);
 }
 
 h1 {

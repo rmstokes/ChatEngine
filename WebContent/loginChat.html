@@ -28,7 +28,7 @@
 	<meta http-equiv="Expires" content="0" />
 </head>
 <body>
-
+<!-- <div style="display:flex; flex-direction:column"> -->
 	<div id="headerDiv">
 		<div id="webSocketGfx">
 			<div id="clientGfx" class="circleBase"></div>
@@ -36,7 +36,9 @@
 			<div id="pingGfx" class="circleBase ping"></div>
 		</div>
 
-		<h2>Login</h2>
+		<h2>Login
+			<span style="float: right; top:30px">COMPS</span>
+		</h2>
 
 	</div>
 	
@@ -76,7 +78,7 @@
       	
       	<div style="height:30px"></div>
       	
-      	<button id="joinBtn" style='font-size:130%'>Join</button>
+      	<button id="joinBtn" style='font-size:130%' disabled="">Join</button>
 	</div>
 
 	
@@ -170,6 +172,11 @@
 				<input id="chatInput" class="chat" type="text"
 					placeholder="type and press enter to chat" />
 				<button id='chat_button' onclick='sendChat(event)'>Chat</button>
+				<div class="emoteIcon"><img src="img/emojiOne-Svg/1f600.svg" alt="EmoteIconDoNotCopy"/></div>
+				<div class=emoteTablePadding></div>
+				<ul class="emoteTable" ondragstart="return false">
+				</ul>
+				<div class="emoteSpeak"></div>
 			</div>
 		</div>
 		</div>
@@ -182,6 +189,7 @@
 	
 	
 	</div>
+<!-- </div> -->
 
 </body>
 
@@ -189,5 +197,6 @@
 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
 			  crossorigin="anonymous"></script>
 <script src="js/utility.js" type="text/javascript"></script>
+<script src="js/chat.js" type="text/javascript"></script>
 <script src="js/loginChatJS.js" type="text/javascript"></script>
 </html>

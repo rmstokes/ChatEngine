@@ -9,7 +9,7 @@ This is the page that users will see when they first input the url.
 
   <head>
     <title>Landing Page - COMPS</title>
-    <link id="titleIcon" href="img/chatbubble-working.png" rel="shortcut icon"/>
+    <link id="titleIcon" type="image/png" href="img/chatbubble-working.png" rel="shortcut icon"/>
     <link rel="stylesheet" type="text/css" href="css/landingPage.css"/>
     <link rel="stylesheet" type="text/css" href="css/siteWide.css"/>
     <meta charset="UTF-8"></meta> 
@@ -23,7 +23,7 @@ This is the page that users will see when they first input the url.
     <p class="navMessage">Try not to use <strong>refresh</strong> or <strong>back</strong>  to change pages while on this site</p>
 <!--     <div style=""></div> -->
     
-    <h1 >Welcome to <br />the Computer Mediated Problem Solving Lab!</h1>
+    <h1 >Welcome to <br />the Computer-Mediated Problem Solving Lab!</h1>
     <div style="">
       
       <p style="margin-bottom: 0px;">Select Desired Function:</p>
@@ -61,10 +61,10 @@ This is the page that users will see when they first input the url.
         	var selected = $("#userType option:selected")[0].text;
         	
         	if (selected == "Login") {
-        		$("#infoBox").html("<strong>Login</strong> is the page for <strong class='blueBold'>Student</strong> users.  <br/> This will allow you to login to your assigned group and chat with other group members.");
+        		$("#infoBox").html("<strong>Login</strong> is the page for <strong class='blueBold'>Student</strong> users.  <br/> This will allow you to login to your assigned group and <strong class='greenBold'>chat</strong> with other group members.");
         		$("#goButton").attr("href", "loginChat.html");
         	} else if (selected == "Admin") {
-        		$("#infoBox").html("<strong>Admin</strong> is for <strong class='redBold'>Adminstrators Only.</strong>  <br/> Here you can create a new <strong>Set</strong> (new set of groups), close a current Set and monitor other system information.");
+        		$("#infoBox").html("<strong>Admin</strong> is for <strong class='redBold'>Adminstrators Only.</strong>  <br/> Here you can create a new <strong>Set</strong> (new set of groups), close a current <strong>Set</strong> and monitor other server information.");
         		$("#goButton").attr("href", "admin.html");
         	} else if (selected == "Admin Monitor") {
         		$("#infoBox").html("<strong>Admin Monitor</strong> is for <strong class='redBold'>Teaching Assistants</strong> or <strong class=redBold>Instructors</strong> to interact with multiple groups at once.  <br/> Here you can <strong class='redBold'>Monitor</strong> groups and watch their progress discretely. <br/> Or you can <strong class='greenBold'>Chat</strong> and talk with the group. <br/>");

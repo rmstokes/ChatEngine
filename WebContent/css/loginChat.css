@@ -1,10 +1,10 @@
 #headerDiv {
-	background-color: blue;
+	background-color: forestgreen;
 }
 
 #bodyDiv {
  	position:absolute;
-	height: 85%;
+	height: 87%;
 	width: 100%;
 	overflow-x: hidden;
 	overflow-y: hidden;
@@ -80,15 +80,15 @@ h1 {
 .offLeftDiv {
 	left: 0%;
 	transform: translateX(-120%);
-	transition: left 2s, transform 2s;
+	transition: left 2s, transform 2s, height 4s;
 	backface-visibility: hidden;
-	
+/* 	height: 400px; */
 }
 
 .centerDiv {
 	left: 50%;
 	transform: translateX(-50%); 
-	transition: left 2s, transform 2s;
+	transition: left 2s, transform 2s, height 4s;
 	height:auto;
 	backface-visibility: hidden;
 	
@@ -97,8 +97,9 @@ h1 {
 .offRightDiv {
 	left: 100%;
 	transform: translateX(50%);
-	transition: left 2s, transform 2s;
+	transition: left 2s, transform 2s, height 4s;
 	backface-visibility: hidden;
+/* 	height: 400px; */
 	
 }
 
@@ -114,7 +115,8 @@ h1 {
 	box-sizing: border-box;
 	padding-bottom: 30px;
 	
-	transition: left 2s, transform 2s;
+/* 	transition: left 2s, transform 2s; */
+	transition: none;
 }
 
 #infoDiv {
@@ -135,7 +137,7 @@ h1 {
 }
 
 h2 {
-	text-shadow: 2px 2px darkblue;
+	text-shadow: 2px 2px darkgreen;
 	margin-left: 100px;
 }
 
@@ -193,8 +195,8 @@ div::-webkit-resizer {
 	background-color: rgba(0, 0, 200, 0.7);
 	padding: 10px;
 	border-radius: 10px;
-	float: right;
-	min-width: 450px;
+	float: left;
+	min-width: 430px;
 	position:relative;
 }
 
@@ -215,7 +217,7 @@ div::-webkit-resizer {
 	padding:5px 0px;
 	overflow:hidden;
 	border-radius:10px;
-	width:440px;
+	width:410px;
 	height:300px;
 	border-bottom-right-radius: 0px;
 }
@@ -255,6 +257,7 @@ div::-webkit-resizer {
 	box-sizing:border-box;
 	text-align:left;
 	white-space:pre-wrap;
+	color: rebeccaPurple;
 }
 
 #answerPara {

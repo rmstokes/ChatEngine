@@ -6,12 +6,12 @@
 function util_redirect(messageNode) {
 	var redirect = messageNode.getAttribute('path');
 	var serverPath = window.location.pathname.match(/^(\/\w*\/)/)[0];
-	window.location.href = 'http://'+window.location.host + serverPath +redirect+'.xhtml';
+	window.location.href = 'http://'+window.location.host + serverPath +redirect+'.html';
 }
 
 function util_webRedirect(webpage) {
 	var serverPath = window.location.pathname.match(/^(\/\w*\/)/)[0];
-	window.location.href = 'http://'+window.location.host + serverPath +webpage+'.xhtml';
+	window.location.href = 'http://'+window.location.host + serverPath +webpage+'.html';
 }
 
 function util_getHostPath() {
@@ -62,6 +62,42 @@ function util_openSocket (){
 function util_closeSocket() {
 	if (Chat.socket.readyState==1) //if socket is open
 		Chat.socket.close();
+}
+
+var reconnectNumber = 0;
+function util_reconnectSocket() {
+	if (reconnectNumber==0) {
+		Chat.Open = Chat.socket.onopen;
+		Chat.Error = Chat.socket.onerror;
+		Chat.Message = Chat.socket.onmessage;
+		Chat.Close = Chat.socket.onclose;
+	} else if (reconnectNumber>10) { //too many attempts
+		console.log("Failed to reconnect WebSocket-Too many attempts-"+reconnectNumber);
+		$ ("#clientGfx").removeClass().addClass("circleBase");
+		$ ("#serverGfx").removeClass().addClass("circleBase");
+		$ ("#pingGfx").removeClass().addClass("circleBase ping");
+		return;
+	}
+	
+	if (Chat.socket.readyState==3) { //Closed
+		console.log("Attempting reconnect attempt-"+reconnectNumber);
+		util_openSocket();
+		Chat.socket.onopen = Chat.Open;
+		Chat.socket.onerror = Chat.Error;
+		Chat.socket.onmessage = Chat.Message;
+		Chat.socket.onclose = Chat.Close;
+		reconnectNumber++;
+	}
+	
+	//Close WS already calls this, no need for timeout
+//	if (Chat.socket.readyState!=1) { //If not open, redo function
+//		setTimeout(util_reconnectSocket, 1000); //1s wait
+//	} else { //connected
+//		reconnectNumber = 0; //reset counter
+//		console.log("Reconnect successful!!");
+//		return;
+//	}
+	
 }
 
 function util_webSocketCheck() {

@@ -55,7 +55,7 @@
 	padding: 0px;
 	overflow:hidden;
 	border-radius:10px;
-	width: 460px;
+	width: 430px;
 	height:500px;
 	border-bottom-right-radius: 0px;
 }
@@ -131,6 +131,11 @@ p.serverMessage {
 	color: gray;
 }
 
+.serverMessage.chatHistoryMessage {
+	background-color: LightGoldenRodYellow;
+	background-color: rgba(172, 230, 100, 0.3);
+}
+
 .pulseMessage {
 	animation: 3s;
 }
@@ -145,4 +150,87 @@ p.serverMessage {
 	display: block;
 	min-height: 2px;
 	clear:both;
+}
+
+.chatConsole p img {
+	width: 1.5em;
+	height: 1.5em;
+}
+
+.emoteIcon {
+	padding:3px;
+	width:3em;
+	height:3em;
+	float:right;
+	border-radius:100%; /*Let the round icon match the hitbox*/
+}
+
+.emoteSpeak {
+	height:0px;
+	width:0px;
+/* 	border-top:10px solid transparent; */
+	border-right:10px solid transparent;
+	border-bottom:10px solid silver;
+	position:absolute;
+	right:2.5em;
+	bottom:1.5em;
+	display:none;
+	pointer-events:none; 
+	/*Dont want to capture this as its at the bottom of the dependancy*/
+}
+
+.emoteTablePadding {
+	height:300px;
+	width:2em;
+	position:absolute;
+	right:1em;
+	bottom:2em;
+	display:none;
+}
+
+.emoteTable {
+	background-color:silver;
+	width: 11.5em;
+	border-radius:10px;
+	list-style-type:none;
+	display: none;
+	padding:5px;
+	position:absolute;
+	right:3em;
+	bottom:0em;
+}
+
+.emoteTable li {
+	width: 2em;
+	height:2em;
+	display:inline-block;
+	margin-bottom:1em;
+	cursor:pointer;
+}
+
+.emoteTable li img {
+	transition: all 100ms ease;
+}
+
+.emoteTable li img:hover {
+	transform: scale(1.3);
+	z-index:5;
+}
+
+.emoteTable li img:active {
+	transform:scale(0.8);
+}
+
+.emoteIcon:hover~.emoteTablePadding, .emoteTablePadding:hover{
+	display:block;
+}
+
+.emoteIcon:hover~.emoteTable, .emoteTable:hover, 
+.emoteTablePadding:hover~.emoteTable {
+	display:block;
+}
+
+.emoteTable:hover ~ .emoteSpeak, .emoteIcon:hover~.emoteSpeak, 
+.emoteTablePadding:hover~.emoteSpeak {
+	display:block
 }

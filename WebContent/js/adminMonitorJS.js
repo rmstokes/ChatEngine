@@ -35,7 +35,8 @@ var Global_Group_Offset = 0;
 var reconnectAttempt = null;
 var reconnectAttemptCounter = 0;
 
-
+//Populate Emoji before we copy table
+populateEmojiTable();
 //Admin Monitor HTML constants
 //Template for group info
 var AMGroupInfo = document.getElementById("GXAMGroupInfo").cloneNode(true);
@@ -44,6 +45,7 @@ var AMGroupInfo = document.getElementById("GXAMGroupInfo").cloneNode(true);
 var AMGroupWindow = document.getElementById("GXGroupWindow").cloneNode(true);
 document.getElementById("GXGroupWindow").style.display = "none";
 
+var AMCredentials = {username:"", loggedIn:false};
 
 util_openSocket(); //open webSocket
 
@@ -61,6 +63,13 @@ util_openSocket(); //open webSocket
 		$ ("#serverGfx").removeClass("activeWS");
 		$ ("#pingGfx").removeClass("pingPong");
 		console.log("WebSocket was closed.");
+		
+		if (!sentLeaveAM) {
+			$("#serverGfx").addClass("disconnectWS");
+			$("#pingGfx").addClass("reconnect");
+
+			setTimeout(util_reconnectSocket, 1000); //reconnect after 1s
+		}
 
 	};
 
@@ -79,6 +88,11 @@ util_openSocket(); //open webSocket
 			return;
 		} else if (messageType == 'groupInfo') {
 			updateGroupInfo(messageNode); //update the group info on the page
+			return;
+		} else if (messageType == "setClose") {
+			//set is closed, remove all windows/side bar
+			$(".groupWindow").remove();
+			$("#AMStatusTBody tr").remove();
 			return;
 		} else if (messageType == 'lGroupMembers') {
 			//adminMonitor has a more advanced version of this, capture and ignore
@@ -109,20 +123,28 @@ util_openSocket(); //open webSocket
 			} else { //answer being edited
 				$("#answerCorrect"+groupID).prop("disabled", true);
 				$("#answerWrong"+groupID).prop("disabled", true);
-				if ($("#answerAlertGroupID").text()==groupID) { //remove alert
-					$("#answerAlert").removeClass();
-				}
+				$("#answerAlert"+groupID).prop("id", "answerAlert").removeClass();//hide and make answerAlert available
+//				if ($("#answerGroupID"+groupID).text()==groupID) { //remove alert
+//					$("#answerAlert"+groupID).removeClass();
+//				}
 			}
 				
 			return;
 		} else if (messageType == 'answerAlert') {
 			var groupID = messageNode.getAttribute("groupNumber");
-			$("#answerAlert").addClass("show");
-			$("#answerAlertGroupID").text(groupID);
-			$("#answerLink").off("click").click(function () {
+			var jqAvailAnswerAlert = $("#answerAlert").eq(-1); //get last available answerAlert
+			
+			jqAvailAnswerAlert.find("span").text(groupID); //groupID span
+			jqAvailAnswerAlert.find("button").off("click").click(function () {
 				showAnswer(groupID);
-				//scroll up by 100px??
-			});
+				$(window).scrollTop($(window).scrollTop()-100); //scroll up by 100px??
+			}); //place button handler
+			jqAvailAnswerAlert.prop("id", "answerAlert"+groupID).addClass("show"); //change ID & add class
+			
+			//$("#answerAlert span").text(groupID);
+			//$("#answerAlert button")
+			//$("#answerAlert").prop("id", "answerAlert"+groupID).addClass("show");
+			
 			$("#answerAlarm")[0].play();
 			$("#answerCorrect"+groupID).prop("disabled", false);
 			$("#answerWrong"+groupID).prop("disabled", false);
@@ -135,8 +157,13 @@ util_openSocket(); //open webSocket
 		//****************************************************
 		//Begin to parse chat messages here
 		//****************************************************
-
-		var textNode; // this thing is the cause of so many issues
+		
+		var groupID = messageNode.getAttribute('groupNumber');
+		var chatConsole = document.getElementById('chatConsole'+groupID); // get console for AM
+		chat_processMessage(messageNode, messageType, chatConsole);
+		//return;
+		
+		/*var textNode; // this thing is the cause of so many issues
 		var innerText = '';
 		if (xmlDoc.getElementsByTagName('text') !== undefined) { // error handling for textNode
 			textNode = xmlDoc.getElementsByTagName('text')[0];
@@ -178,7 +205,7 @@ util_openSocket(); //open webSocket
 			}
 			if (paragraph instanceof Array) //if couldnt find paragraph in that array
 				paragraph = null; 
-		}*/
+		}
 
 		var chatText = userLabel + innerText + timestamp; // put everything into 1
 		
@@ -231,6 +258,7 @@ util_openSocket(); //open webSocket
 							+ '</span>');
 
 			innerText = util_chatHighlightAlert(innerText);
+			innerText += timestamp; //undecided on this rn
 			
 			paragraph.id = '';
 			paragraph.innerHTML = innerText;
@@ -241,6 +269,7 @@ util_openSocket(); //open webSocket
 		} else {
 			console.log('invalid message from server: \n' + xml);
 		}
+		*/
 
 		// Scroll to bottom on console if user not scrolled up
 		var gID = parseInt(groupID);
@@ -248,7 +277,7 @@ util_openSocket(); //open webSocket
 			chatConsole.scrollTop = chatConsole.scrollHeight;
 	};
 
-function buttonSend(event) {
+/*function buttonSend(event) {
 	// send message from text field when/button enter is pressed
 	var groupID = event.currentTarget.id;
 	if (event.currentTarget.tagName=="button")
@@ -258,11 +287,11 @@ function buttonSend(event) {
 	
 	//console.log("Sent to group "+groupID);
 	Chat.sendMessage(event, groupID);
-}
+}*/
 
 function sendChat(event) {
 	var keycode = event.keyCode || event.which;
-	var groupID = Number(/\d*$/.exec(event.currentTarget.id));
+	var groupID = Number(/\d*$/.exec(event.target.id)); //event.currentTarget.id was used before
 	var message = $('#chatInput'+groupID).val();
 	
 	var chatType = 'typing'; // typing by default
@@ -298,6 +327,8 @@ function AMLogin() {
 	Chat.socket.send(xml);
 	$("#loginBtn").text("...");
 	$("#loginBtn")[0].disabled = true;
+	$("#usernameAM")[0].disabled = true;
+	AMCredentials.username = usernameText;
 }
 
 //Function runs to initialize group info
@@ -305,18 +336,26 @@ function updateGroupInfo(messageNode) {
 	//clear the first table of values
 	var AMTBody = $("#AMStatusTBody")[0];
 	//remove every row except the header
-	if (AMTBody.children.length!=0) //caption counts as a child
+	while (AMTBody.children.length!=0) //tbody
 		AMTBody.removeChild(AMTBody.lastElementChild);
+	
+	var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
 
 	//check groups created
 	var setStatus = messageNode.getAttribute('setStatus');
 	if (setStatus == 'FALSE') {
 		alert("There are no groups created currently.");
 		document.getElementById("loginBtn").disabled = true;
+		document.getElementById("loginBtn").textContent = "No Groups Created";
 		groupPrompt = true;
 	} else {
-		if (groupPrompt)
+		if (groupPrompt) {
 			alert("Groups have been created/updated!");
+			groupPrompt = false;
+		}
+		
+		if (AMCredentials.loggedIn)
+			AMLogin(); //run login script
 		
 		//add rows based on groupInfo
 		var groupTotal = Number(messageNode.getAttribute('groupTotal'));
@@ -343,6 +382,8 @@ function updateGroupInfo(messageNode) {
 		}
 
 		document.getElementById("loginBtn").disabled = false;
+		document.getElementById("loginBtn").textContent = "Login";
+		document.getElementById('usernameAM').onkeyup = function(e) {if(e.keyCode==13 || e.which==13) AMLogin()};
 	}
 	
 	//Set up background variables to begin to set up the system
@@ -432,6 +473,7 @@ function updateServerStatus(messageNode) {
 	}
 	//update chat display
 	updateAMChat();
+	AMCredentials.loggedIn = true;
 }
 
 function updateAMChat() {
@@ -491,7 +533,11 @@ function showAnswer(groupID) {
 	$("#windowType"+groupID).prop("checked", true); //display answer via css
 	location.href = "adminMonitor.html#windowType"+groupID; //go to answer
 	
-	$("#answerAlert").removeClass();//hide
+	//$("#answerAlert").removeClass();
+	$("#answerAlert"+groupID).prop("id", "answerAlert").removeClass();//hide and make answerAlert available
+	//$("#answerLink"+groupID).prop("id", "answerLink");
+	//$("#answerGroupID"+groupID).prop("id", "answerGroupID");
+	
 	
 	var xml = '<message type="answerUnderReview" senderID="' + clientID + '" groupNumber="' + groupID +'">'
 	+ '</message>';
@@ -546,10 +592,21 @@ function updateGroupStats(messageNode) {
 	}
 }
 
-//JS Entry point
-document.getElementById('usernameAM').onkeyup = function(e) {if(e.keyCode==13 || e.which==13) AMLogin()};
+window.onbeforeunload = function () {
+	//This is assuming the user has purposely closed the page/refreshed the page.
+	//Send a closeSocket message to the server- the server must know that client disconnect on purpose
+	if(Chat.socket==null) //If Chat.socket is not loaded, dont run
+		return;
+	
+	var xml = '<message type="adminMonitorLeave" senderID="'+clientID+'"/>';
+	Chat.socket.send(xml);
+	sentLeaveAM = true;
+	console.log("beforeunload has run");
+};
 
-window.onunload = util_closeSocket();
+//JS Entry point
+
+window.onunload = util_closeSocket;
 
 
 $("#loginBtn").click(AMLogin);

@@ -114,7 +114,7 @@ public class FileLogger extends TimerTask {
 
 	}
 	
-	private int maxSleep = 5; //mins
+	private int maxSleep = 30; //mins
 	public void saveXML() throws Exception {
 
 	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss"); //File format date string
@@ -126,11 +126,12 @@ public class FileLogger extends TimerTask {
 		while (loggedClientMessages.size()==fileCounter) {
 			actualTime += sleepTime;
 			
-			System.out.println("No new messages have been logged for "+actualTime+"mins as of - "+df.format(new Date()));
 			if (destroy) 
 				break; //ignore this sleep timer
+			System.out.println("No new messages have been logged for "+actualTime+"mins as of - "+df.format(new Date()));
 			
-			if (sleepTime>maxSleep) {
+			//sleepTIme > maxSleep 
+			if (actualTime>=maxSleep) {
 				System.out.println("No messages have been logged for "+actualTime+"mins. Server will close the Set and save files.");
 				ChatAnnotation.groupManager.destroy();
 				ChatAnnotation.groupManager = null; //destroy reference
