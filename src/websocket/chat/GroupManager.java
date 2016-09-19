@@ -266,13 +266,15 @@ public class GroupManager {
 	public boolean allowAnswerType (int groupID, String senderID) {
 		int groupNo = getGroupNo(groupID);
 		long timeDiff = System.currentTimeMillis() - answerTypeTime[groupNo];
-		//update the time
-		answerTypeTime[groupNo] = System.currentTimeMillis();
+		
 		
 		boolean answerTypePriority = senderID.equals(answerTypeID[groupNo]) || timeDiff>answerTimeout;
 		
-		if (answerTypePriority) //new typer takes priority if true
+		if (answerTypePriority) {//new typer takes priority if true
 			answerTypeID[groupNo] = senderID;
+			//update the time
+			answerTypeTime[groupNo] = System.currentTimeMillis();
+		}
 		
 		return answerTypePriority;
 	}

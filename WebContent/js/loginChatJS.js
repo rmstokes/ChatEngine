@@ -5,11 +5,11 @@
 "use strict";
 
 //Chat color constants
-var TYPING_BGC = 'Lavender';
-var USER_TYPING_BGC = 'CornSilk';
-var USER_BGC = 'LavenderBlush';
-var CHAT_HISTORY_BGC = 'LightGoldenRodYellow';
-var CHAT_HISTORY_DBGC = 'Beige';
+//var TYPING_BGC = 'Lavender';
+//var USER_TYPING_BGC = 'CornSilk';
+//var USER_BGC = 'LavenderBlush';
+//var CHAT_HISTORY_BGC = 'LightGoldenRodYellow';
+//var CHAT_HISTORY_DBGC = 'Beige';
 var SERVER_COLOUR = 'Navy';
 
 //SenderID and ClientID
@@ -31,6 +31,13 @@ var lastAnswerEdit = 0;
 var groupPrompt = false;
 var SetReset = false; //if user has logged in, go to landingPage (closes webSocket)
 var AnswerStatus = false;
+var AnswerLock = false;
+
+var answerTimeoutFunc = 0;
+var answerPopupFunc = 0;
+
+var answerPromptMembers = -100;
+var currNoMembers = 100;
 
 util_openSocket(); //open the webSocket
 
@@ -165,69 +172,300 @@ util_openSocket(); //open the webSocket
 			$("#answerPara").text(answerText);
 			var senderID = messageNode.getAttribute('senderID');
 			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
-			if (senderID != clientID && !chatHistory) {
+			if (senderID != clientID && !chatHistory) { //text-area changes
+				$("#answerInput").prop("disabled", true);
+				$("#answerInput").val(answerText);
+			}
+			
+//			if (senderID != clientID && !chatHistory) {
+			if (!chatHistory) { //Do regardless who is typing
 				//lockout user from answer
 				var senderName = messageNode.getAttribute('senderName');
 				var senderColor = messageNode.getAttribute('senderColor');
-				$("#answerInput").prop("disabled", true);
-				$("#answerInput").val(answerText);
+//				$("#answerInput").prop("disabled", true);
+//				$("#answerInput").val(answerText);
 				$("#lockedPara").css("opacity", 1);
-				$("#lockedPara").text("Locked by "+senderName);
+				$("#lockedPara").text("Locked by "+senderName+"");
 				$("#lockedPara").css("background-color", senderColor);
 				
 				lastAnswerEdit = new Date().getTime();
 				
-				setTimeout(function () {
+				$("#lockedParaTimer").css("width", "100%");
+				clearTimeout(answerTimeoutFunc); //clear function timer
+				
+				answerTimeoutFunc = setTimeout(answerLockFunction, 1000);
+				/*setTimeout(function () {
 					var time = new Date().getTime();
-					if(time-lastAnswerEdit>2900) {
+					
+					if(time-lastAnswerEdit<1000) {
+						//do nothing
+					} else if (time-lastAnswerEdit <2000) {
+						$("#lockedParaTimer").css("width", "66%");
+					} else if (time-lastAnswerEdit < 3000) {
+						$("#lockedParaTimer").css("width", "33%");
+						
+					} else if(time-lastAnswerEdit>2900) {
 						$("#answerInput").prop("disabled", false);
-						$("#lockedPara").css("opacity", 0);
+						$("#lockedPara").css("background-color", "slategray");
+						$("#lockedPara").text("Answer is unlocked");
+
+						$("#lockedParaTimer").css("width", "0%");
+//						$("#lockedPara").css("opacity", 0);
+						clearTimeout(answerTimeoutFunc);
+						return;
 					}
-				}, 3000);
+					
+				}, 1000);*/
 			}
+			return;
+		} else if (messageType =='answerPrompt') {
+			//Bring up the prompt message
+			var senderID = messageNode.getAttribute('senderID');
+			var senderName = messageNode.getAttribute('senderName');
+			var senderColor = messageNode.getAttribute('senderColor');
+			
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (chatHistory)
+				return;
+			
+			$("#answerDropDown").empty();
+			
+			$("#answerDropDown").append( 
+					$("<p>"+senderName+" is requesting submission </p>")
+					.css("background-color", senderColor)
+					.css("height", "1.5em"));
+			
+			//$("#lockedPara").text(senderName +" is submitting!");
+			$("#lockedPara").text("Answer is locked until submission decision is done.");
+			$("#lockedPara").css("background-color", "DodgerBlue");
+			
+			lastAnswerEdit = new Date().getTime(); //since the answer should be locked, use new time
+			$("#answerInput").prop("disabled", true);
+			
+			//set function for managing timer & etc
+			$("#lockedParaTimer").css("width", "100%");
+			
+			clearTimeout(answerTimeoutFunc);
+			clearTimeout(answerPopupFunc);
+			
+			$("#answerPopupTimer").text((15-1)+"s");
+			
+			var promptTimerFunc = function () {
+				var timeDiff = new Date().getTime() - lastAnswerEdit;
+				
+				if (timeDiff > (15 * 1000)) {
+					$("#lockedParaTimer").css("width", "0%");
+					if (!AnswerLock)
+						$("#answerInput").prop("disabled", false);
+					
+					if (!$("#answerPopup").hasClass("hidePopup")) { //if popup is still up
+						//close and do automatic return
+						$("#answerPopup").addClass("hidePopup");
+						$("#blackOverlay").addClass("hidePopup");
+						
+						var xml = '<message type="answerStatus" senderID="' + clientID
+						+ '" status="' + 'false' 
+						+ '" overtime="' + 'true' + '">'
+						+ '</message>';
+						
+						Chat.socket.send(xml);
+					}
+					
+					return;
+				} else {
+					var pert = ((15*1000 - timeDiff) * 100) / (15 * 1000);
+					$("#lockedParaTimer").css("width", pert+'%');
+					$("#answerPopupTimer").text(parseInt(15-timeDiff/1000)+"s");
+				}
+				answerPopupFunc = setTimeout(promptTimerFunc, 1000);
+			};
+			
+			answerPopupFunc = setTimeout(promptTimerFunc, 1000);
+			
+			if (senderID == clientID) //do nothing if user prompted
+				return;
+			
+			//$("#lockedPara").text(senderName+" is submitting!");
+			//$("#lockedPara").css("background-color", "lightBlue");
+			
+			$("#blackOverlay").removeClass("hidePopup");
+			$("#answerPopup").removeClass("hidePopup");
+			$("#answerSubmitUser").text(messageNode.getAttribute("senderName"))
+				.css("color", messageNode.getAttribute("senderColor"))
+				.css("height", "1.5em");
+			
+			
+			return;
+			
+		} else if (messageType == 'answerUpdate') {
+			//A user is sending an update changing their status
+			
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (chatHistory)
+				return;
+			
+			var senderID = messageNode.getAttribute('senderID');
+//			if (senderID==clientID)
+//				return;
+			
+			var senderName = messageNode.getAttribute('senderName');
+			var senderColor = messageNode.getAttribute('senderColor');
+			var answerStatus = messageNode.getAttribute('answerStatus')=="true";
+			var overtime = messageNode.getAttribute('overtime') == "true";
+			
+			var answerUpdatePara = $("<p/>").css('background-color', senderColor);
+			if (answerStatus)
+				answerUpdatePara.text(senderName+" agrees");
+			else if (overtime)
+				answerUpdatePara.text(senderName+" did not respond");
+			else
+				answerUpdatePara.text(senderName+" disagress");
+			
+			$("#answerDropDown").append(answerUpdatePara);
+			
+			setTimeout(function () {
+				answerUpdatePara.css('height', '1.5em');
+			}, 50); //0.05s delay
+			
+			answerPromptMembers -= 1;
+			if (answerPromptMembers==0) { //this is only un-negative if this user prompted
+				//all members have answered, send follow up message
+				var xml = '<message type="answerSubmitReview" senderID="'+clientID
+				+  '">'+ '</message>';
+				
+				//setTimeout()
+				Chat.socket.send(xml);
+			}
+			
+			return;
+			
+		} else if (messageType == 'answerSubmitReview') {
+			//submission has ended, see results
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (chatHistory)
+				return;
+			//pop up should be down already
+			if (!AnswerLock) {
+				$("#lockedPara").text("Submission failed. Answer is unlocked")
+					.css("background-color", "slategray");
+				$("#answerInput").prop("disabled", false);
+			}
+			
+			$("#lockedParaTimer").css("width", "0%");
+			
+			clearTimeout(answerPopupFunc);
+			
+			
+			return;
+			
+		} else if (messageType == 'answerUnderReview') {
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (chatHistory)
+				return;
+			//just an alert message, make a paragraph thingy
+			var senderName = messageNode.getAttribute('senderName');
+			var senderColor = messageNode.getAttribute('senderColor');
+			
+			var answerUpdatePara = $("<p/>").css('background-color', senderColor);
+			answerUpdatePara.text(senderName + " is reviewing your answer!");
+			
+			$("#answerDropDown").append(answerUpdatePara);
+			
+			setTimeout(function () {
+				answerUpdatePara.css('height', '1.5em');
+			}, 50); //0.05s delay
+			
+			return;
+			
+		} else if (messageType == 'answerReview') {
+			var chatHistory = messageNode.getAttribute('chatHistory') == "chatHistory";
+			if (chatHistory)
+				return;
+			//answer alert message, unlock the answerInput + new para
+			var senderName = messageNode.getAttribute('senderName');
+			var reviewColor = "red";
+			$("#answerInput").prop("disabled", false);
+			
+			//add new para for review message
+			var answerReview = messageNode.getAttribute("answerReview") == "true";
+			if (answerReview)
+				reviewColor = "MediumSpringGreen";
+
+			var answerMsg = (answerReview) ? "correct" : "wrong";
+			$("#lockedPara").text("Answer reviewed as "+answerMsg+"! Unlocked")
+				.css("background-color", "slateblue");
+			
+			var answerUpdatePara = $("<p/>").css('background-color', reviewColor);
+			answerUpdatePara.text(messageNode.getElementsByTagName('text')[0].textContent);
+			$("#answerDropDown").append(answerUpdatePara);
+			
+			setTimeout(function () {
+				answerUpdatePara.css('height', '1.5em');
+			}, 50); //0.05s delay
+			
+			//Now we need to collapse everything, but we'll let prompt clear so we dont overwrite
+			//var timeoutCounter = 0;
+			var ansChildren = $("#answerDropDown")[0].children;
+			for (var i=0; i<ansChildren.length; i++) {
+				setTimeout(function (ipass) {
+					$($("#answerDropDown p")[ipass]).css("height", "0px").css("padding", "0em");
+					//console.log("hi -"+$($("#answerDropDown p")[ipass]));
+				}, 2*1000*i, i);
+
+				//$($("#answerDropDown p")[i]).css("height", "1px");
+			}
+			
 			return;
 		} else if (messageType =='AnswerGroupStatus') {
 			$("#answerPara").text(xmlDoc.getElementsByTagName('answer')[0].textContent);
 			$("#answerInput").val(xmlDoc.getElementsByTagName('answer')[0].textContent);
 			$("#prevPara").text(xmlDoc.getElementsByTagName('prevAnswer')[0].textContent);
 			
+			$("#answerInputCopy").text( $("#answerInput").val() );
+			
 			var answerLock = messageNode.getAttribute("answerLock")=="true";
+			AnswerLock = answerLock;
 			
 			if (!answerLock) {
-				$("#lockedPara").css("opacity", 0);
+//				$("#lockedPara").css("opacity", 0);
+				//$("#lockedPara").text("Answer is unlocked").css("background-color", "slateGray");
 				$("#submitBtn").text("Submit").removeClass();
-				$("#answerInput").prop("disabled", false);
+				$("#submitBtn").prop("disabled", false);
+				//$("#answerInput").prop("disabled", false);
 			} else {
 				$("#lockedPara").css("opacity", 1).css("background-color", "Green")
 					.text("Answer is awaiting review");
-				$("#submitBtn").text("Withdraw").removeClass().addClass("withdrawBtn");
+//				$("#submitBtn").text("Withdraw").removeClass().addClass("withdrawBtn");
+				$("#submitBtn").prop("disabled", true);
 				$("#answerInput").prop("disabled", true);
 			}
 			
 			var members = messageNode.getElementsByTagName('member');
-			for (var i=0; i<members.length; i++) {
-				var sidebarP = $("#sidebar"+members[i].getAttribute("senderID"));
-				var memStatus = members[i].textContent=="true";
-				sidebarP.removeClass();
-				
-				if (memStatus && !answerLock)
-					sidebarP.addClass("whiteBlink");
-				else if (memStatus && answerLock)
-					sidebarP.addClass("redWhiteBlink");
-				
-				//changes only to user
-				if (clientID == members[i].getAttribute("senderID")) {
-					AnswerStatus = memStatus;
-					if (memStatus) {
-						if (!answerLock)
-							$("#submitBtn").text("XSubmit")
-								.removeClass().addClass("cancelBtn");
-						else
-							$("#submitBtn").text("XWithdraw")
-								.removeClass().addClass("cancelBtn");
-					}
-				}
-			}
+			currNoMembers = members.length;
+			
+//			for (var i=0; i<members.length; i++) {
+//				var sidebarP = $("#sidebar"+members[i].getAttribute("senderID"));
+//				var memStatus = members[i].textContent=="true";
+//				sidebarP.removeClass();
+//				
+//				if (memStatus && !answerLock)
+//					sidebarP.addClass("whiteBlink");
+//				else if (memStatus && answerLock)
+//					sidebarP.addClass("redWhiteBlink");
+//				
+//				//changes only to user
+//				if (clientID == members[i].getAttribute("senderID")) {
+//					AnswerStatus = memStatus;
+//					if (memStatus) {
+//						if (!answerLock)
+//							$("#submitBtn").text("XSubmit")
+//								.removeClass().addClass("cancelBtn");
+//						else
+//							$("#submitBtn").text("XWithdraw")
+//								.removeClass().addClass("cancelBtn");
+//					}
+//				}
+//			}
 			return;
 		} else if (messageType!='typing' && messageType!='chat' && messageType!='alert') {
 			console.log("unparsable: "+xml);
@@ -393,6 +631,25 @@ function sendAnswer(event) {
 	Chat.socket.send(xml);
 }
 
+function sendAnswerStatus(value) {
+	
+	var xml = '<message type="answerStatus" senderID="' + clientID
+	+ '" status="' + value + '">'
+	+ '</message>';
+	
+	Chat.socket.send(xml);
+	
+	//Now remove popup
+	$("#blackOverlay").addClass("hidePopup");
+	$("#answerPopup").addClass("hidePopup");
+	
+	//Allow edit maybe
+	//$("#answerInput").prop("disabled", false);
+	$("#lockedParaTimer").css("width", "0%");
+	
+	clearTimeout(answerPopupFunc);
+}
+
 function changePanel () {
 //	console.log("swappedPanels "+swapPanel);
 	if (swapPanel==0) {
@@ -430,6 +687,7 @@ function loginShortcut (event) {
 	if (keycode==13)
 		loginGroup();
 }
+
 function loginGroup () {
 	var groupNum = $("#groupSelection").val();
 	var username = $("#firstName").val() + " "+$("#lastName").val();
@@ -449,13 +707,30 @@ function loginGroup () {
 }
 
 function submitAnswer (event) {
+	//Sends answerPrompt to server & other group members
 	var status = !AnswerStatus;
 	
-	var xml = '<message type="answerStatus" senderID="' + clientID
-	+ '" status="' + status + '">'
-	+ '</message>';
+//	var xml = '<message type="answerStatus" senderID="' + clientID
+//	+ '" status="' + status + '">'
+//	+ '</message>';
+	
+	var xml = '<message type="answerPrompt" senderID="' + clientID
+	+  '">'+ '</message>';
 	
 	Chat.socket.send(xml);
+	
+//	setTimeout(function () {
+//		$("answerInput").prop("disabled", false);
+//	}, 3000);
+//	
+//	setTimeout(function () {
+//		var xml = '<message type="answerSubmitReview" senderID="'+clientID
+//		+  '">'+ '</message>';
+//		
+//		Chat.socket.send(xml);
+//	}, 15*1000);
+//	
+	answerPromptMembers = currNoMembers-1; //-1 includes self
 }
 
 function getKeyPress (event) {
@@ -488,6 +763,30 @@ function captureTab (event) {
 	    	$(et).get(0).selectionEnd = start+4;// + 1;
 	    $(et).trigger("input"); //tab not caught by input since programmable
 	  }
+}
+
+function answerLockFunction () {
+	var time = new Date().getTime();
+	
+	if(time-lastAnswerEdit<1000) {
+		//do nothing
+	} else if (time-lastAnswerEdit <2000) {
+		$("#lockedParaTimer").css("width", "66%");
+	} else if (time-lastAnswerEdit < 2900) {
+		$("#lockedParaTimer").css("width", "33%");
+		
+	} else if(time-lastAnswerEdit>2900) {
+		$("#answerInput").prop("disabled", false);
+		$("#lockedPara").css("background-color", "slategray");
+		$("#lockedPara").text("Answer is unlocked");
+
+		$("#lockedParaTimer").css("width", "0%");
+//		$("#lockedPara").css("opacity", 0);
+		clearTimeout(answerTimeoutFunc);
+		return;
+	}
+	
+	answerTimeoutFunc = setTimeout(answerLockFunction, 1000); //run 1000s after
 }
 
 window.onbeforeunload = function () {
@@ -527,7 +826,7 @@ document.onkeypress = function (event) {
 	
 };
 
-
+//$("#blackOverlay")
 $("#loginDiv").css("transition", "left 2s, transform 2s");
 //$("#loginDiv").one("transitionend", function () {
 //	$("#loginDiv").css("transition", "left 2s, transform 2s");
@@ -543,4 +842,8 @@ $("#chatConsole").scroll(function (event) {
 });
 $("#submitBtn").click(submitAnswer);
 $("#answerInput").keydown(captureTab);
+
+$("#answerPopup").css("visibility", "");
+$("#blackOverlay").css("visibility","");
+//$("#answerPara").click(function (event) {})
 populateEmojiTable();

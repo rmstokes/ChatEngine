@@ -104,14 +104,17 @@ h1 {
 	font-weight: bold;
 	transition: background-color 1s;
 	cursor:pointer;
-	border: 2px black outset;
+/* 	border: 2px black outset; */
+	border: 2px dimgray outset;
 }
 #sidebar td input + label:hover {
 	background-color:lightgray;
 	border-color: lightgray;
 }
 #sidebar td input:disabled + label {
-	background-color: #9c9c9c;
+/* 	background-color: #9c9c9c; */
+	cursor: default;
+	background-color: lightgray;
 	border-color: #9c9c9c;
 	border-style: solid;
 }
@@ -132,6 +135,22 @@ h1 {
 }
 
 @keyframes blinking { from {} to {background-color: white;} }
+
+@keyframes dblBlinking {
+	0% {
+		background-color: rgba(31, 122, 31, 0.7);
+		}
+	10% {
+		background-color: whitesmoke;
+		}
+	20% {background-color: rgba(31, 122, 31, 0.7);}
+	30% {background-color: whitesmoke;}
+	100% {background-color: rgba(31, 122, 31, 0.7);}
+}
+
+.dblBlink {
+	animation: 2s ease-out infinite dblBlinking;
+}
 
 #loginDiv {
 /* 	position: absolute;  */
@@ -311,6 +330,7 @@ input:checked ~ div.chatWindow, input ~ div.answerWindow {
 
 .answerCorrect:disabled, .answerWrong:disabled {
 	background-color:darkgray;
+	color:dimgray;
 }
 
 .answerCorrect:not([disabled]):hover {

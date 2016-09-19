@@ -46,6 +46,14 @@ public class MessageType {
 	
 	public static final String Answer_Status = "answerStatus";
 	
+	public static final String Answer_Update = "answerUpdate";
+	
+	public static final String Answer_Submit = "answerSubmit";
+	
+	public static final String Answer_SubmitReview = "answerSubmitReview";
+	
+	public static final String Answer_Prompt = "answerPrompt";
+	
 	public static final String Answer_Review = "answerReview";
 	
 	public static final String Answer_UnderReview = "answerUnderReview";

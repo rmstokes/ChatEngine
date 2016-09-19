@@ -149,6 +149,11 @@ util_openSocket(); //open webSocket
 			$("#answerCorrect"+groupID).prop("disabled", false);
 			$("#answerWrong"+groupID).prop("disabled", false);
 			return;
+			
+		} else if (messageType=="answerStatus"||messageType=="answerPrompt"||messageType=="answerUpdate"
+			||messageType=="answerSubmitReview" || messageType=="answerReview" || messageType=="answerUnderReview") {
+			//capture these but do nothing
+			return;
 		} else if (messageType!='typing' && messageType!='chat' && messageType!='alert') {
 			console.log("unparsable: "+xml);
 			return;
@@ -441,7 +446,7 @@ function updateServerStatus(messageNode) {
 	
 	$("#usernameSpan").text(messageNode.getAttribute("senderName"));
 	$("#loginDiv").css("height", "0px").css("padding", "0px");
-	$("#usernameDiv").css("height", "3em");
+	$("#usernameDiv").css("height", "5em");
 	
 	var groupOff = Number(messageNode.getAttribute('groupOffset'));
 	var groupTotal = Number(messageNode.getAttribute('groupNum'));
@@ -459,7 +464,8 @@ function updateServerStatus(messageNode) {
 		groupInfoRow.cells[1].lastElementChild.className = "chat";
 		groupInfoRow.cells[2].lastElementChild.className = "monitor";
 		
-		groupM.disabled = false;
+		//IM DISABLING MONITOR CAUSE NO ONE USES IT PROPERLY
+//		groupM.disabled = false;
 		groupC.disabled = false;
 		groupM.checked = false;
 		groupC.checked = false;

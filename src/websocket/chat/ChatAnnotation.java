@@ -246,9 +246,10 @@ public class ChatAnnotation implements ServletContextListener{
 	} else if (messageType.equals(MessageType.Answer_Type)) {
 		//Send message to group like typing event
 		//int groupID = Integer.parseInt(element.getAttribute("groupNumber"));
-		if (userClient.groupID < 1) {
+		if (userClient.groupID < 1 || groupManager == null) {
 			sendXMLMessage("webAlert", "Wooz2", "Invalid group ID");
 		}
+		
 		if (groupManager.getAnswerLock(userClient.groupID)) {
 			System.out.println("Answer is locked-Group "+userClient.groupID);
 			return;
@@ -514,6 +515,8 @@ public class ChatAnnotation implements ServletContextListener{
 			//If successful, initialize groupMember info, then send them to chat page
 			userClient.username = element.getAttribute("username");
 			userClient.groupID = groupNumber;
+			
+			userClient.answerStatus = false; //assume this user has not submitted anything
 			groupManager.assignChatColor(userClient);
 			
 			System.out.println("User: "+userClient.IDString()+"-> Group: "+userClient.groupID+"-> color: "+userClient.chatColor.toString());
@@ -552,9 +555,90 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			sendExitMessage(doc, userClient, bGroupID);
 			//userClient.session.close(); //Attempt to close connection from server side
-		 
+		
+		} else if (messageType.equals(MessageType.Answer_Prompt)) {
+			//One user is prompting the other users to submit the answer
+			
+			//Set everyone's status to false
+			Set<Client> group = groupManager.getGroup(userClient.groupID);
+			for (Client c : group) {
+				c.answerStatus = false;
+			}
+			
+			userClient.answerStatus = true; //user is submitting
+			System.out.println("User "+userClient.IDString()+" is requesting submission from the group");
+			
+			//hack to prevent typing for 15s seconds
+			//groupManager.answerTypeTime[groupManager.getGroupNo(userClient.groupID)] = System.currentTimeMillis() + 1000 * 13;
+			
+			Element ansPromptMsg = doc.createElement("message");
+			ansPromptMsg.setAttribute("type", "answerPrompt");
+			ansPromptMsg.setAttribute("senderName", userClient.username);
+			ansPromptMsg.setAttribute("senderID", userClient.permID);
+			ansPromptMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			ansPromptMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			ansPromptMsg.appendChild(doc.createElement("text"));
+			ansPromptMsg.getFirstChild().setTextContent(userClient.username+" is requesting submission!");
+			
+			broadcastGroup(ansPromptMsg, userClient.groupID);
+			
+			
+//			Element ansMsg = doc.createElement("message"); 
+//			ansMsg.setAttribute("type", "alert");
+//			ansMsg.setAttribute("senderName", userClient.username);
+//			ansMsg.setAttribute("senderID", userClient.permID);
+//			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+//			ansMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+//			ansMsg.appendChild(doc.createElement("text"));
+//			ansMsg.getFirstChild().setTextContent(userClient.username+" is requesting submission!");
+//			
+//			broadcastGroup(ansMsg, userClient.groupID);
+			
+			sendGroupAnswerStatus(userClient.groupID); //send full update on answerStatus
+			return;
 		
 		} else if (messageType.equals(MessageType.Answer_Status)) {
+			//This is a user replying from the prompt
+			userClient.answerStatus = Boolean.parseBoolean(element.getAttribute("status"));
+			System.out.println("User "+userClient.IDString()+" changed status to "+userClient.answerStatus);
+			
+			//Here send message status to the answer box
+			Element ansMsg = doc.createElement("message");
+			ansMsg.setAttribute("type", MessageType.Answer_Update);
+			ansMsg.setAttribute("senderName", userClient.username);
+			ansMsg.setAttribute("senderID", userClient.permID);
+			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			ansMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			ansMsg.setAttribute("answerStatus", Boolean.toString(userClient.answerStatus));
+			
+			if (!element.getAttribute("overtime").isEmpty())
+				ansMsg.setAttribute("overtime", "true");
+			
+			ansMsg.appendChild(doc.createElement("text"));
+			if (userClient.answerStatus)
+				ansMsg.getFirstChild().setTextContent(userClient.username+" agrees with the current answer!");
+			else 
+				ansMsg.getFirstChild().setTextContent(userClient.username+" disagrees with the current answer!");
+			
+			broadcastGroup(ansMsg, userClient.groupID);
+			
+			//Element ansMsg = doc.createElement("message"); 
+//			ansMsg.setAttribute("type", "alert");
+			//ansMsg.setAttribute("senderName", userClient.username);
+			//ansMsg.setAttribute("senderID", userClient.permID);
+			//ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
+			//ansMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+//			ansMsg.appendChild(doc.createElement("text"));
+//			if (userClient.answerStatus)
+//				ansMsg.getFirstChild().setTextContent(userClient.username+" wants to submit the answer!");
+//			else 
+//				ansMsg.getFirstChild().setTextContent(userClient.username+" wants to cancel and edit the answer.");
+//			
+//			broadcastGroup(ansMsg, userClient.groupID);
+			sendGroupAnswerStatus(userClient.groupID); //send full update on answerStatus
+			return;
+			
+		/*} else if (messageType.equals(MessageType.Answer_Status)) {
 			//System.out.println("Time diff "+(System.nanoTime()-startTime));
 			userClient.answerStatus = Boolean.parseBoolean(element.getAttribute("status"));
 			System.out.println("User "+userClient.IDString()+" changed status to "+userClient.answerStatus);
@@ -582,8 +666,26 @@ public class ChatAnnotation implements ServletContextListener{
 			broadcastGroup(ansMsg, userClient.groupID);
 			sendGroupAnswerStatus(userClient.groupID); //send full update on answerStatus
 			return;
+			*/
 			
+		} else if (messageType.equals(MessageType.Answer_SubmitReview)) {
+			//Everyone has submitted their response, just forward message
+			
+			System.out.println("Acknowledging submitReview from- "+userClient.IDString());
+			element.setAttribute("answerLock", 
+					Boolean.toString(groupManager.answerLock[groupManager.getGroupNo(userClient.groupID)]));
+			silentBroadcastGroup(element, userClient.groupID);
+			
+			Set<Client> group = groupManager.getGroup(userClient.groupID);
+			for (Client c: group)
+				c.answerStatus = false;
+			
+			
+			return;
 		} else if (messageType.equals(MessageType.Answer_UnderReview)) {
+			//Just an alert that is broadcast to the group telling them the TA has clicked
+			//on the review button
+			
 			int groupID = Integer.parseInt(element.getAttribute("groupNumber")); 
 			
 			Element ansMsg = doc.createElement("message"); 
@@ -596,8 +698,14 @@ public class ChatAnnotation implements ServletContextListener{
 			ansMsg.getFirstChild().setTextContent(userClient.username+" is currently reviewing your answer!");
 			
 			broadcastGroup(ansMsg, groupID);
+			
+			ansMsg.setAttribute("type", "answerUnderReview");
+			silentBroadcastGroup(ansMsg, groupID);
 			return;
 		} else if (messageType.equals(MessageType.Answer_Review)) {
+			//TA has made a decision on the answer submitted, unlock answer and inform
+			//the group of the decision
+			
 			int groupID = Integer.parseInt(element.getAttribute("groupNumber"));
 			String answerReview = element.getAttribute("answerReview");
 			
@@ -608,7 +716,10 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			int groupNo = groupManager.getGroupNo(groupID);
 			groupManager.answerLock[groupNo] = false;
-			groupManager.prevAnswer[groupNo] = groupManager.answer[groupNo]; 
+			groupManager.prevAnswer[groupNo] = groupManager.answer[groupNo];
+			
+			if (answerReview.equals("correct"))
+				groupManager.answer[groupNo] = "";
 			
 
 			Element ansMsg = doc.createElement("message"); 
@@ -617,11 +728,15 @@ public class ChatAnnotation implements ServletContextListener{
 			ansMsg.setAttribute("senderName", userClient.username);
 			ansMsg.setAttribute("senderColor", userClient.chatColor.toString());
 			ansMsg.setAttribute("groupNumber", Integer.toString(groupID));
+			ansMsg.setAttribute("answerReview", Boolean.toString(answerReview.equals("correct")));
 			ansMsg.appendChild(doc.createElement("text"));
 			ansMsg.getFirstChild().setTextContent(userClient.username+" has marked your answer as "+answerReview+"!");
 			
 			sendGroupAnswerStatus(groupID);
 			broadcastGroup(ansMsg, groupID);
+			
+			ansMsg.setAttribute("type", "answerReview");
+			silentBroadcastGroup(ansMsg, groupID);
 			return;
 		}
 		//END OF REFACTORING
@@ -691,6 +806,47 @@ public class ChatAnnotation implements ServletContextListener{
 		System.out.println();
 		
 	} //End of broadcastGroup
+	
+	public static void silentBroadcastGroup(Element msg, int groupID)  throws Exception {
+		//same as broadcast but silent (meaning it is not logged)
+		System.out.println("Silent broadcast Message: "+convertXMLtoString(msg));
+		
+		Set<Client> group = groupManager.getGroup(groupID);
+		
+		if (group.size()==0) {
+			System.out.println("Message not s. broadcast to empty group.");
+			return;
+		}
+		
+		String xmlStr = convertXMLtoString(msg);
+		System.out.print("Silent Broadcast to group ("+groupID+ ")");
+		for (Client gClient : group) {
+			try { //It should throw a IllegalStateException should this fail
+				synchronized (gClient.session) {
+				if (gClient.session.isOpen()) {
+					gClient.session.getBasicRemote().sendText(xmlStr); 
+					System.out.print(" : "+gClient.IDString());
+				} else
+					throw new Exception();
+				}
+			//a ton of error handling for lost messages
+			} catch (Exception e) {
+				log.debug("Chat Error: Failed to send message to client "+gClient.permID, e);
+				System.out.println("Chat Error: Failed to send message to client "+gClient.IDString()+" "+e.getMessage());
+				group.remove(gClient);
+				try {
+					gClient.session.close();
+				} catch (Exception ex) {
+					log.error("Server Error: Could not disconnect client");
+					System.out.println("Server Error: Could not disconnect client");
+				}
+				
+				sendDisconnectMessage(msg.getOwnerDocument(), gClient, groupID, "(Msg)");
+
+			}//end of try catch		
+		}//end of for - for each group Member
+		System.out.println();
+	}
 		
 	//Send simple message in xml form
 	private void sendXMLMessage(String msgType, String senderID) throws IOException {
@@ -788,7 +944,7 @@ public class ChatAnnotation implements ServletContextListener{
 		e.appendChild(epa);
 		
 		boolean allTrue = true; //check that 1 user is false instead of all users are true
-		boolean stdUsers = false; //there's at least 1 standard user
+		boolean stdUsers = false; //there's at least 1 standard(student) user 
 		
 		//Search through all group members that are not admins
 		for (Client c : group) {
@@ -841,8 +997,10 @@ public class ChatAnnotation implements ServletContextListener{
 			e.appendChild(ec);
 		}
 		
-		for (Client c : group) 
-			c.session.getBasicRemote().sendText(convertXMLtoString(e));
+		for (Client c : group)
+			synchronized (c.session) {
+				c.session.getBasicRemote().sendText(convertXMLtoString(e));
+			}
 	}
 	
 	private void sendAMStatus(int[] AMStatus) throws Exception {
@@ -1215,7 +1373,7 @@ public class ChatAnnotation implements ServletContextListener{
 class UserClientCullerClass extends TimerTask {
 	
 	public ArrayList<Client> userList;
-	public static int userCullTime = 1000*60*3;
+	public static int userCullTime = 1000*60*1;
 	public static int userReconnectTime = 1000*60*2;
 	
 	public UserClientCullerClass (ArrayList<Client> userL) {
