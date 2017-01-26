@@ -194,6 +194,10 @@ util_openSocket(); //open the webSocket
 				clearTimeout(answerTimeoutFunc); //clear function timer
 				
 				answerTimeoutFunc = setTimeout(answerLockFunction, 1000);
+				
+				
+				
+				
 				/*setTimeout(function () {
 					var time = new Date().getTime();
 					
@@ -783,6 +787,13 @@ function answerLockFunction () {
 		$("#lockedParaTimer").css("width", "0%");
 //		$("#lockedPara").css("opacity", 0);
 		clearTimeout(answerTimeoutFunc);
+		
+		// code to send message to server to log unlock 
+		var xml = '<message type="answerUnlock" senderID="' + clientID
+		+ '">'
+		+ '</message>';
+		Chat.socket.send(xml);
+		
 		return;
 	}
 	

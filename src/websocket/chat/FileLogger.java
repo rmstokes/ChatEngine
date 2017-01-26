@@ -123,6 +123,7 @@ public class FileLogger extends TimerTask {
 	    //To close the Set, it must run for 15mins without ANY messages sent
 	    int sleepTime = 1;
 		int actualTime = 0;
+		
 		while (loggedClientMessages.size()==fileCounter) {
 			actualTime += sleepTime;
 			
@@ -142,6 +143,7 @@ public class FileLogger extends TimerTask {
 			Thread.sleep(1000*60*sleepTime++); //sleep
 			//sleepTime++;
 		}
+		
 		
 		fileCounter = loggedClientMessages.size();
 		
@@ -177,12 +179,19 @@ public class FileLogger extends TimerTask {
 	    //Loop through each message, add to corresponding document
 	    //for (Element e : this.loggedClientMessages) {
 	    int logSize = loggedClientMessages.size();
+	    
 	    for (int i=0; i<logSize; i++) {
+	      
 	      Element e = loggedClientMessages.get(i);
+	      
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
+	      
 	      int indexID = groupID - gManage.groupOffset;
+	      
 	      if(indexID<0 || indexID>gManage.groupTotal) return;
+	      
 	      Node ne = docs[indexID].importNode(e, true);
+	      
 	      root[indexID].appendChild(ne);
 	    }
 	    
@@ -210,6 +219,7 @@ public class FileLogger extends TimerTask {
 	      logPathDir = logPathDir.replaceAll(" ", "_"); //space can sneak in with instructor
 	      File logPathFile = new File(logPathDir); 
 	      logPathFile.mkdir(); //create new file directory if DNE 
+	    
 	      logPathFile.setExecutable(true, false); //This gives linux dir read/execute perm so kimlab can read root dirs
 	      logPathFile.setReadable(true, false); //So kimlab can view the dir & contents, but cannot edit it
 	      //Final permissions should be 755 rwxr-xr-x
@@ -220,6 +230,7 @@ public class FileLogger extends TimerTask {
 	      StreamResult streamresult = new StreamResult(logFile);
 	      
 	      transformer.transform(source, streamresult);
+	      
 	    }
 	}
 

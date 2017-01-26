@@ -57,7 +57,7 @@ import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 
-import com.sun.org.apache.xerces.internal.parsers.DOMParser;
+//import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 
 import util.CHAT_COLOR;
 import util.GroupInfoObject;
@@ -738,6 +738,21 @@ public class ChatAnnotation implements ServletContextListener{
 			ansMsg.setAttribute("type", "answerReview");
 			silentBroadcastGroup(ansMsg, groupID);
 			return;
+		} else if (messageType.equals(MessageType.Answer_Unlock)) {
+			
+			//Add groupMember information to element - senderID is already there
+			element.setAttribute("senderName", userClient.username);
+			element.setAttribute("senderColor", userClient.chatColor.toString());
+			if (element.getAttribute("groupNumber").isEmpty()) //adminMonitor provides groupNumber and is not bound to its userClient
+				element.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			element.setAttribute("sessionID", userClient.sessionID);
+			
+			//Capture message in FileLogger here
+			String dateTimestamp = serverDateFormatter.format(new Date());
+			element.setAttribute("timestamp", dateTimestamp);
+			synchronized (fileLogger.getLoggedClientMessages()) {
+				fileLogger.captureMessage(element);
+			}
 		}
 		//END OF REFACTORING
 		
