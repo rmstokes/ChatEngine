@@ -39,6 +39,9 @@ var answerPopupFunc = 0;
 var answerPromptMembers = -100;
 var currNoMembers = 100;
 
+
+
+
 util_openSocket(); //open the webSocket
 
 	Chat.socket.onopen = function() {
@@ -420,6 +423,12 @@ util_openSocket(); //open the webSocket
 			}
 			
 			return;
+		} else if (messageType == 'noAdmin'){
+			//Sends answerPrompt to server & other group members
+			
+			answerPromptMembers = -100;
+			alert("No Chat Admin Available to Approve");
+			
 		} else if (messageType =='AnswerGroupStatus') {
 			$("#answerPara").text(xmlDoc.getElementsByTagName('answer')[0].textContent);
 			$("#answerInput").val(xmlDoc.getElementsByTagName('answer')[0].textContent);
@@ -768,6 +777,8 @@ function captureTab (event) {
 	    $(et).trigger("input"); //tab not caught by input since programmable
 	  }
 }
+
+
 
 function answerLockFunction () {
 	var time = new Date().getTime();

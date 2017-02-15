@@ -559,8 +559,28 @@ public class ChatAnnotation implements ServletContextListener{
 		} else if (messageType.equals(MessageType.Answer_Prompt)) {
 			//One user is prompting the other users to submit the answer
 			
+			// check if group has an adminMonitor
+			// Submission should be blocked if no adminMonitor
+			
 			//Set everyone's status to false
 			Set<Client> group = groupManager.getGroup(userClient.groupID);
+			
+			// check if group has an adminMonitor
+			// Submission should be blocked if no adminMonitor
+			boolean hasAdmin = false;
+			for (Client c: group){				
+				if (c.isAdmin){
+					hasAdmin = true;
+				}
+			}
+			if(!hasAdmin){
+				// send message to group that they have no admin
+				sendXMLMessage("noAdmin", userClient.permID);
+				// return to stop Answer_Prompt
+				return;
+			}
+			
+			
 			for (Client c : group) {
 				c.answerStatus = false;
 			}
