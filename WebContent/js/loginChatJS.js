@@ -39,6 +39,8 @@ var answerPopupFunc = 0;
 var answerPromptMembers = -100;
 var currNoMembers = 100;
 
+var IPAddress = "";
+
 
 
 
@@ -201,6 +203,7 @@ util_openSocket(); //open the webSocket
 				
 				
 				
+				
 				/*setTimeout(function () {
 					var time = new Date().getTime();
 					
@@ -270,7 +273,7 @@ util_openSocket(); //open the webSocket
 						$("#answerPopup").addClass("hidePopup");
 						$("#blackOverlay").addClass("hidePopup");
 						
-						var xml = '<message type="answerStatus" senderID="' + clientID
+						var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress 
 						+ '" status="' + 'false' 
 						+ '" overtime="' + 'true' + '">'
 						+ '</message>';
@@ -337,7 +340,7 @@ util_openSocket(); //open the webSocket
 			answerPromptMembers -= 1;
 			if (answerPromptMembers==0) { //this is only un-negative if this user prompted
 				//all members have answered, send follow up message
-				var xml = '<message type="answerSubmitReview" senderID="'+clientID
+				var xml = '<message type="answerSubmitReview" senderID="'+clientID + '" IPAddress="' + IPAddress 
 				+  '">'+ '</message>';
 				
 				//setTimeout()
@@ -623,7 +626,7 @@ function sendChat(event) {
 	message = message.replace(/&/gm, '&amp;');
 	message = message.replace(/</gm, '&lt;');
 
-	var xml = '<message type="' + chatType + '" senderID="' + clientID + '">'
+	var xml = '<message type="' + chatType + '" senderID="' + clientID + '" IPAddress="' + IPAddress + '">'
 			+ '<chat>' + '<text>' + message + '</text>' + '</chat>'
 			+ '</message>';
 	
@@ -638,7 +641,7 @@ function sendAnswer(event) {
 	message = message.replace(/&/gm, '&amp;');
 	message = message.replace(/</gm, '&lt;');
 	
-	var xml = '<message type="answerType" senderID="' + clientID + '">'
+	var xml = '<message type="answerType" senderID="' + clientID + '" IPAddress="' + IPAddress + '">'
 		+ '<chat>' + '<text>' + message + '</text>' + '</chat>'
 		+ '</message>';
 	Chat.socket.send(xml);
@@ -646,7 +649,7 @@ function sendAnswer(event) {
 
 function sendAnswerStatus(value) {
 	
-	var xml = '<message type="answerStatus" senderID="' + clientID
+	var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress  
 	+ '" status="' + value + '">'
 	+ '</message>';
 	
@@ -710,7 +713,7 @@ function loginGroup () {
 		return;
 	}
 	
-	var xml = '<message type="joinGroup" senderID="' + clientID
+	var xml = '<message type="joinGroup" senderID="' + clientID + '" IPAddress="' + IPAddress 
 		+ '" username="' + username + '"><text>' + groupNum
 		+ '</text></message>';
 	$("#joinBtn").prop("disabled", true);
@@ -723,11 +726,11 @@ function submitAnswer (event) {
 	//Sends answerPrompt to server & other group members
 	var status = !AnswerStatus;
 	
-//	var xml = '<message type="answerStatus" senderID="' + clientID
+//	var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress 
 //	+ '" status="' + status + '">'
 //	+ '</message>';
 	
-	var xml = '<message type="answerPrompt" senderID="' + clientID
+	var xml = '<message type="answerPrompt" senderID="' + clientID + '" IPAddress="' + IPAddress 
 	+  '">'+ '</message>';
 	
 	Chat.socket.send(xml);
@@ -737,7 +740,7 @@ function submitAnswer (event) {
 //	}, 3000);
 //	
 //	setTimeout(function () {
-//		var xml = '<message type="answerSubmitReview" senderID="'+clientID
+//		var xml = '<message type="answerSubmitReview" senderID="'+clientID + '" IPAddress="' + IPAddress 
 //		+  '">'+ '</message>';
 //		
 //		Chat.socket.send(xml);
@@ -800,7 +803,7 @@ function answerLockFunction () {
 		clearTimeout(answerTimeoutFunc);
 		
 		// code to send message to server to log unlock 
-		var xml = '<message type="answerUnlock" senderID="' + clientID
+		var xml = '<message type="answerUnlock" senderID="' + clientID + '" IPAddress="' + IPAddress
 		+ '">'
 		+ '</message>';
 		Chat.socket.send(xml);
@@ -810,6 +813,9 @@ function answerLockFunction () {
 	
 	answerTimeoutFunc = setTimeout(answerLockFunction, 1000); //run 1000s after
 }
+
+
+
 
 window.onbeforeunload = function () {
 	//This is assuming the user has purposely closed the page/refreshed the page.
@@ -821,7 +827,7 @@ window.onbeforeunload = function () {
 	var fakeBtnEvent = {type:"click"};
 	sendChat(fakeBtnEvent);
 	
-	var xml = '<message type="leaveChat" senderID="'+clientID+'"/>';
+	var xml = '<message type="leaveChat" senderID="'+clientID + '" IPAddress="' + IPAddress +'"/>';
 	Chat.socket.send(xml);
 	sentLeaveChat = true;
 	console.log("beforeunload has run");
@@ -867,5 +873,9 @@ $("#answerInput").keydown(captureTab);
 
 $("#answerPopup").css("visibility", "");
 $("#blackOverlay").css("visibility","");
+$.getJSON('https://api.ipify.org?format=json', function(data){
+    IPAddress = data.ip;
+});
 //$("#answerPara").click(function (event) {})
 populateEmojiTable();
+
