@@ -41,6 +41,9 @@ var currNoMembers = 100;
 
 var IPAddress = "";
 
+//boolean variable that determines whether or not the answer window will show 
+var showAnswerWindow = false;
+
 
 
 
@@ -135,6 +138,7 @@ util_openSocket(); //open the webSocket
 			//successful login, go to info page
 			//SetReset = true;
 			changePanel();
+			hideAnswerDiv();
 			return;
 		} else if (messageType == 'goToChat') {
 			//during reconnect, force to chat window
@@ -664,6 +668,12 @@ function sendAnswerStatus(value) {
 	$("#lockedParaTimer").css("width", "0%");
 	
 	clearTimeout(answerPopupFunc);
+}
+
+function hideAnswerDiv() {
+	if (showAnswerWindow == false) {
+		$("#answerWindow").css("display","none");
+	}
 }
 
 function changePanel () {
