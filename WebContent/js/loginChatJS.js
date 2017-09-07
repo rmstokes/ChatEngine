@@ -436,6 +436,20 @@ util_openSocket(); //open the webSocket
 			answerPromptMembers = -100;
 			alert("No Chat Admin Available to Approve");
 			
+		} else if (messageType == 'updateAnsWinFlag'){
+			//updates answer window flag
+			
+			var ansWinTextBoolean = messageNode.getAttribute('ansWinFlag');
+			
+			if (ansWinTextBoolean == "true") {
+				showAnswerWindow = true;
+			} else {
+				showAnswerWindow = false;
+			}
+			
+			hideAnswerDiv();
+			
+			
 		} else if (messageType =='AnswerGroupStatus') {
 			$("#answerPara").text(xmlDoc.getElementsByTagName('answer')[0].textContent);
 			$("#answerInput").val(xmlDoc.getElementsByTagName('answer')[0].textContent);
@@ -673,6 +687,8 @@ function sendAnswerStatus(value) {
 function hideAnswerDiv() {
 	if (showAnswerWindow == false) {
 		$("#answerWindow").css("display","none");
+	} else {
+		$("#answerWindow").css("display","initial");
 	}
 }
 

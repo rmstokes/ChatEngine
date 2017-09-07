@@ -93,6 +93,9 @@ public class ChatAnnotation implements ServletContextListener{
 	private Session session;
 	private Client userClient;
 	private Integer[] AMLineCounter;
+	
+	// boolean to hold answer window status
+	private static boolean answerWindowOn = true;
 
 	public ChatAnnotation() {
 		// a new ChatAnnotation object is created for every time a WEBSOCKET that
@@ -773,8 +776,27 @@ public class ChatAnnotation implements ServletContextListener{
 			synchronized (fileLogger.getLoggedClientMessages()) {
 				fileLogger.captureMessage(element);
 			}
+		} else if (messageType.equals(MessageType.Answer_Window_Update)) {
+			String flag = element.getAttribute("answerWindowFlag");
+			if (flag == "true") {
+				answerWindowOn = true;
+			} else {
+				answerWindowOn = false;
+			}
+			
+			broadcastAnswerWindowFlag();
 		}
+			
 		//END OF REFACTORING
+		
+	}
+
+	private void broadcastAnswerWindowFlag() {
+		// This function will generate an XML message and broadcast it 
+		// to all groups.
+		
+		String msg =  "<message type='updateAnsWinFlag' ansWinFlag='" + answerWindowOn + "'>" 
+		+ "</message>";
 		
 	}
 
@@ -783,6 +805,15 @@ public class ChatAnnotation implements ServletContextListener{
 		log.error("Chat Error: " + t.toString(), t);
 	}
 	
+	public static void broadcastAll(Element msg)  throws Exception {
+		int offset = groupManager.groupOffset;
+		int total = groupManager.groupTotal;
+		
+		for (int i = 1; i <= total; i++) {
+			broadcastGroup(msg, offset + i);
+		}
+		
+	}
 
 	public static void broadcastGroup(Element msg, int groupID)  throws Exception {
 		//Assume ChatAnnotation has added the necessary elements

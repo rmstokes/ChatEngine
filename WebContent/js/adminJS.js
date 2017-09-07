@@ -111,12 +111,24 @@ util_openSocket();
 			util_alert(msgtext);
 		} else if (messageType=='redirect' || messageType=='groupInfo') {
 			//capture but do nothing
-		} else {
+		} 
+		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
 
+	
+function sendAnswerWindowStatus() {
+	
+	var checked = document.getElementById('answerWindowCheck').checked;
+	//alert(checked);
+	var xml = '<message type="answerWindowFlagUpdate" senderID="' + clientID
+	+ ' answerWindowFlag="' + checked + '">'
+	+ '</message>';
+Chat.socket.send(xml);
+}
+	
 function createGroups() {
 
 	if (adminGroupsCreated) {
