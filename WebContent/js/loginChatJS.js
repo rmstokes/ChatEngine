@@ -42,7 +42,7 @@ var currNoMembers = 100;
 var IPAddress = "";
 
 //boolean variable that determines whether or not the answer window will show 
-var showAnswerWindow = false;
+var showAnswerWindow = true;
 
 
 
@@ -64,6 +64,8 @@ util_openSocket(); //open the webSocket
 		
 		//clear chat window for reconnect
 		$(".chatConsole p").remove(); //remove all messages
+		
+		
 	};
 
 	Chat.socket.onclose = function() {
@@ -137,7 +139,9 @@ util_openSocket(); //open the webSocket
 		} else if (messageType == 'displayChat') {
 			//successful login, go to info page
 			//SetReset = true;
-			changePanel();
+			
+			refreshAnswerWindowStatus();			
+			changePanel();			
 			hideAnswerDiv();
 			return;
 		} else if (messageType == 'goToChat') {
@@ -441,6 +445,8 @@ util_openSocket(); //open the webSocket
 			
 			var ansWinTextBoolean = messageNode.getAttribute('ansWinFlag');
 			
+			//alert(ansWinTextBoolean);
+			
 			if (ansWinTextBoolean == "true") {
 				showAnswerWindow = true;
 			} else {
@@ -687,9 +693,19 @@ function sendAnswerStatus(value) {
 function hideAnswerDiv() {
 	if (showAnswerWindow == false) {
 		$("#answerWindow").css("display","none");
+		//alert("hid answer window");
 	} else {
 		$("#answerWindow").css("display","initial");
+		//alert("revealed answer window");
 	}
+}
+
+function refreshAnswerWindowStatus() {
+	var xml = '<message type="ansWinStatusReq" senderID="' + clientID 
+	+ '">'
+	+ '</message>';
+	alert(xml);
+	Chat.socket.send(xml);
 }
 
 function changePanel () {
@@ -746,6 +762,7 @@ function loginGroup () {
 	$("#joinBtn").text("...");
 	
 	Chat.socket.send(xml);
+	
 }
 
 function submitAnswer (event) {

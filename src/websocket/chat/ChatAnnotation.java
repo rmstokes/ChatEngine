@@ -96,6 +96,7 @@ public class ChatAnnotation implements ServletContextListener{
 	
 	// boolean to hold answer window status
 	private static boolean answerWindowOn = true;
+	private static boolean sessionOpen = false;
 
 	public ChatAnnotation() {
 		// a new ChatAnnotation object is created for every time a WEBSOCKET that
@@ -110,7 +111,7 @@ public class ChatAnnotation implements ServletContextListener{
 		System.out.println("Opened Websocket @ /"+path+" by sID-"+session.getId());
 //		System.out.println("Remote session ="+
 //			session.getUserProperties().get("javax.websocket.endpoint.remoteAddress"));
-		
+		sessionOpen = true;
 		this.session = session;
 		//WATCH OUT FOR FALL THROUGH
 		switch (path) {
@@ -153,7 +154,7 @@ public class ChatAnnotation implements ServletContextListener{
 		synchronized (connectedSessions) {
 			connectedSessions.remove(this.session);
 		}
-		
+		sessionOpen = false;
 		//Session has already been closed before end could run
 		if (!session.isOpen()) {//Monitor this for WI-FI users
 			System.out.print("Session was closed- ");
@@ -777,13 +778,21 @@ public class ChatAnnotation implements ServletContextListener{
 				fileLogger.captureMessage(element);
 			}
 		} else if (messageType.equals(MessageType.Answer_Window_Update)) {
+			
+			
+			
 			String flag = element.getAttribute("answerWindowFlag");
-			if (flag == "true") {
+			
+			if (flag.equals("true")) {
 				answerWindowOn = true;
+				System.out.println("Answer Window Shown");
 			} else {
 				answerWindowOn = false;
+				System.out.println("Answer Window Hidden");
 			}
 			
+			broadcastAnswerWindowFlag();
+		} else if (messageType.equals(MessageType.Answer_Window_Request)) {
 			broadcastAnswerWindowFlag();
 		}
 			
@@ -791,12 +800,19 @@ public class ChatAnnotation implements ServletContextListener{
 		
 	}
 
-	private void broadcastAnswerWindowFlag() {
+	private static void broadcastAnswerWindowFlag() throws Exception  {
 		// This function will generate an XML message and broadcast it 
 		// to all groups.
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.newDocument();
 		
-		String msg =  "<message type='updateAnsWinFlag' ansWinFlag='" + answerWindowOn + "'>" 
-		+ "</message>";
+		Element msg = doc.createElement("message");
+		
+		msg.setAttribute("type", "updateAnsWinFlag");
+		msg.setAttribute("ansWinFlag", String.valueOf(answerWindowOn));
+			
+		broadcastAll(msg);
 		
 	}
 
@@ -806,12 +822,15 @@ public class ChatAnnotation implements ServletContextListener{
 	}
 	
 	public static void broadcastAll(Element msg)  throws Exception {
+		if (groupManager == null) return;
 		int offset = groupManager.groupOffset;
 		int total = groupManager.groupTotal;
+		
 		
 		for (int i = 1; i <= total; i++) {
 			broadcastGroup(msg, offset + i);
 		}
+		
 		
 	}
 
@@ -1205,6 +1224,7 @@ public class ChatAnnotation implements ServletContextListener{
 		for (Client c : group) {
 			c.session.getBasicRemote().sendText(msg);
 		}
+		broadcastAnswerWindowFlag();
 		
 	}
 	

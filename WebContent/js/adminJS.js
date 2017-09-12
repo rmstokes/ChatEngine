@@ -124,9 +124,12 @@ function sendAnswerWindowStatus() {
 	var checked = document.getElementById('answerWindowCheck').checked;
 	//alert(checked);
 	var xml = '<message type="answerWindowFlagUpdate" senderID="' + clientID
-	+ ' answerWindowFlag="' + checked + '">'
+	+ '" answerWindowFlag="' + checked 
+	+ '">'
 	+ '</message>';
-Chat.socket.send(xml);
+	
+	
+	Chat.socket.send(xml);
 }
 	
 function createGroups() {
@@ -146,6 +149,7 @@ function createGroups() {
 	var xml = '<message type="groupCreation" senderID="' + clientID
 			+ '" instructor="' + instruct + '" groupOffset="' + groupOff + '">'
 			+ '<text>' + numGroups + '</text>' + '</message>';
+	
 	Chat.socket.send(xml);
 }
 
