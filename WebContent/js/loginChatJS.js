@@ -693,8 +693,10 @@ function sendAnswerStatus(value) {
 function hideAnswerDiv() {
 	if (showAnswerWindow == false) {
 		$("#answerWindow").css("display","none");
+		$("#alertButtonDiv").css("display","initial");
 		//alert("hid answer window");
 	} else {
+		$("#alertButtonDiv").css("display","none");
 		$("#answerWindow").css("display","initial");
 		//alert("revealed answer window");
 	}
@@ -912,6 +914,7 @@ $("#chatConsole").scroll(function (event) {
 	Scroll_To_Bot = !(scrollCoef > 100); // average p is about 22px?
 });
 $("#submitBtn").click(submitAnswer);
+$("#alertBtn").click(submitAnswer);
 $("#answerInput").keydown(captureTab);
 
 $("#answerPopup").css("visibility", "");
