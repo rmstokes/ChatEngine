@@ -706,7 +706,7 @@ function refreshAnswerWindowStatus() {
 	var xml = '<message type="ansWinStatusReq" senderID="' + clientID 
 	+ '">'
 	+ '</message>';
-	alert(xml);
+	//alert(xml);
 	Chat.socket.send(xml);
 }
 

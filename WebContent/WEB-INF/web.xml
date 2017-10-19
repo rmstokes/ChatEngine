@@ -18,6 +18,17 @@
   
   <!-- Use the URL http://hostName/appName/test2 for
        testPackage.TestServlet -->
+       
+  <servlet>
+  	<servlet-name>HTTPHandler</servlet-name>
+  	<servlet-class>HttpReqHandler.HttpReqHandlerClass</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+  	<servlet-name>HTTPHandler</servlet-name>
+  	<url-pattern>/logServ</url-pattern>
+  </servlet-mapping>
+       
   <servlet>
     <servlet-name>chat</servlet-name>
     <servlet-class>websocket.ChatAnnotation</servlet-class>

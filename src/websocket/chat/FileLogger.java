@@ -1,6 +1,9 @@
 package websocket.chat;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -57,6 +60,9 @@ public class FileLogger extends TimerTask {
 	//private final String instructor;
 	private boolean destroy = false;
 	private String logPath;
+	private String sFileName = "currentLogFileNames.txt";
+	
+	private static boolean writeableFileList;
 	
 	public FileLogger(GroupManager gm, int groupIt, String logPath) {
 		//int groupNum, Date date, int groupIt, String logPath, String instruct
@@ -70,6 +76,7 @@ public class FileLogger extends TimerTask {
 	    this.groupIteration = groupIt;
 	    //this.instructor = instruct;
 	    this.logPath = logPath;
+	    this.sFileName = this.logPath + this.sFileName;
 	}
 	
 	
@@ -184,6 +191,7 @@ public class FileLogger extends TimerTask {
 	      
 	      Element e = loggedClientMessages.get(i);
 	      
+	      
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
 	      
 	      int indexID = groupID - gManage.groupOffset;
@@ -193,6 +201,8 @@ public class FileLogger extends TimerTask {
 	      Node ne = docs[indexID].importNode(e, true);
 	      
 	      root[indexID].appendChild(ne);
+	      
+	      
 	    }
 	    
 	    
@@ -224,6 +234,10 @@ public class FileLogger extends TimerTask {
 	      logPathFile.setReadable(true, false); //So kimlab can view the dir & contents, but cannot edit it
 	      //Final permissions should be 755 rwxr-xr-x
 	      
+	      
+	      recordFileName(logPathDir + filename);
+	      
+	      
 	      File logFile = new File(logPathDir + filename);
 	      logFile.setReadable(true, false); //make the logFile readable from linux
 	      //Final permissions should be 644 rw-r--r--
@@ -232,6 +246,38 @@ public class FileLogger extends TimerTask {
 	      transformer.transform(source, streamresult);
 	      
 	    }
+	}
+	
+	/**
+	 * This function writes the current log names out to file so that they can be read by 
+	 * the HTTP Get Handler
+	 * @param sFileName is the file name being written to
+	 * @param sContent is the file name of the specific log
+	 */
+	public synchronized void recordFileName(String sContent){ // synchronized to avoid multi Fileloggers writing at same time
+		
+		try {
+
+            File oFile = new File(sFileName);
+            // this is to make sure that we are not reusing old file names
+            if (!writeableFileList) {
+            	oFile.delete();
+            	oFile.createNewFile();
+            	writeableFileList = true;
+            }
+            
+            
+            if (oFile.canWrite()) {
+                BufferedWriter oWriter = new BufferedWriter(new FileWriter(sFileName, true));
+                oWriter.write (sContent + "\n");
+                oWriter.close();
+            }
+
+        }
+        catch (IOException oException) {
+            throw new IllegalArgumentException("Error appending/File cannot be written: \n" + sFileName);
+        }
+		
 	}
 
 }

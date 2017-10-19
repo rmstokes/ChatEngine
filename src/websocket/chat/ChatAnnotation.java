@@ -812,7 +812,7 @@ public class ChatAnnotation implements ServletContextListener{
 		msg.setAttribute("type", "updateAnsWinFlag");
 		msg.setAttribute("ansWinFlag", String.valueOf(answerWindowOn));
 			
-		broadcastAll(msg);
+		silentBroadcastAll(msg);
 		
 	}
 
@@ -821,14 +821,14 @@ public class ChatAnnotation implements ServletContextListener{
 		log.error("Chat Error: " + t.toString(), t);
 	}
 	
-	public static void broadcastAll(Element msg)  throws Exception {
+	public static void silentBroadcastAll(Element msg)  throws Exception {
 		if (groupManager == null) return;
 		int offset = groupManager.groupOffset;
 		int total = groupManager.groupTotal;
 		
 		
 		for (int i = 1; i <= total; i++) {
-			broadcastGroup(msg, offset + i);
+			silentBroadcastGroup(msg, offset + i);
 		}
 		
 		
@@ -1149,6 +1149,7 @@ public class ChatAnnotation implements ServletContextListener{
 		int chatHisSize = chatHis.size();
 		for (int i=startLog; i<chatHisSize; i++) {
 			Element chatMsg = (Element) chatHis.get(i).cloneNode(true); //Need to clone node otherwise reference will pick up chatHistory attrib
+			System.out.println("groupNumber" + chatMsg.getAttribute("groupNumber"));
 			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) )
 			//		|| chatMsg.getAttribute("type").equals("typing"))  //get everything thats not typing
 				continue;
