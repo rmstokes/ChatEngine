@@ -62,7 +62,7 @@ public class FileLogger extends TimerTask {
 	private String logPath;
 	private String sFileName = "currentLogFileNames.txt";
 	
-	private static boolean writeableFileList;
+	private static boolean writeableFileList = false;
 	
 	public FileLogger(GroupManager gm, int groupIt, String logPath) {
 		//int groupNum, Date date, int groupIt, String logPath, String instruct
@@ -76,7 +76,7 @@ public class FileLogger extends TimerTask {
 	    this.groupIteration = groupIt;
 	    //this.instructor = instruct;
 	    this.logPath = logPath;
-	    this.sFileName = this.logPath + this.sFileName;
+	    
 	}
 	
 	
@@ -258,24 +258,32 @@ public class FileLogger extends TimerTask {
 		
 		try {
 
-            File oFile = new File(sFileName);
+            File oFile = new File(this.logPath + this.sFileName);
             // this is to make sure that we are not reusing old file names
+            System.out.println("writeableFileList: " + writeableFileList);
             if (!writeableFileList) {
+            	System.out.println("in if statement");
             	oFile.delete();
+            	System.out.println(this.logPath + this.sFileName);
             	oFile.createNewFile();
+            	System.out.println("new file");
             	writeableFileList = true;
+            	System.out.println("boolean changed");
             }
-            
+            System.out.println("writeableFileList: " + writeableFileList);
             
             if (oFile.canWrite()) {
-                BufferedWriter oWriter = new BufferedWriter(new FileWriter(sFileName, true));
+                BufferedWriter oWriter = new BufferedWriter(new FileWriter(oFile, true));
                 oWriter.write (sContent + "\n");
+                System.out.println("content presumeably written: " + sContent);
                 oWriter.close();
             }
 
         }
         catch (IOException oException) {
-            throw new IllegalArgumentException("Error appending/File cannot be written: \n" + sFileName);
+            
+        	oException.printStackTrace();
+            
         }
 		
 	}
