@@ -66,15 +66,23 @@ Eg. 5 groups, 1,2,3,4,5">
     	</div>
 <!--     	<br style="clear:both"></br> -->
 		<div id="secondDivRow" class="divRow">
+			
 			<label title="This string is saved in the log directory. 
 Use this to add text to the log directory name. 
 For example, you can name a Set (set of groups) 'Lab_3_Wed'. ">
     			<h3 class="yellow">Log Name</h3>
     			<input maxlength='30' type='text' id='logName' placeholder="Log Name" style="text-align:center"/>
     		</label>
+    		
+    		
+    		
 		</div>
 		<div id="thirdDivRow" class="">
+			
 			<button id="createBtn" disabled>Create Set</button>
+			
+			
+			
 		</div>
     </div>
     </div>
@@ -83,6 +91,19 @@ For example, you can name a Set (set of groups) 'Lab_3_Wed'. ">
     <div id="currentSetDiv" style="max-width: 520px; margin: 0px auto;">
     	<h1 class="sectionName">Current Set</h1>
     	<p id="serverStatus">Waiting for server info</p>
+    	
+    	<div id="answerWindowDiv" class="divRow">
+    		<div class="leftF halfDiv">
+			<label title="Unheck this box to disable the answer window">
+    			<h3>Answer Window:</h3>
+    			
+    		</label>
+    		</div>
+    		<div class="rightF halfDiv">
+    		<input id="answerWindowCheck" type="checkbox" onclick="sendAnswerWindowStatus();" checked>
+    		</div>
+    	</div>
+    	
     	<div id="firstDivRow2" class="divRow">
     		<div class="halfDiv leftF">
     			<h3>Group Offset</h3>

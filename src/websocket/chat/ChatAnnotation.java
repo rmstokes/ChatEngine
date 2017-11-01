@@ -57,7 +57,7 @@ import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 
-import com.sun.org.apache.xerces.internal.parsers.DOMParser;
+//import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 
 import util.CHAT_COLOR;
 import util.GroupInfoObject;
@@ -93,6 +93,10 @@ public class ChatAnnotation implements ServletContextListener{
 	private Session session;
 	private Client userClient;
 	private Integer[] AMLineCounter;
+	
+	// boolean to hold answer window status
+	private static boolean answerWindowOn = true;
+	private static boolean sessionOpen = false;
 
 	public ChatAnnotation() {
 		// a new ChatAnnotation object is created for every time a WEBSOCKET that
@@ -107,7 +111,7 @@ public class ChatAnnotation implements ServletContextListener{
 		System.out.println("Opened Websocket @ /"+path+" by sID-"+session.getId());
 //		System.out.println("Remote session ="+
 //			session.getUserProperties().get("javax.websocket.endpoint.remoteAddress"));
-		
+		sessionOpen = true;
 		this.session = session;
 		//WATCH OUT FOR FALL THROUGH
 		switch (path) {
@@ -150,7 +154,7 @@ public class ChatAnnotation implements ServletContextListener{
 		synchronized (connectedSessions) {
 			connectedSessions.remove(this.session);
 		}
-		
+		sessionOpen = false;
 		//Session has already been closed before end could run
 		if (!session.isOpen()) {//Monitor this for WI-FI users
 			System.out.print("Session was closed- ");
@@ -559,8 +563,28 @@ public class ChatAnnotation implements ServletContextListener{
 		} else if (messageType.equals(MessageType.Answer_Prompt)) {
 			//One user is prompting the other users to submit the answer
 			
+			// check if group has an adminMonitor
+			// Submission should be blocked if no adminMonitor
+			
 			//Set everyone's status to false
 			Set<Client> group = groupManager.getGroup(userClient.groupID);
+			
+			// check if group has an adminMonitor
+			// Submission should be blocked if no adminMonitor
+			boolean hasAdmin = false;
+			for (Client c: group){				
+				if (c.isAdmin){
+					hasAdmin = true;
+				}
+			}
+			if(!hasAdmin){
+				// send message to group that they have no admin
+				sendXMLMessage("noAdmin", userClient.permID);
+				// return to stop Answer_Prompt
+				return;
+			}
+			
+			
 			for (Client c : group) {
 				c.answerStatus = false;
 			}
@@ -738,8 +762,57 @@ public class ChatAnnotation implements ServletContextListener{
 			ansMsg.setAttribute("type", "answerReview");
 			silentBroadcastGroup(ansMsg, groupID);
 			return;
+		} else if (messageType.equals(MessageType.Answer_Unlock)) {
+			
+			//Add groupMember information to element - senderID is already there
+			element.setAttribute("senderName", userClient.username);
+			element.setAttribute("senderColor", userClient.chatColor.toString());
+			if (element.getAttribute("groupNumber").isEmpty()) //adminMonitor provides groupNumber and is not bound to its userClient
+				element.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+			element.setAttribute("sessionID", userClient.sessionID);
+			
+			//Capture message in FileLogger here
+			String dateTimestamp = serverDateFormatter.format(new Date());
+			element.setAttribute("timestamp", dateTimestamp);
+			synchronized (fileLogger.getLoggedClientMessages()) {
+				fileLogger.captureMessage(element);
+			}
+		} else if (messageType.equals(MessageType.Answer_Window_Update)) {
+			
+			
+			
+			String flag = element.getAttribute("answerWindowFlag");
+			
+			if (flag.equals("true")) {
+				answerWindowOn = true;
+				System.out.println("Answer Window Shown");
+			} else {
+				answerWindowOn = false;
+				System.out.println("Answer Window Hidden");
+			}
+			
+			broadcastAnswerWindowFlag();
+		} else if (messageType.equals(MessageType.Answer_Window_Request)) {
+			broadcastAnswerWindowFlag();
 		}
+			
 		//END OF REFACTORING
+		
+	}
+
+	private static void broadcastAnswerWindowFlag() throws Exception  {
+		// This function will generate an XML message and broadcast it 
+		// to all groups.
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		
+		Element msg = doc.createElement("message");
+		
+		msg.setAttribute("type", "updateAnsWinFlag");
+		msg.setAttribute("ansWinFlag", String.valueOf(answerWindowOn));
+			
+		silentBroadcastAll(msg);
 		
 	}
 
@@ -748,6 +821,18 @@ public class ChatAnnotation implements ServletContextListener{
 		log.error("Chat Error: " + t.toString(), t);
 	}
 	
+	public static void silentBroadcastAll(Element msg)  throws Exception {
+		if (groupManager == null) return;
+		int offset = groupManager.groupOffset;
+		int total = groupManager.groupTotal;
+		
+		
+		for (int i = 1; i <= total; i++) {
+			silentBroadcastGroup(msg, offset + i);
+		}
+		
+		
+	}
 
 	public static void broadcastGroup(Element msg, int groupID)  throws Exception {
 		//Assume ChatAnnotation has added the necessary elements
@@ -1064,6 +1149,7 @@ public class ChatAnnotation implements ServletContextListener{
 		int chatHisSize = chatHis.size();
 		for (int i=startLog; i<chatHisSize; i++) {
 			Element chatMsg = (Element) chatHis.get(i).cloneNode(true); //Need to clone node otherwise reference will pick up chatHistory attrib
+			System.out.println("groupNumber" + chatMsg.getAttribute("groupNumber"));
 			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) )
 			//		|| chatMsg.getAttribute("type").equals("typing"))  //get everything thats not typing
 				continue;
@@ -1139,6 +1225,7 @@ public class ChatAnnotation implements ServletContextListener{
 		for (Client c : group) {
 			c.session.getBasicRemote().sendText(msg);
 		}
+		broadcastAnswerWindowFlag();
 		
 	}
 	

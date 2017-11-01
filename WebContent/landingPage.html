@@ -63,10 +63,10 @@ This is the page that users will see when they first input the url.
         	
         	if (selected == "Login") {
         		$("#infoBox").html("<strong>Login</strong> is the page for <strong class='blueBold'>Student</strong> users.  <br/> This will allow you to login to your assigned group and <strong class='greenBold'>chat</strong> with other group members.");
-        		$("#goButton").attr("href", "loginChat.html");
+        		$("#goButton").attr("href", "loginChat.php");
         	} else if (selected == "Admin") {
         		$("#infoBox").html("<strong>Admin</strong> is for <strong class='redBold'>Adminstrators Only.</strong>  <br/> Here you can create a new <strong>Set</strong> (new set of groups), close a current <strong>Set</strong> and monitor other server information.");
-        		$("#goButton").attr("href", "admin.html");
+        		$("#goButton").attr("href", "admin.php");
         	} else if (selected == "Admin Monitor") {
         		$("#infoBox").html("<strong>Admin Monitor</strong> is for <strong class='redBold'>Teaching Assistants</strong> or <strong class=redBold>Instructors</strong> to interact with multiple groups at once.  <br/> Here you can <strong class='redBold'>Monitor</strong> groups and watch their progress discretely. <br/> Or you can <strong class='greenBold'>Chat</strong> and talk with the group. <br/>");
         		$("#goButton").attr("href", "adminMonitor.html");

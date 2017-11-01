@@ -39,6 +39,14 @@ var answerPopupFunc = 0;
 var answerPromptMembers = -100;
 var currNoMembers = 100;
 
+var IPAddress = "";
+
+//boolean variable that determines whether or not the answer window will show 
+var showAnswerWindow = true;
+
+
+
+
 util_openSocket(); //open the webSocket
 
 	Chat.socket.onopen = function() {
@@ -56,6 +64,8 @@ util_openSocket(); //open the webSocket
 		
 		//clear chat window for reconnect
 		$(".chatConsole p").remove(); //remove all messages
+		
+		
 	};
 
 	Chat.socket.onclose = function() {
@@ -129,7 +139,10 @@ util_openSocket(); //open the webSocket
 		} else if (messageType == 'displayChat') {
 			//successful login, go to info page
 			//SetReset = true;
-			changePanel();
+			
+			refreshAnswerWindowStatus();			
+			changePanel();			
+			hideAnswerDiv();
 			return;
 		} else if (messageType == 'goToChat') {
 			//during reconnect, force to chat window
@@ -194,6 +207,11 @@ util_openSocket(); //open the webSocket
 				clearTimeout(answerTimeoutFunc); //clear function timer
 				
 				answerTimeoutFunc = setTimeout(answerLockFunction, 1000);
+				
+				
+				
+				
+				
 				/*setTimeout(function () {
 					var time = new Date().getTime();
 					
@@ -263,7 +281,7 @@ util_openSocket(); //open the webSocket
 						$("#answerPopup").addClass("hidePopup");
 						$("#blackOverlay").addClass("hidePopup");
 						
-						var xml = '<message type="answerStatus" senderID="' + clientID
+						var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress 
 						+ '" status="' + 'false' 
 						+ '" overtime="' + 'true' + '">'
 						+ '</message>';
@@ -330,7 +348,7 @@ util_openSocket(); //open the webSocket
 			answerPromptMembers -= 1;
 			if (answerPromptMembers==0) { //this is only un-negative if this user prompted
 				//all members have answered, send follow up message
-				var xml = '<message type="answerSubmitReview" senderID="'+clientID
+				var xml = '<message type="answerSubmitReview" senderID="'+clientID + '" IPAddress="' + IPAddress 
 				+  '">'+ '</message>';
 				
 				//setTimeout()
@@ -416,6 +434,28 @@ util_openSocket(); //open the webSocket
 			}
 			
 			return;
+		} else if (messageType == 'noAdmin'){
+			//Sends answerPrompt to server & other group members
+			
+			answerPromptMembers = -100;
+			alert("No Chat Admin Available to Approve");
+			
+		} else if (messageType == 'updateAnsWinFlag'){
+			//updates answer window flag
+			
+			var ansWinTextBoolean = messageNode.getAttribute('ansWinFlag');
+			
+			//alert(ansWinTextBoolean);
+			
+			if (ansWinTextBoolean == "true") {
+				showAnswerWindow = true;
+			} else {
+				showAnswerWindow = false;
+			}
+			
+			hideAnswerDiv();
+			
+			
 		} else if (messageType =='AnswerGroupStatus') {
 			$("#answerPara").text(xmlDoc.getElementsByTagName('answer')[0].textContent);
 			$("#answerInput").val(xmlDoc.getElementsByTagName('answer')[0].textContent);
@@ -610,7 +650,7 @@ function sendChat(event) {
 	message = message.replace(/&/gm, '&amp;');
 	message = message.replace(/</gm, '&lt;');
 
-	var xml = '<message type="' + chatType + '" senderID="' + clientID + '">'
+	var xml = '<message type="' + chatType + '" senderID="' + clientID + '" IPAddress="' + IPAddress + '">'
 			+ '<chat>' + '<text>' + message + '</text>' + '</chat>'
 			+ '</message>';
 	
@@ -625,7 +665,7 @@ function sendAnswer(event) {
 	message = message.replace(/&/gm, '&amp;');
 	message = message.replace(/</gm, '&lt;');
 	
-	var xml = '<message type="answerType" senderID="' + clientID + '">'
+	var xml = '<message type="answerType" senderID="' + clientID + '" IPAddress="' + IPAddress + '">'
 		+ '<chat>' + '<text>' + message + '</text>' + '</chat>'
 		+ '</message>';
 	Chat.socket.send(xml);
@@ -633,7 +673,7 @@ function sendAnswer(event) {
 
 function sendAnswerStatus(value) {
 	
-	var xml = '<message type="answerStatus" senderID="' + clientID
+	var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress  
 	+ '" status="' + value + '">'
 	+ '</message>';
 	
@@ -648,6 +688,26 @@ function sendAnswerStatus(value) {
 	$("#lockedParaTimer").css("width", "0%");
 	
 	clearTimeout(answerPopupFunc);
+}
+
+function hideAnswerDiv() {
+	if (showAnswerWindow == false) {
+		$("#answerWindow").css("display","none");
+		$("#alertButtonDiv").css("display","initial");
+		//alert("hid answer window");
+	} else {
+		$("#alertButtonDiv").css("display","none");
+		$("#answerWindow").css("display","initial");
+		//alert("revealed answer window");
+	}
+}
+
+function refreshAnswerWindowStatus() {
+	var xml = '<message type="ansWinStatusReq" senderID="' + clientID 
+	+ '">'
+	+ '</message>';
+	//alert(xml);
+	Chat.socket.send(xml);
 }
 
 function changePanel () {
@@ -697,24 +757,25 @@ function loginGroup () {
 		return;
 	}
 	
-	var xml = '<message type="joinGroup" senderID="' + clientID
+	var xml = '<message type="joinGroup" senderID="' + clientID + '" IPAddress="' + IPAddress 
 		+ '" username="' + username + '"><text>' + groupNum
 		+ '</text></message>';
 	$("#joinBtn").prop("disabled", true);
 	$("#joinBtn").text("...");
 	
 	Chat.socket.send(xml);
+	
 }
 
 function submitAnswer (event) {
 	//Sends answerPrompt to server & other group members
 	var status = !AnswerStatus;
 	
-//	var xml = '<message type="answerStatus" senderID="' + clientID
+//	var xml = '<message type="answerStatus" senderID="' + clientID + '" IPAddress="' + IPAddress 
 //	+ '" status="' + status + '">'
 //	+ '</message>';
 	
-	var xml = '<message type="answerPrompt" senderID="' + clientID
+	var xml = '<message type="answerPrompt" senderID="' + clientID + '" IPAddress="' + IPAddress 
 	+  '">'+ '</message>';
 	
 	Chat.socket.send(xml);
@@ -724,7 +785,7 @@ function submitAnswer (event) {
 //	}, 3000);
 //	
 //	setTimeout(function () {
-//		var xml = '<message type="answerSubmitReview" senderID="'+clientID
+//		var xml = '<message type="answerSubmitReview" senderID="'+clientID + '" IPAddress="' + IPAddress 
 //		+  '">'+ '</message>';
 //		
 //		Chat.socket.send(xml);
@@ -765,6 +826,8 @@ function captureTab (event) {
 	  }
 }
 
+
+
 function answerLockFunction () {
 	var time = new Date().getTime();
 	
@@ -783,11 +846,21 @@ function answerLockFunction () {
 		$("#lockedParaTimer").css("width", "0%");
 //		$("#lockedPara").css("opacity", 0);
 		clearTimeout(answerTimeoutFunc);
+		
+		// code to send message to server to log unlock 
+		var xml = '<message type="answerUnlock" senderID="' + clientID + '" IPAddress="' + IPAddress
+		+ '">'
+		+ '</message>';
+		Chat.socket.send(xml);
+		
 		return;
 	}
 	
 	answerTimeoutFunc = setTimeout(answerLockFunction, 1000); //run 1000s after
 }
+
+
+
 
 window.onbeforeunload = function () {
 	//This is assuming the user has purposely closed the page/refreshed the page.
@@ -799,7 +872,7 @@ window.onbeforeunload = function () {
 	var fakeBtnEvent = {type:"click"};
 	sendChat(fakeBtnEvent);
 	
-	var xml = '<message type="leaveChat" senderID="'+clientID+'"/>';
+	var xml = '<message type="leaveChat" senderID="'+clientID + '" IPAddress="' + IPAddress +'"/>';
 	Chat.socket.send(xml);
 	sentLeaveChat = true;
 	console.log("beforeunload has run");
@@ -841,9 +914,14 @@ $("#chatConsole").scroll(function (event) {
 	Scroll_To_Bot = !(scrollCoef > 100); // average p is about 22px?
 });
 $("#submitBtn").click(submitAnswer);
+$("#alertBtn").click(submitAnswer);
 $("#answerInput").keydown(captureTab);
 
 $("#answerPopup").css("visibility", "");
 $("#blackOverlay").css("visibility","");
+$.getJSON('https://api.ipify.org?format=json', function(data){
+    IPAddress = data.ip;
+});
 //$("#answerPara").click(function (event) {})
 populateEmojiTable();
+
