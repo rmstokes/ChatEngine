@@ -269,7 +269,12 @@ public class FileLogger extends TimerTask {
             	//System.out.println("in if statement");
             	oFile.delete();
             	//System.out.println(this.logPath + this.sFileName);
-            	oFile.createNewFile();
+            	try {
+					oFile.createNewFile();
+				} catch (Exception e) {
+					// problem creating file
+					System.out.println(e.getMessage() + " for oFile.createNewFile(); in FileLogger");
+				}
             	//System.out.println("new file");
             	writeableFileList = true;
             	//System.out.println("boolean changed");

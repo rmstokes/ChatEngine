@@ -78,17 +78,17 @@ public class HttpReqHandlerClass extends HttpServlet {
 	private String getLogsAsXML() throws IOException{
 		
 		File iFile = new File(logPath+sFileName);
-		/**
-		 * Will need to 
-		 */
-		if (!iFile.exists()) {
-			return "<Error><text>There is no session open</text></Error>";
-		}
+		BufferedReader br = null;
 		
-		BufferedReader br = new BufferedReader(new FileReader(iFile));
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder1 = null;
 		DocumentBuilder dBuilder2 = null;
+		/**
+		 * Will need to 
+		 */
+		
+		
+		
 		try {
 			dBuilder1 = dbFactory.newDocumentBuilder();
 			dBuilder2 = dbFactory.newDocumentBuilder();
@@ -96,11 +96,24 @@ public class HttpReqHandlerClass extends HttpServlet {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
 		Document newDoc = dBuilder1.newDocument();
 		try {
-			StringBuilder sb = new StringBuilder();
+			br = new BufferedReader(new FileReader(iFile));
+		} catch (Exception e2) {
+			// iFile doesn't exist
+			System.out.println("Attempted to read logNames and failed\n" +
+			"No file found at: " + iFile);
+			
+			return generateErrorXML(newDoc);
+		}
+		/*if (!iFile.exists()) {
+			br.close();
 			
 			
+			return generateErrorXML(newDoc);
+		}*/
+		try {
 			
 			Element element = newDoc.createElement("woozlogs");
 			newDoc.appendChild(element);
@@ -155,7 +168,7 @@ public class HttpReqHandlerClass extends HttpServlet {
 	
 
 
-public static String toString(Document doc) {
+private static String toString(Document doc) {
     try {
         StringWriter sw = new StringWriter();
         TransformerFactory tf = TransformerFactory.newInstance();
@@ -170,6 +183,13 @@ public static String toString(Document doc) {
     } catch (Exception ex) {
         throw new RuntimeException("Error converting to String", ex);
     }
+}
+
+private static String generateErrorXML(Document newDoc) {
+	newDoc.appendChild(newDoc.createElement("Error"));
+	newDoc.getDocumentElement().appendChild(newDoc.createTextNode("There is no session open"));
+	
+	return toString(newDoc);
 }
 
 
