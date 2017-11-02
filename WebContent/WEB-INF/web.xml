@@ -2,6 +2,7 @@
          xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"> 
+         
   <!-- In Tomcat 7 and other servlet 3.0 containers, you can use @WebServlet("/urlPattern") in
        the Java source code instead of using the servlet and servlet-mapping tags here.
        In fact, the ENTIRE web.xml file can be totally omitted with servlets 3.0. But, I put
@@ -26,7 +27,7 @@
   
   <servlet-mapping>
   	<servlet-name>HTTPHandler</servlet-name>
-  	<url-pattern>/logServ/</url-pattern>
+  	<url-pattern>/logServ</url-pattern>
   </servlet-mapping>
        
   <servlet>
@@ -39,13 +40,60 @@
     <url-pattern>/test2</url-pattern>
   </servlet-mapping>
   -->
- 
+  
+ <servlet>
+    <servlet-name>Quercus Servlet</servlet-name>
+    <servlet-class>com.caucho.quercus.servlet.QuercusServlet</servlet-class>
+
+    <!--
+      Specifies the encoding Quercus should use to read in PHP scripts.
+    -->
+    <!--
+    <init-param>
+      <param-name>script-encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    -->
+
+    <!--
+      Tells Quercus to use the following JDBC database and to ignore the
+      arguments of mysql_connect().
+    -->
+    <!--
+    <init-param>
+      <param-name>database</param-name>
+      <param-value>jdbc/test</param-value>
+    </init-param>
+    -->
+
+    <!--
+    <init-param>
+      <param-name>ini-file</param-name>
+      <param-value>WEB-INF/php.ini</param-value>
+    </init-param>
+    -->
+    
+    <!--
+      Location of the license to enable php to java compilation.
+    -->
+    <init-param>
+      <param-name>license-directory</param-name>
+      <param-value>WEB-INF/licenses</param-value>
+    </init-param>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>Quercus Servlet</servlet-name>
+    <url-pattern>*.php</url-pattern>
+  </servlet-mapping>
+  
  <welcome-file-list>
         <welcome-file>landingPage.html</welcome-file>
         <welcome-file>chat.xhtml</welcome-file>
         <welcome-file>chat.htm</welcome-file>
         <welcome-file>chat.jsp</welcome-file>
  </welcome-file-list>
+ 
  <context-param>
  	<param-name>logPath</param-name>
  	<param-value>/home/kimlab/newserver_test/logs/</param-value>
@@ -54,3 +102,5 @@
 
 
 </web-app>
+         
+ 
