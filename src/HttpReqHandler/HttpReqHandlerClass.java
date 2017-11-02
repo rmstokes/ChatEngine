@@ -3,12 +3,19 @@ package HttpReqHandler;
 
 
 import java.io.BufferedReader;
+
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 
@@ -18,6 +25,11 @@ import javax.servlet.http.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 @WebServlet
 public class HttpReqHandlerClass extends HttpServlet {
@@ -46,10 +58,12 @@ public class HttpReqHandlerClass extends HttpServlet {
 		
 		String typeParam = req.getParameter("type");
 		String responseXMLString;
+		PrintWriter out = res.getWriter();
 		switch(typeParam) {
 		case "logRequest": 
+			res.setContentType("text/xml;charset=UTF-8");
 			responseXMLString = getLogsAsXML();
-			
+			out.append(responseXMLString);
 			break;
 		}
 		
@@ -72,28 +86,62 @@ public class HttpReqHandlerClass extends HttpServlet {
 		}
 		
 		BufferedReader br = new BufferedReader(new FileReader(iFile));
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder1 = null;
+		DocumentBuilder dBuilder2 = null;
+		try {
+			dBuilder1 = dbFactory.newDocumentBuilder();
+			dBuilder2 = dbFactory.newDocumentBuilder();
+		} catch (ParserConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		Document newDoc = dBuilder1.newDocument();
 		try {
 			StringBuilder sb = new StringBuilder();
+			
+			
+			
+			Element element = newDoc.createElement("woozlogs");
+			newDoc.appendChild(element);
 			String logName = "";
 			while((logName = br.readLine()) != null) { 
 				try {
-					System.out.println(logName);
-					File xmlFile = new File(logName);
-					System.out.println("read in:" + xmlFile);
-					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-					Document doc = dBuilder.parse(xmlFile);
-					System.out.println(doc);
-				} catch (ParserConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SAXException e) {
+					//System.out.println(logName);
+					File fXmlFile = new File(logName);
+					
+					Document doc = dBuilder2.parse(fXmlFile);
+					
+					doc.getDocumentElement().normalize();
+					//System.out.println(toString(doc));
+					
+					//Node transfer = doc.getDocumentElement().getFirstChild();
+					//woozlogs.appendChild(doc.getElementById("woozlog"));
+					NodeList nodesToCopy = doc.getElementsByTagName("woozlog");
+					//System.out.println("Nodes: " + nodesToCopy.getLength());
+					
+					for(int i =0; i < nodesToCopy.getLength(); i++) {
+					    /// Create a duplicate node
+					    Node newNode = nodesToCopy.item(i).cloneNode(true);
+					    // Transfer ownership of the new node into the destination document
+					    newDoc.adoptNode(newNode);
+					    // Make the new node an actual item in the target document
+					    newDoc.getDocumentElement().appendChild(newNode);
+					}
+					
+					
+
+					
+					
+				}  catch (SAXException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
 				
 			}
+			//woozlogs.appendChild(buildElement);
+			
 			
 		} finally {
 			br.close();
@@ -102,8 +150,29 @@ public class HttpReqHandlerClass extends HttpServlet {
 		
 		
 		
-		return null;
+		return toString(newDoc);
 	}
+	
+
+
+public static String toString(Document doc) {
+    try {
+        StringWriter sw = new StringWriter();
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = tf.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+
+        transformer.transform(new DOMSource(doc), new StreamResult(sw));
+        return sw.toString();
+    } catch (Exception ex) {
+        throw new RuntimeException("Error converting to String", ex);
+    }
+}
+
+
 	
 	
 

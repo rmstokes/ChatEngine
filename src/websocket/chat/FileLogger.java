@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -61,6 +62,7 @@ public class FileLogger extends TimerTask {
 	private boolean destroy = false;
 	private String logPath;
 	private String sFileName = "currentLogFileNames.txt";
+	private static HashSet<String> fileNames = new HashSet<String>();
 	
 	private static boolean writeableFileList = false;
 	
@@ -234,8 +236,10 @@ public class FileLogger extends TimerTask {
 	      logPathFile.setReadable(true, false); //So kimlab can view the dir & contents, but cannot edit it
 	      //Final permissions should be 755 rwxr-xr-x
 	      
-	      
-	      recordFileName(logPathDir + filename);
+	      if (!fileNames.contains(logPathDir + filename)) {
+	    	  recordFileName(logPathDir + filename);
+	    	  fileNames.add(logPathDir + filename);
+	      }
 	      
 	      
 	      File logFile = new File(logPathDir + filename);
@@ -260,17 +264,17 @@ public class FileLogger extends TimerTask {
 
             File oFile = new File(this.logPath + this.sFileName);
             // this is to make sure that we are not reusing old file names
-            System.out.println("writeableFileList: " + writeableFileList);
+            //System.out.println("writeableFileList: " + writeableFileList);
             if (!writeableFileList) {
-            	System.out.println("in if statement");
+            	//System.out.println("in if statement");
             	oFile.delete();
-            	System.out.println(this.logPath + this.sFileName);
+            	//System.out.println(this.logPath + this.sFileName);
             	oFile.createNewFile();
-            	System.out.println("new file");
+            	//System.out.println("new file");
             	writeableFileList = true;
-            	System.out.println("boolean changed");
+            	//System.out.println("boolean changed");
             }
-            System.out.println("writeableFileList: " + writeableFileList);
+            //System.out.println("writeableFileList: " + writeableFileList);
             
             if (oFile.canWrite()) {
                 BufferedWriter oWriter = new BufferedWriter(new FileWriter(oFile, true));
