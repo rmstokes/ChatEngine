@@ -1,0 +1,172 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf200
+{\fonttbl\f0\fnil\fcharset0 Monaco;}
+{\colortbl;\red255\green255\blue255;\red0\green128\blue128;\red63\green127\blue127;\red63\green95\blue191;
+\red127\green0\blue127;\red42\green0\blue255;\red42\green0\blue225;}
+{\*\expandedcolortbl;;\csgenericrgb\c0\c50196\c50196;\csgenericrgb\c24706\c49804\c49804;\csgenericrgb\c24706\c37255\c74902;
+\csgenericrgb\c49804\c0\c49804;\csgenericrgb\c16471\c0\c100000;\csgenericrgb\c16471\c0\c88235;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs22 \cf2 <!\cf3 DOCTYPE\cf0  \cf2 html>\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 <!--\cf0 \
+\cf4   Licensed to the Apache Software Foundation (ASF) under one or more\cf0 \
+\cf4   contributor license agreements.  See the NOTICE file distributed with\cf0 \
+\cf4   this work for additional information regarding copyright ownership.\cf0 \
+\cf4   The ASF licenses this file to You under the Apache License, Version 2.0\cf0 \
+\cf4   (the "License"); you may not use this file except in compliance with\cf0 \
+\cf4   the License.  You may obtain a copy of the License at\cf0 \
+\
+\cf4       http://www.apache.org/licenses/LICENSE-2.0\cf0 \
+\
+\cf4   Unless required by applicable law or agreed to in writing, software\cf0 \
+\cf4   distributed under the License is distributed on an "AS IS" BASIS,\cf0 \
+\cf4   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\cf0 \
+\cf4   See the License for the specific language governing permissions and\cf0 \
+\cf4   limitations under the License.\cf0 \
+\cf4 -->\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf2 <\cf3 html\cf0  \cf5 xmlns\cf0 =\cf6 "http://www.w3.org/1999/xhtml"\cf0  \cf5 xml:lang\cf0 =\cf6 "en"\cf2 >\cf0 \
+\cf2 <\cf3 head\cf2 >\cf0 \
+	\cf2 <\cf3 meta\cf0  \cf5 charset\cf0 =\cf6 "UTF-8"\cf2 ></\cf3 meta\cf2 >\cf0 \
+    \cf2 <\cf3 title\cf2 >\cf0 \ul \ulc0 Dashboard\cf2 \ulnone </\cf3 title\cf2 >\cf0 \
+	\cf2 <\cf3 link\cf0  \cf5 rel\cf0 =\cf6 "stylesheet"\cf0  \cf5 type\cf0 =\cf6 "text/css"\cf0  \cf5 href\cf0 =\cf6 "css/siteWide.css"\cf0  \cf2 />\cf0 \
+	\cf2 <\cf3 link\cf0  \cf5 rel\cf0 =\cf6 "stylesheet"\cf0  \cf5 type\cf0 =\cf6 "text/css"\cf0  \cf5 href\cf0 =\cf6 "css/chat.css"\cf0  \cf2 />\cf0 \
+	\cf2 <\cf3 link\cf0  \cf5 rel\cf0 =\cf6 "stylesheet"\cf0  \cf5 type\cf0 =\cf6 "text/css"\cf0  \cf5 href\cf0 =\cf6 "css/loginChat.css"\cf0  \cf2 />\cf0 \
+	\cf2 <\cf3 link\cf0  \cf5 rel\cf0 =\cf6 "stylesheet"\cf0  \cf5 type\cf0 =\cf6 "text/css"\cf0  \cf5 href\cf0 =\cf6 "css/adminMonitor.css"\cf0  \cf2 />\cf0 \
+	\cf2 <\cf3 link\cf0  \cf5 rel\cf0 =\cf6 "stylesheet"\cf0  \cf5 type\cf0 =\cf6 "text/css"\cf0  \cf5 href\cf0 =\cf6 "css/dashboard.css"\cf0  \cf2 />\cf0 \
+     \cf2 <\cf3 link\cf0  \cf5 id\cf0 =\cf6 "titleIcon"\cf0  \cf5 href\cf0 =\cf6 "img/chatbubble-working.png"\cf0  \cf5 rel\cf0 =\cf6 "shortcut icon"\cf2 />\cf0 \
+    \cf2 <\cf3 meta\cf0  \cf5 http-equiv\cf0 =\cf6 "Cache-Control"\cf0  \cf5 content\cf0 =\cf6 "no-cache, no-store, must-revalidate"\cf2 />\cf0 \
+     \cf2 <\cf3 meta\cf0  \cf5 http-equiv\cf0 =\cf6 "Pragma"\cf0  \cf5 content\cf0 =\cf6 "no-cache"\cf2 />\cf0 \
+     \cf2 <\cf3 meta\cf0  \cf5 http-equiv\cf0 =\cf6 "Expires"\cf0  \cf5 content\cf0 =\cf6 "0"\cf2 />\cf0 \
+\cf2 </\cf3 head\cf2 >\cf0 \
+\
+\
+\cf2 <\cf3 body\cf2 >\cf0 \
+	\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "headerDiv"\cf2 >\cf0 \
+		\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "webSocketGfx"\cf2 >\cf0 \
+			\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "clientGfx"\cf0  \cf5 class\cf0 =\cf6 "circleBase"\cf2 ></\cf3 div\cf2 >\cf0 \
+			\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "serverGfx"\cf0  \cf5 class\cf0 =\cf6 "circleBase"\cf2 ></\cf3 div\cf2 >\cf0 \
+			\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "pingGfx"\cf0  \cf5 class\cf0 =\cf6 "circleBase ping"\cf2 ></\cf3 div\cf2 >\cf0 \
+		\cf2 </\cf3 div\cf2 >\cf0 \
+\
+		\cf2 <\cf3 h2\cf2 >\cf0 \ul \ulc0 Dashboard\ulnone \
+			\cf2 <\cf3 span\cf0  \cf5 style\cf0 ="\cf5 float\cf0 : \cf7 right\cf0 ; \cf5 top\cf0 :\cf7 30px\cf0 "\cf2 >\cf0 COMPS\cf2 </\cf3 span\cf2 >\cf0 \
+		\cf2 </\cf3 h2\cf2 >\cf0 \
+		\
+	\cf2 </\cf3 div\cf2 >\cf0 \
+	\
+	\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "conversationDiv"\cf2 >\cf0 \
+			\
+			\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "conversationWindow"\cf2 >\cf0 \
+\
+					\cf2 <\cf3 div\cf0  \cf5 class\cf0 =\cf6 "chatContainer"\cf2 >\cf0 \
+\
+						\
+					\cf2 </\cf3 div\cf2 >\cf0 \
+\
+				\cf2 </\cf3 div\cf2 >\cf0 \
+	\
+	\cf2 </\cf3 div\cf2 >\cf0 \
+	\
+	\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "sidebar"\cf2 >\cf0 \
+		\cf2 <\cf3 img\cf0  \cf5 src\cf0 =\cf6 "img/WhiteArrow2.png"\cf0  \cf5 alt\cf0 =\cf6 "Right Arrow"\cf2 />\cf0 \
+		\cf2 <\cf3 table\cf0  \cf5 id\cf0 =\cf6 'AMStatusTable'\cf2 >\cf0 \
+			\cf2 <\cf3 caption\cf0  \cf5 style\cf0 ="\cf5 color\cf0 : \cf7 white\cf0 ; \cf5 font-weight\cf0 : \cf7 bold\cf0 ;"\cf2 >\cf0 \ul \ulc0 Admin\ulnone  Monitor Status\cf2 </\cf3 caption\cf2 >\cf0 \
+			\cf2 <\cf3 thead\cf2 >\cf0 \
+			\cf2 <\cf3 tr\cf0  \cf5 id\cf0 =\cf6 'AMGroupHeader'\cf2 >\cf0 \
+				\cf2 <\cf3 th\cf2 >\cf0 Group Name\cf2 </\cf3 th\cf2 >\cf0 \
+				\cf2 <\cf3 th\cf0  \cf5 title\cf0 =\cf6 "Chat with this group. All the typical functions of chatting are available."\cf2 >\cf0 \
+				Chat\cf2 </\cf3 th\cf2 >\cf0 \
+				\cf2 <\cf3 th\cf0  \cf5 title\cf0 =\cf6 "Monitor this group. Places you in the group discreetly.\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf6 			You cannot chat with the group and they cannot see your presence."\cf2 >\cf0 \
+					Monitor\cf2 </\cf3 th\cf2 >\cf0 \
+			\cf2 </\cf3 tr\cf2 >\cf0 \
+			\cf2 </\cf3 thead\cf2 >\cf0 \
+			\cf2 <\cf3 tbody\cf0  \cf5 id\cf0 =\cf6 'AMStatusTBody'\cf2 >\cf0 \
+				\cf2 <\cf3 tr\cf0  \cf5 id\cf0 =\cf6 'GXAMGroupInfo'\cf2 >\cf0 \
+					\cf2 <\cf3 td\cf2 >\cf0 Group X\cf2 </\cf3 td\cf2 >\cf0 \
+					\cf2 <\cf3 td\cf2 >\cf0  	\cf2 <\cf3 input\cf0  \cf5 type\cf0 =\cf6 'checkbox'\cf0  \cf5 id\cf0 =\cf6 'CBgroupChat'\cf0  \cf5 disabled\cf0 =\cf6 "true"\cf2 />\cf0 \
+							\cf2 <\cf3 label\cf0  \cf5 for\cf0 =\cf6 'CBgroupChat'\cf0  \cf5 class\cf0 =\cf6 'chat'\cf2 >\cf0 Chat\cf2 </\cf3 label\cf2 >\cf0 \
+					 \cf2 </\cf3 td\cf2 >\cf0 \
+					\cf2 <\cf3 td\cf2 >\cf0  	\cf2 <\cf3 input\cf0  \cf5 type\cf0 =\cf6 'checkbox'\cf0  \cf5 id\cf0 =\cf6 'CBgroupMonitor'\cf0  \cf5 disabled\cf0 =\cf6 "true"\cf2 />\cf0 \
+							\cf2 <\cf3 label\cf0  \cf5 for\cf0 =\cf6 'CBgroupMonitor'\cf0  \cf5 class\cf0 =\cf6 'monitor'\cf2 >\cf0 Monitor\cf2 </\cf3 label\cf2 >\cf0 \
+					 \cf2 </\cf3 td\cf2 >\cf0 \
+					 \
+				\cf2 </\cf3 tr\cf2 >\cf0 \
+			\cf2 </\cf3 tbody\cf2 >\cf0 \
+			\
+		\cf2 </\cf3 table\cf2 >\cf0 \
+	\cf2 </\cf3 div\cf2 >\cf0 \
+	\
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 <\cf3 br\cf2 />\cf0 \
+\
+\cf2 <\cf3 div\cf0  \cf5 id\cf0 =\cf6 "GXGroupWindow"\cf0  \cf5 class\cf0 =\cf6 "groupWindow"\cf2 >\cf0 \
+	\cf2 <\cf3 input\cf0  \cf5 type\cf0 =\cf6 "checkbox"\cf0  \cf5 id\cf0 =\cf6 "windowType"\cf2 />\cf0 \
+	\cf2 <\cf3 label\cf0  \cf5 for\cf0 =\cf6 "windowType"\cf0  \cf5 class\cf0 =\cf6 "windowToggle"\cf2 >\cf0 Show Answer\cf2 </\cf3 label\cf2 >\cf0 \
+	\cf2 <\cf3 span\cf0  \cf5 style\cf0 ="\cf5 display\cf0 :\cf7 inline-block\cf0 ; \cf5 min-width\cf0 :\cf7 50px\cf0 "\cf2 ></\cf3 span\cf2 >\cf0 \
+	\cf2 <\cf3 span\cf0  \cf5 class\cf0 =\cf6 "groupHeader"\cf2 >\cf0 Group X\cf2 </\cf3 span\cf2 >\cf0 \
+	\cf2 <\cf3 br\cf0  \cf5 style\cf0 ="\cf5 clear\cf0 :\cf7 both\cf0 "\cf2 />\cf0 \
+\
+\cf2 </\cf3 div\cf2 >\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 <!-- \cf0 \
+\cf4 <table id="chatRoomTable" width="100%" style="padding:5px" \ul cellpadding\ulnone ="3px">\cf0 \
+\
+\cf4 <tr id="chatRow1" class="chatRow">\cf0 \
+\cf4 	<td align="center" id="GXChat">\cf0 \
+\cf4 		 <div id="userContainer1" style="float:right; font-weight:bold">\ul </div>\cf0 \ulnone \
+\cf4     	<h2 id="GXgroupName" align='center' style="background:inherit">Group X</h2>\cf0 \
+\cf4     	<div class="console-container" id="GXconsole-container">\cf0 \
+\cf4         	<div class="chatConsole" id="GXconsole"/>\cf0 \
+\cf4     	\ul </div>\cf0 \ulnone \
+\cf4     	<p style='padding:3px' id="GXchatInterface">\cf0 \
+\cf4         	<input class="chat" id="GXchat" type="text" placeholder="type and press enter to chat" />\cf0 \
+\cf4         	<button id='GXchat_button' >Chat</button>\cf0 \
+\cf4     	</p>\cf0 \
+\cf4     	\cf0 \
+\cf4     	<table border="3px" style='border-color:black; color:GhostWhite; background-color:rgba(100,100,100,0.7)' id="GXuserTable" class="userTable">\cf0 \
+\cf4     		<tr align='center' id="GXuserTableHeader">\cf0 \
+\cf4     			<th title="\ul Username\ulnone ">User</th>\cf0 \
+\cf4     			<th title="Number of typing messages sent">Typing</th>\cf0 \
+\cf4     			<th title="Number of chat messages sent">Chat</th>\cf0 \
+\cf4     			<th title="Participation determined by total typing and chat messages">Participation</th>\cf0 \
+\cf4     		</tr>\cf0 \
+\cf4     		<tr align='center' id="GXuserTableUser">\cf0 \
+\cf4     			<td>User X</td>\cf0 \
+\cf4     			<td>100</td>\cf0 \
+\cf4     			<td>10</td>\cf0 \
+\cf4     			<td>1</td>\cf0 \
+\cf4     		</tr>\cf0 \
+\cf4     	</table>\cf0 \
+\cf4     	<br/>\cf0 \
+\cf4 	</td>\cf0 \
+\cf4 </tr>\cf0 \
+\cf4 <tr id="chatRow2" class="chatRow">\cf0 \
+\cf4 </tr>\cf0 \
+\cf4 <tr id="chatRow3" class="chatRow"/>\cf0 \
+\cf4 <tr id="chatRow4" class="chatRow"/>\cf0 \
+\cf4 </table>\cf0 \
+\
+\
+\cf4 -->\cf0 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 </\cf3 body\cf2 >\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 <!-- <script	  \ul src\ulnone ="https://code.jquery.com/jquery-2.2.4.min.js" -->\cf0 \
+\cf4 <!-- 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" -->\cf0 \
+\cf4 <!-- 			  \ul crossorigin\ulnone ="anonymous"></script> -->\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf2 <\cf3 script\cf0  \cf5 src\cf0 =\cf6 "js/jquery-3.1.0.min.js"\cf0  \cf5 type\cf0 =\cf6 "text/javascript"\cf2 ></\cf3 script\cf2 >\cf0 \
+\cf2 <\cf3 script\cf0  \cf5 src\cf0 =\cf6 "js/utility.js"\cf0  \cf5 type\cf0 =\cf6 "text/javascript"\cf2 ></\cf3 script\cf2 >\cf0 \
+\cf2 <\cf3 script\cf0  \cf5 src\cf0 =\cf6 "js/chat.js"\cf0  \cf5 type\cf0 =\cf6 "text/javascript"\cf2 ></\cf3 script\cf2 >\cf0 \
+\cf2 <\cf3 script\cf0  \cf5 src\cf0 =\cf6 "js/adminMonitorJS.js"\cf0  \cf5 type\cf0 =\cf6 "text/javascript"\cf2 ></\cf3 script\cf2 >\cf0 \
+\cf2 </\cf3 html\cf2 >}
