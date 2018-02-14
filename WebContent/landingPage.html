@@ -31,6 +31,7 @@ This is the page that users will see when they first input the url.
         <option value="0" title="Students login from here" selected="selected">Login</option>
         <option value="1" title="Use to create new groups/log files">Admin</option>
         <option value="2" title="TA/Instructors should log in here">Admin Monitor</option>
+        <option value="3" title="Dashboard for viewing metrics">Dashboard</option>
       </select>
       <p style="display: none;">Info will be displayed below</p>
       
@@ -70,6 +71,9 @@ This is the page that users will see when they first input the url.
         	} else if (selected == "Admin Monitor") {
         		$("#infoBox").html("<strong>Admin Monitor</strong> is for <strong class='redBold'>Teaching Assistants</strong> or <strong class=redBold>Instructors</strong> to interact with multiple groups at once.  <br/> Here you can <strong class='redBold'>Monitor</strong> groups and watch their progress discretely. <br/> Or you can <strong class='greenBold'>Chat</strong> and talk with the group. <br/>");
         		$("#goButton").attr("href", "adminMonitor.html");
+        	} else if (selected == "Dashboard") {
+        		$("#infoBox").html("<strong>Dashboard</strong> is for <strong class='redBold'>viewing metrics</strong> or <strong class=redBold>Instructors</strong> to interact with multiple groups at once.  <br/> Here you can <strong class='redBold'>Monitor</strong> groups and watch their progress discretely. <br/> Or you can <strong class='greenBold'>Chat</strong> and talk with the group. <br/>");
+        		$("#goButton").attr("href", "dashboard.html");
         	}
         	
         });
