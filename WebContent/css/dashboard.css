@@ -1,33 +1,23 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf200
-{\fonttbl\f0\fnil\fcharset0 Monaco;}
-{\colortbl;\red255\green255\blue255;\red63\green127\blue127;\red127\green0\blue127;\red42\green0\blue225;
+#conversationWindow {
+	background-color: rgba(200, 0, 00, 0.7);
+	float: left;
+	margin: 0px 5px 0px 300px;
+	padding: 10px;
+	border-radius: 10px;
+	min-width: 800px;
 }
-{\*\expandedcolortbl;;\csgenericrgb\c24706\c49804\c49804;\csgenericrgb\c49804\c0\c49804;\csgenericrgb\c16471\c0\c88235;
-}
-\margl1440\margr1440\vieww10800\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720\partightenfactor0
-
-\f0\fs22 \cf2 #conversationWindow\cf0  \{\
-	\cf3 background-color\cf0 : \cf4 rgba(200,\cf0  \cf4 0,\cf0  \cf4 00,\cf0  \cf4 0.7)\cf0 ;\
-	\cf3 float\cf0 : \cf4 left\cf0 ;\
-	\cf3 margin\cf0 : \cf4 0px\cf0  \cf4 5px\cf0  \cf4 0px\cf0  \cf4 300px\cf0 ;\
-	\cf3 padding\cf0 : \cf4 10px\cf0 ;\
-	\cf3 border-radius\cf0 : \cf4 10px\cf0 ;\
-	\cf3 min-width\cf0 : \cf4 800px\cf0 ;\
-\}\
-\cf2 .chatContainer\cf0  \{\
-	\cf3 background-color\cf0 : \cf4 White\cf0 ;\
-	\cf3 font-size\cf0 : \cf4 18px\cf0 ;\
-	\cf3 resize\cf0 : \cf4 both\cf0 ;\
-	\cf3 width\cf0 : \cf4 100%\cf0 ;\
-	\cf3 position\cf0 : \cf4 relative\cf0 ;\
-	\cf3 margin\cf0 : \cf4 10px\cf0  \cf4 auto\cf0 ;\
-	\cf3 min-width\cf0 : \cf4 775px\cf0 ;\
-	\cf3 padding\cf0 : \cf4 5px\cf0  \cf4 0px\cf0 ;\
-	\cf3 overflow\cf0 : \cf4 hidden\cf0 ;\
-	\cf3 border-radius\cf0 : \cf4 10px\cf0 ;\
-	\cf3 width\cf0 : \cf4 410px\cf0 ;\
-	\cf3 height\cf0 : \cf4 300px\cf0 ;\
-	\cf3 border-bottom-right-radius\cf0 : \cf4 0px\cf0 ;\
-\}}
+.chatContainer {
+	background-color: White;
+	font-size: 18px;
+	resize: both;
+	width: 100%;
+	position: relative;
+	margin: 10px auto;
+	min-width: 775px;
+	padding: 5px 0px;
+	overflow: hidden;
+	border-radius: 10px;
+	width: 410px;
+	height: 300px;
+	border-bottom-right-radius: 0px;
+} 
