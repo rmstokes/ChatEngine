@@ -9,6 +9,14 @@
     <url-pattern>/logServ</url-pattern>
   </servlet-mapping>
   <servlet>
+    <servlet-name>Dashboard</servlet-name>
+    <servlet-class>websocket.dashboard</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Dashboard</servlet-name>
+    <url-pattern>/dashXML</url-pattern>
+  </servlet-mapping>
+  <servlet>
     <servlet-name>chat</servlet-name>
     <servlet-class>websocket.ChatAnnotation</servlet-class>
   </servlet>
