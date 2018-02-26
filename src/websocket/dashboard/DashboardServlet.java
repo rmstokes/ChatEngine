@@ -1,6 +1,8 @@
 package websocket.dashboard;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -15,46 +17,55 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 
-/**
- * Servlet implementation class DashboardServlet
- */
+
 @WebServlet("/DashboardServlet")
 public class DashboardServlet extends HttpServlet implements ServletContextListener{
 	private static final long serialVersionUID = 1L;
        
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
+  
     public DashboardServlet() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+	
+	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		System.out.println("doGet is called");
+		
+		String responseXMLString;
+		PrintWriter out = res.getWriter();
+		res.setContentType("text/xml;charset=UTF-8");
+		
+		BufferedReader reader = new BufferedReader(req.getReader());
+		StringBuffer xmlBuffer = new StringBuffer();
+		
+		while ((responseXMLString = reader.readLine()) != null) {
+			xmlBuffer.append(responseXMLString + "\n");
+		}
+		responseXMLString = xmlBuffer.toString();
+		out.append(responseXMLString);
+		
+		if (responseXMLString.length() > 0) {
+			System.out.println("Recieved XML file");
+		}
+		else {
+			System.out.println("No XML document recieved");
+			out.append("No XML document received");
+		}
+		
 	}
 
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
+	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		doGet(request, response);
 	}
 
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 	@OnOpen
