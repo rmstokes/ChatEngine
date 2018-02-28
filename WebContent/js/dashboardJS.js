@@ -14,9 +14,20 @@ var setCreated = null;
 
 var TAfile = null;
 
+var sentLeaveDash = false;
+
+var testXML = '';
+
+
+//Template for group dashboard window
+var AMGroupWindow = document.getElementById("GXGroupWindow").cloneNode(true);
+document.getElementById("GXGroupWindow").style.display = "none";
+
 window.onbeforeunload = util_closeSocket;
 
-util_openSocket();
+util_openSocket(); //open webSocket
+
+updateDash(testXML);
 
 	Chat.socket.onopen = function() {
 		// connection opened with server
@@ -26,6 +37,7 @@ util_openSocket();
 		util_affirmUserClient();
 		$ ('#createBtn').removeAttr('disabled');
 		//util_setUserClient();
+		console.log("WebSocket was opened");
 	};
 
 	Chat.socket.onclose = function() {
@@ -36,6 +48,13 @@ util_openSocket();
 		console.log("WebSocket was closed.");
 		
 		$ ('button').attr('disabled', true);
+		
+		if (!sentLeaveDash) {
+			$("#serverGfx").addClass("disconnectWS");
+			$("#pingGfx").addClass("reconnect");
+
+			setTimeout(util_reconnectSocket, 1000); //reconnect after 1s
+		}
 	};
 	
 	Chat.socket.onmessage = function(message) {
@@ -52,8 +71,27 @@ util_openSocket();
 			console.log(messageType+" "+messageNode.getAttribute('senderID'));
 			util_setPermID(messageNode.getAttribute('senderID'));
 			
-		} else {
+		} else if (messageType == 'DashUpdate') {
+			updateDash(messageNode);
+		} 
+		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
+	
+	function updateDash(message){
+		
+	};
+	
+	window.onbeforeunload = function () {
+		//This is assuming the user has purposely closed the page/refreshed the page.
+		//Send a closeSocket message to the server- the server must know that client disconnect on purpose
+		if(Chat.socket==null) //If Chat.socket is not loaded, dont run
+			return;
+		
+		var xml = '<message type="dashLeave" senderID="'+clientID+'"/>';
+		Chat.socket.send(xml);
+		sentLeaveDash = true;
+		console.log("beforeunload has run");
+	};
