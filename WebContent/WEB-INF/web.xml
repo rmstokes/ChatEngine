@@ -10,7 +10,7 @@
   </servlet-mapping>
   <servlet>
     <servlet-name>Dashboard</servlet-name>
-    <servlet-class>websocket.dashboard</servlet-class>
+    <servlet-class>websocket.dashboard.DashboardServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>Dashboard</servlet-name>

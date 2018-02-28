@@ -18,7 +18,7 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 
 
-@WebServlet("/DashboardServlet")
+@WebServlet  //("/DashboardServlet")
 public class DashboardServlet extends HttpServlet implements ServletContextListener{
 	private static final long serialVersionUID = 1L;
        
