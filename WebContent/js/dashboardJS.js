@@ -25,7 +25,14 @@ document.getElementById("GXGroupWindow").style.display = "none";
 
 window.onbeforeunload = util_closeSocket;
 
-util_openSocket(); //open webSocket
+var serverPath = window.location.pathname.match(/^(.*)\./)[1];
+var hostname = window.location.host;
+document.getElementById("output").innerHTML = ("serverPath: " + serverPath + " hostname: " + hostname);
+
+//alert("serverPath: " + serverPath + " hostname: " + hostname);
+
+
+util_openSocket("/dashXML"); //open webSocket
 
 updateDash(testXML);
 

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,9 +17,12 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
+import javax.websocket.server.ServerEndpoint;
 
 
 @WebServlet  //("/DashboardServlet")
+@WebListener
+@ServerEndpoint(value = "/{path}/dash")
 public class DashboardServlet extends HttpServlet implements ServletContextListener{
 	private static final long serialVersionUID = 1L;
        
@@ -70,7 +74,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	}
 	@OnOpen
 	public void start(Session session, @PathParam("path") String path) throws Exception {
-		
+		System.out.println("Succcesssss");
 	}
 	
 	@OnClose
