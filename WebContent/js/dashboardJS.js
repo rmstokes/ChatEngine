@@ -27,7 +27,7 @@ window.onbeforeunload = util_closeSocket;
 
 var serverPath = window.location.pathname.match(/^(.*)\./)[1];
 var hostname = window.location.host;
-document.getElementById("output").innerHTML = ("serverPath: " + serverPath + " hostname: " + hostname);
+//document.getElementById("output").innerHTML = ("serverPath: " + serverPath + " hostname: " + hostname);
 
 //alert("serverPath: " + serverPath + " hostname: " + hostname);
 
@@ -65,8 +65,11 @@ updateDash(testXML);
 	};
 	
 	Chat.socket.onmessage = function(message) {
+		document.getElementById("output").innerHTML = ("messgae received");
+		alert("message received")
 		// message received from server
-
+		//alert that got message and send some text from message
+		//message.getNode
 		var xml = message.data;
 		var parser = new DOMParser();
 		var xmlDoc = parser.parseFromString(xml, "text/xml");
@@ -100,5 +103,5 @@ updateDash(testXML);
 		var xml = '<message type="dashLeave" senderID="'+clientID+'"/>';
 		Chat.socket.send(xml);
 		sentLeaveDash = true;
-		console.log("beforeunload has run");
+		console.log("before unload has run");
 	};
