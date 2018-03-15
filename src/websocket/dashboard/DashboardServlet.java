@@ -108,6 +108,8 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 			connectedSessions.add(this.session);
 		}
 		
+		sendXML();
+		
 	}
 	
 	@OnClose
