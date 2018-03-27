@@ -286,6 +286,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		//String msg = "This is a test message";
 		//System.out.println(this.session.toString());
 		
+		// This gets all connected sessions from memory and shares dash update
 		for (Session session : connectedSessions) {
 			session.getBasicRemote().sendText(msg);
 		}
