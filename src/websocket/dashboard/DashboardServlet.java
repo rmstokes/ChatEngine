@@ -3,7 +3,12 @@ package websocket.dashboard;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Set;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -14,19 +19,24 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
+import org.xml.sax.InputSource;
 
+import util.MessageType;
 import websocket.chat.Client;
+import websocket.chat.GroupManager;
 
 
 @WebServlet  //("/DashboardServlet")
@@ -35,8 +45,14 @@ import websocket.chat.Client;
 public class DashboardServlet extends HttpServlet implements ServletContextListener{
 	private static final long serialVersionUID = 1L;
 	
+	private static final ArrayList<Client> userList = new ArrayList<Client>();
 	public static final ArrayList<Session> connectedSessions = new ArrayList<Session>();
 	//private static final ArrayList<Client> userList = new ArrayList<Client>();
+	
+	//private static final String GUEST_PREFIX = "Guest";
+	public static final DateFormat serverDateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
+	private static final DateFormat timeDifferenceFormatter = new SimpleDateFormat("HH:mm:ss.SSS");
+	private static final Date serverStartTime = new Date();
 	
 	private Session session;
 	private Client userClient;
@@ -48,7 +64,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		System.out.println("doGet is called");
+		//System.out.println("doGet is called");
 		
 		String responseXMLString;
 		PrintWriter out = res.getWriter();
@@ -64,17 +80,17 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		out.append(responseXMLString);
 		
 		if (responseXMLString.length() > 0) {
-			System.out.println("Recieved XML file");
+			System.out.println("Received XML file");
 			try {
 				sendXML();
 			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
-				System.out.println("No session to reference");
+				System.out.println("No session to reference: NullPointerException");
 				e.printStackTrace();
 			}
 		}
 		else {
-			System.out.println("No XML document recieved");
+			System.out.println("No XML document received");
 			out.append("No XML document received");
 		}
 		
@@ -94,13 +110,26 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	public void contextInitialized(ServletContextEvent arg0) {
 		
 	}
+	
+	@OnError
+	public void onError(Throwable t) throws Throwable {
+		System.out.println("Chat Error" + t + ": " + t.toString());
+	}
+	
 	@OnOpen
-	public void start(Session session, @PathParam("path") String path) throws Exception {
+	public void start(Session sessionLoc, @PathParam("path") String path) throws Exception {
 		//System.out.println("Succcesssss");
 		
-		System.out.println("Opened Websocket @ /" + path + " by sID-" + session.getId());
+		System.out.println("Dashboard opened Websocket @ /" + path + " by sID-" + sessionLoc.getId());
 		sessionOpen = true;
-		this.session = session;
+		
+		//System.out.println("session: " + session.toString());
+		//System.out.println("this.session: " + this.session.toString());
+		
+		this.session = sessionLoc;
+		
+		//System.out.println("session: " + session.toString());
+		//System.out.println("this.session: " + this.session.toString());
 		
 		//sendXML(session);
 		
@@ -108,7 +137,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 			connectedSessions.add(this.session);
 		}
 		
-		sendXML();
+		//sendXML();
 		
 	}
 	
@@ -138,7 +167,112 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	}
 	
 	@OnMessage
-	public void incoming(String message, @PathParam("path") String path) throws Exception {}
+	public void incoming(String message, @PathParam("path") String path) throws Exception {
+		
+		// parse xml message and send broadcast to group.
+				// Handles different types of messages
+				
+				// parse xml
+				//System.out.println("this.session: " + this.session.toString());
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder;
+				builder = factory.newDocumentBuilder();
+				StringReader sr = new StringReader(message);
+				InputSource is = new InputSource(sr);
+				Document doc = builder.parse(is); //Invalid XML will crash here
+
+				// get message type
+				Element element = doc.getDocumentElement();
+				String messageType = element.getAttribute("type");
+				
+				System.out.println("Received: "+convertXMLtoString(element));
+
+				String senderID = null; 
+				
+				//Get the senderID and Client and link to this ChatAnnotation class
+				senderID = element.getAttribute("senderID");
+				
+				//long startTime = System.nanoTime();
+				
+			//Moved these up for optimization, but it only gets like 1ms so idk
+		
+		if(messageType.equals(MessageType.UserClientAffirm)) {
+			//If a clientID is included, confirm it the userClient and send it
+			//Else create a new userClient
+		//System.out.println("Time diff "+(System.nanoTime()-startTime));
+			//Use senderID to find userClient and link userClient
+			if (senderID != "") {
+				int userListSize = userList.size(); //set before for is run
+				
+				for (int i=0; i<userListSize; i++) {
+					Client user = userList.get(i);
+					if (user.permID.equals(senderID)) {
+						
+						this.userClient = user;
+						System.out.println("CONFIRM permID: "+userClient.permID+" -> "+ userClient.toString());
+						sendXMLMessage("permIDConfirm", userClient.permID);
+						
+						/******************************************************
+						 * User had a verified Client, run reconnect script
+						 *********************************************************/
+						
+//						//Reconnect for loginChat- is not Admin but has groupID 
+//						if (path.equals("loginChat") && !userClient.isAdmin && userClient.groupID>0) {
+//							//place user back into group if removed- otherwise Session change fixes this
+//							userClient.session = this.session; //change session early in case
+//							Set<Client> group = groupManager.getGroup(userClient.groupID);
+//							if (!group.contains(userClient))
+//								group.add(userClient); 
+//
+//							sendChatHistory(userClient, 0, true); //send chatHistory
+//							sendXMLMessage("goToChat", userClient.permID); //calls swapPanel on loginChatJS which when sent twice
+//							//sendXMLMessage("displayChat", userClient.permID); //sends user to chat page
+//							
+//							sendReconnectMessage(doc, userClient);
+//							
+//							System.out.println("User "+userClient.IDString()+" has successfully reconnected to loginChat.");
+//						} else if //adminMonitor- is admin and has adminMonitor Table (has logged in but not out)
+//							(path.equals("adminMonitor") && userClient.isAdmin &&
+//									groupManager.getAMStatus(userClient)!=null) {
+//							
+//							userClient.session = this.session; //refresh session
+//							sendAMStatus(groupManager.getAMStatus(userClient)); //client needs this to prepare the windows
+//							
+//							int[] AMStatus = groupManager.getAMStatus(userClient);
+//							for (int groupNo=0; groupNo<AMStatus.length; groupNo++) {
+//								if (AMStatus[groupNo]>GroupManager.AM_NONE){ //add to group
+//									groupManager.getGroupByNo(groupNo).add(userClient);
+//									userClient.groupID = groupManager.getGroupID(groupNo);
+//									sendChatHistory(userClient, 0, true);
+//								}
+//								if (AMStatus[groupNo]==GroupManager.AM_CHAT)
+//									sendReconnectMessage(doc, userClient);
+//							}
+//							System.out.println("AM User "+userClient.IDString()+" has reconnected to: "+AMStatus);
+//						}
+						break;
+					}
+				}//end of for loop
+				
+			}
+			
+			//if no userClient was found (and by default senderID is empty)
+			if (userClient==null) {
+				if (senderID != "") {
+					System.out.print("Outdated PermID-"+senderID+" ");
+				}
+				this.userClient = new Client(session.getId(), new SimpleDateFormat("-HHmmssSS").format(serverStartTime) );
+				//senderID = userClient.permID;
+				System.out.println("AFFIRM permID: "+userClient.permID+" -> "+ userClient.toString());
+				userList.add(this.userClient);
+				sendXMLMessage("permIDSet", userClient.permID);
+			}
+			
+			userClient.sessionID = this.session.getId();
+			userClient.session = this.session;
+			return;
+		} //end of UserClientAffirm
+	}
 	
 	private void sendXML() throws IOException {
 		
@@ -147,22 +281,65 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 //		e.setAttribute("type", "groupInfo");
 //		System.out.println(convertXMLtoString(e));
 		
-		String msg = "This is a test message";
+		String msg =  "<message type='"+"DashUpdate"+"' senderID='" + "12345" + "'>"+ "test" + "</message>";
+		
+		//String msg = "This is a test message";
 		//System.out.println(this.session.toString());
 		
-		session.getBasicRemote().sendText(msg);
+		for (Session session : connectedSessions) {
+			session.getBasicRemote().sendText(msg);
+		}
+		
 		
 	}
+	
+	//Send simple message in xml form
+	private void sendXMLMessage(String msgType, String senderID) throws IOException {
+		String msg =  "<message type='"+msgType+"' senderID='" + senderID + "'></message>";
+		session.getBasicRemote().sendText(msg);
+	}
+	
+	private void sendXMLMessage(String msgType, String senderID, String info) throws IOException {
+		String msg =  "<message type='"+msgType+"' senderID='" + senderID + "'>"+ info + "</message>";
+		session.getBasicRemote().sendText(msg);
+	}
+	
+	//Send a redirect message with path
+	private void sendXMLRedirect(String path, String senderID) throws IOException {
+		String msg =  "<message type='redirect' path='" + path + "' senderID='" + senderID +"'></message>";
+		session.getBasicRemote().sendText(msg);
+		//return msg;
+	}
+	
+
+	
+//	public Element sendReconnectMessage(Document doc, Client userClient) throws Exception {
+//		Element reconnectMsg = doc.createElement("message");
+//		reconnectMsg.setAttribute("type", "alert");
+//		reconnectMsg.setAttribute("senderID", "Wooz2");
+//		reconnectMsg.setAttribute("groupNumber", Integer.toString(userClient.groupID));
+//		reconnectMsg.setAttribute("senderColor", userClient.chatColor.toString());
+//		reconnectMsg.setAttribute("senderName", userClient.username);
+//		reconnectMsg.appendChild(doc.createElement("text"));
+//		reconnectMsg.getFirstChild().setTextContent(userClient.username+" has reconnected to the group!");
+//		
+//		broadcastGroup(reconnectMsg, userClient.groupID);
+//		sendGroupMembers(userClient.groupID);
+//		sendGroupAnswerStatus(userClient.groupID);
+//		
+//		return reconnectMsg;
+//	}
 	
 private void sendXML(Session session) throws IOException {
 		
 //		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
-//		
 //		e.setAttribute("type", "groupInfo");
 //		System.out.println(convertXMLtoString(e));
+	
+		 
 		
 		String msg = "This is a test message";
-		System.out.println(session.toString());
+		//System.out.println(session.toString());
 		
 		session.getBasicRemote().sendText(msg);
 		
