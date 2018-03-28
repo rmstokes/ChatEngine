@@ -59,8 +59,8 @@ util_openSocket("/dashXML"); //open webSocket
 	};
 	
 	Chat.socket.onmessage = function(message) {
-		document.getElementById("output").innerHTML = ("messgae received");
-		alert("message received")
+		//
+		//alert("message received")
 		// message received from server
 		//alert that got message and send some text from message
 		//message.getNode
@@ -69,7 +69,7 @@ util_openSocket("/dashXML"); //open webSocket
 		var xmlDoc = parser.parseFromString(xml, "text/xml");
 		var messageNode = xmlDoc.getElementsByTagName('message')[0];
 		var messageType = messageNode.getAttribute('type');
-		
+		dashLog(messageType);
 		
 		if (messageType == 'permIDSet' || messageType == 'permIDConfirm') {
 			console.log(messageType+" "+messageNode.getAttribute('senderID'));
@@ -86,22 +86,33 @@ util_openSocket("/dashXML"); //open webSocket
 	
 	function updateDash(message){
 		
-		
+		dashLog("updateDash entered");
 		//Parses and places the statistics at the bottom of the chatBox
-		var groupStatArr = message.getElementsByTagName('group_summaries');
+		var groupStatArr = message.getElementsByTagName('group_summary');
+		dashLog("length = " + groupStatArr.length +";");
 		
 		for(var i=0; i<groupStatArr.length; i++) {
+			dashLog("loop started");
 			var groupStat = groupStatArr[i];
-			var groupID = parseInt(groupStat.getAttribute('groupname'));
-			
+			dashLog(groupStat);
+			var groupID = String(groupStat.getAttribute('groupname'));
+			dashLog(groupID);
+			var text = "";
 			for (element in groupStat){
-				
+				text += element + "\n";
+				dashLog(element);
 			}
+			
+			dashLog(groupID);
+			
 		}
 		
 		
 	};
 	
+	function dashLog(message){
+		document.getElementById("output").innerHTML = (document.getElementById("output").innerHTML + "<br>" + message);
+	}
 	
 	window.onbeforeunload = function () {
 		//This is assuming the user has purposely closed the page/refreshed the page.

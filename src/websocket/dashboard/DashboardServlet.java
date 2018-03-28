@@ -66,26 +66,28 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		//System.out.println("doGet is called");
 		
-		String responseXMLString;
+		String dashXMLString;
 		PrintWriter out = res.getWriter();
 		res.setContentType("text/xml;charset=UTF-8");
 		
 		BufferedReader reader = new BufferedReader(req.getReader());
 		StringBuffer xmlBuffer = new StringBuffer();
 		
-		while ((responseXMLString = reader.readLine()) != null) {
-			xmlBuffer.append(responseXMLString + "\n");
+		while ((dashXMLString = reader.readLine()) != null) {
+			xmlBuffer.append(dashXMLString + "\n");
 		}
-		responseXMLString = xmlBuffer.toString();
-		out.append(responseXMLString);
+		dashXMLString = xmlBuffer.toString();
+		out.append(dashXMLString);
 		
-		if (responseXMLString.length() > 0) {
+		if (dashXMLString.length() > 0) {
 			System.out.println("Received XML file");
 			try {
-				sendXML();
+				updateDash(dashXMLString);
 			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
 				System.out.println("No session to reference: NullPointerException");
+				e.printStackTrace();
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -274,21 +276,21 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		} //end of UserClientAffirm
 	}
 	
-	private void sendXML() throws IOException {
+	private void updateDash(String dashXMLString) throws Exception {
 		
-//		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
-//		
-//		e.setAttribute("type", "groupInfo");
-//		System.out.println(convertXMLtoString(e));
 		
-		String msg =  "<message type='"+"DashUpdate"+"' senderID='" + "12345" + "'>"+ "test" + "</message>";
+		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
+		System.out.println(dashXMLString);
+		e.setAttribute("type", "DashUpdate");
+		e.setAttribute("message", dashXMLString);
+		
 		
 		//String msg = "This is a test message";
 		//System.out.println(this.session.toString());
 		
 		// This gets all connected sessions from memory and shares dash update
 		for (Session session : connectedSessions) {
-			session.getBasicRemote().sendText(msg);
+			session.getBasicRemote().sendText(convertXMLtoString(e));
 		}
 		
 		
@@ -331,20 +333,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 //		return reconnectMsg;
 //	}
 	
-private void sendXML(Session session) throws IOException {
-		
-//		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
-//		e.setAttribute("type", "groupInfo");
-//		System.out.println(convertXMLtoString(e));
-	
-		 
-		
-		String msg = "This is a test message";
-		//System.out.println(session.toString());
-		
-		session.getBasicRemote().sendText(msg);
-		
-	}
+
 	
 	public static String convertXMLtoString(Element node) throws Exception {
 		Document document = node.getOwnerDocument();
@@ -354,5 +343,4 @@ private void sendXML(Session session) throws IOException {
 		String str = serializer.writeToString(node);
 		return str;
 	}
-
 }
