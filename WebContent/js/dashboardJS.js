@@ -16,9 +16,6 @@ var TAfile = null;
 
 var sentLeaveDash = false;
 
-var testXML = '';
-
-
 //Template for group dashboard window
 var AMGroupWindow = document.getElementById("GXGroupWindow").cloneNode(true);
 document.getElementById("GXGroupWindow").style.display = "none";
@@ -31,10 +28,7 @@ var hostname = window.location.host;
 
 //alert("serverPath: " + serverPath + " hostname: " + hostname);
 
-
 util_openSocket("/dashXML"); //open webSocket
-
-updateDash(testXML);
 
 	Chat.socket.onopen = function() {
 		// connection opened with server
@@ -42,7 +36,7 @@ updateDash(testXML);
 		$ ("#serverGfx").addClass("activeWS");
 		$ ("#pingGfx").addClass("pingPong");
 		util_affirmUserClient();
-		$ ('#createBtn').removeAttr('disabled');
+		//$ ('#createBtn').removeAttr('disabled');
 		//util_setUserClient();
 		console.log("WebSocket was opened");
 	};
@@ -92,7 +86,22 @@ updateDash(testXML);
 	
 	function updateDash(message){
 		
+		
+		//Parses and places the statistics at the bottom of the chatBox
+		var groupStatArr = message.getElementsByTagName('group_summaries');
+		
+		for(var i=0; i<groupStatArr.length; i++) {
+			var groupStat = groupStatArr[i];
+			var groupID = parseInt(groupStat.getAttribute('groupname'));
+			
+			for (element in groupStat){
+				
+			}
+		}
+		
+		
 	};
+	
 	
 	window.onbeforeunload = function () {
 		//This is assuming the user has purposely closed the page/refreshed the page.
