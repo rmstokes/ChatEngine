@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,9 +28,17 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
@@ -78,6 +87,8 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		}
 		dashXMLString = xmlBuffer.toString();
 		out.append(dashXMLString);
+		
+		
 		
 		if (dashXMLString.length() > 0) {
 			System.out.println("Received XML file");
@@ -187,7 +198,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 				Element element = doc.getDocumentElement();
 				String messageType = element.getAttribute("type");
 				
-				System.out.println("Received: "+convertXMLtoString(element));
+				//System.out.println("Received: "+convertXMLtoString(element));
 
 				String senderID = null; 
 				
@@ -278,19 +289,46 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	
 	private void updateDash(String dashXMLString) throws Exception {
 		
+		//System.out.println(dashXMLString);
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		builder = factory.newDocumentBuilder();
+		StringReader sr = new StringReader(dashXMLString);
+		InputSource is = new InputSource(sr);
+		Document doc = builder.parse(is); //Invalid XML will crash here
+		
+		//doc.getDocumentElement().
+		//doc.getDocumentElement().setAttribute("type", "DashUpdate");
+		
+		Document newDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+		
+		
+		
+		
 		
 		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
-		System.out.println(dashXMLString);
+		//System.out.println(dashXMLString);
 		e.setAttribute("type", "DashUpdate");
-		e.setAttribute("message", dashXMLString);
+//		e.setAttribute("dash", dashXMLString);
+
 		
+		newDoc.adoptNode(e);
+		newDoc.appendChild(e);
 		
-		//String msg = "This is a test message";
-		//System.out.println(this.session.toString());
+		// Create a duplicate node
+	    Node newNode = doc.getDocumentElement().cloneNode(true);
+	    // Transfer ownership of the new node into the destination document
+	    newDoc.adoptNode(newNode);
+	    // Make the new node an actual item in the target document
+	    newDoc.getDocumentElement().appendChild(newNode);
+		
+		//println(convertDocumentToString(newDoc));
 		
 		// This gets all connected sessions from memory and shares dash update
 		for (Session session : connectedSessions) {
-			session.getBasicRemote().sendText(convertXMLtoString(e));
+			System.out.println("Sent update to dash");
+			session.getBasicRemote().sendText(convertDocumentToString(newDoc));
 		}
 		
 		
@@ -334,6 +372,16 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 //	}
 	
 
+	public static String convertDocumentToString(Document doc) throws TransformerException {
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer transformer = tf.newTransformer();
+		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		StringWriter writer = new StringWriter();
+		transformer.transform(new DOMSource(doc), new StreamResult(writer));
+		String output = writer.getBuffer().toString().replaceAll("\n|\r", "");
+		
+		return output;
+	}
 	
 	public static String convertXMLtoString(Element node) throws Exception {
 		Document document = node.getOwnerDocument();
@@ -342,5 +390,9 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		serializer.getDomConfig().setParameter("xml-declaration", false);
 		String str = serializer.writeToString(node);
 		return str;
+	}
+	
+	public static void println(String s) {
+		System.out.println(s);
 	}
 }

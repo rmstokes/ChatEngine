@@ -12,6 +12,9 @@ Chat.socket = null;
 var host = '';
 var setCreated = null;
 
+var groups = [];
+var numGroups = 0;
+
 var TAfile = null;
 
 var sentLeaveDash = false;
@@ -60,16 +63,19 @@ util_openSocket("/dashXML"); //open webSocket
 	
 	Chat.socket.onmessage = function(message) {
 		//
-		//alert("message received")
+		//dashLog("message received");
 		// message received from server
 		//alert that got message and send some text from message
 		//message.getNode
 		var xml = message.data;
 		var parser = new DOMParser();
 		var xmlDoc = parser.parseFromString(xml, "text/xml");
+		
 		var messageNode = xmlDoc.getElementsByTagName('message')[0];
 		var messageType = messageNode.getAttribute('type');
-		dashLog(messageType);
+		
+		
+		
 		
 		if (messageType == 'permIDSet' || messageType == 'permIDConfirm') {
 			console.log(messageType+" "+messageNode.getAttribute('senderID'));
@@ -77,6 +83,7 @@ util_openSocket("/dashXML"); //open webSocket
 			
 		} else if (messageType == 'DashUpdate') {
 			updateDash(messageNode);
+			printGroups();
 		} 
 		else {
 			console.log("Could not parse server message: \n" + message.data);
@@ -86,33 +93,142 @@ util_openSocket("/dashXML"); //open webSocket
 	
 	function updateDash(message){
 		
-		dashLog("updateDash entered");
+		//dashLog("updateDash entered");
+		
+		
 		//Parses and places the statistics at the bottom of the chatBox
 		var groupStatArr = message.getElementsByTagName('group_summary');
-		dashLog("length = " + groupStatArr.length +";");
+		
+		
+		groups = [];
+		numGroups = groupStatArr.length;
+		
+		dashLog(numGroups);
 		
 		for(var i=0; i<groupStatArr.length; i++) {
-			dashLog("loop started");
 			var groupStat = groupStatArr[i];
-			dashLog(groupStat);
+			
 			var groupID = String(groupStat.getAttribute('groupname'));
-			dashLog(groupID);
-			var text = "";
-			for (element in groupStat){
-				text += element + "\n";
-				dashLog(element);
-			}
+			//dashLog("GRP: " + groupID);
+			//getGroupStats(groupStat);
+			groups[i] = new Group(groupStat);
 			
-			dashLog(groupID);
-			
+			//dashLog(groups[i].toString());
 		}
 		
 		
 	};
 	
+	function Group(group){
+		this.name = String(group.getAttribute('groupname'));
+		this.sessionName = String(group.getAttribute('sessionname'));
+		this.count = group.getElementsByTagName('group_person_summary').length;
+				
+		var tempMembers = group.getElementsByTagName('group_person_summary');
+			
+		var newMembers = []
+		for(var i=0; i<this.count; i++) {
+			
+			newMembers[i] = new Member(tempMembers[i]);
+			
+			}
+		this.members = newMembers;			
+			
+		
+		
+		this.toString = function(){
+			
+			var out = this.name;
+			
+			out += " " + this.sessionName;
+			
+			for (var i = 0; i<this.count; i++){
+				
+				out += " " + this.members[i].toString();
+				
+			}
+			return out;
+			
+
+		}
+	}
+	
+	function Member(member){
+		this.name = String(member.getAttribute('name'));
+		
+		
+		
+		this.attrNames = member.attributes;
+		var attrDict = {};
+		
+		for(var j=0; j<this.attrNames.length; j++){
+			var attribute = this.attrNames[j].localName;
+			var value = this.attrNames[j].value;
+			if (attribute == 'name'){
+				continue;
+			} else{
+				attrDict[attribute] = value;
+			}
+		}
+		
+		this.attributes = attrDict;	
+			
+		this.toString = function(){
+			//dashLog(this.attrNames.length);
+			var out = this.name;
+			for (var key in this.attributes){
+				out += " " + key + ": " + this.attributes[key];
+			}
+			
+			return out;
+				
+		}		
+	}
+	
+	
+//	function getGroupStats(group){
+//		//dashLog("Entered getGroupStats");
+//		var result = {};
+//		//dashLog("array created");
+//		var members = group.getElementsByTagName('group_person_summary');
+//		//dashLog("Got Members");
+//		for(var i=0; i<members.length; i++) {
+//			var member = members[i];
+//			var name = String(member.getAttribute('name'));
+//			//dashLog(name);
+//			var attrNames = member.attributes;
+//			var attributes = {};
+//			//dashLog("got attributes")
+//			for(var j=0; j<attrNames.length; j++){
+//				var attribute = attrNames[i];
+//				if (attribute == 'name'){
+//					continue;
+//				} 
+//				attributes[attribute] = member.getAttribute(attribute);
+//				
+//			}
+//			result[name] = attributes;
+//			//dashLog(name);
+//			
+//			
+//		}
+//		
+//		
+//		return result;
+//	}
+	
+	function printGroups(){
+		dashLog("printGroups Called");
+		for (var i = 0; i<numGroups; i++){
+			dashLog(groups[i].toString());
+		}
+		
+	}
+	
 	function dashLog(message){
 		document.getElementById("output").innerHTML = (document.getElementById("output").innerHTML + "<br>" + message);
 	}
+	
 	
 	window.onbeforeunload = function () {
 		//This is assuming the user has purposely closed the page/refreshed the page.
