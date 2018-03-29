@@ -20,8 +20,8 @@ var TAfile = null;
 var sentLeaveDash = false;
 
 //Template for group dashboard window
-var AMGroupWindow = document.getElementById("GXGroupWindow").cloneNode(true);
-document.getElementById("GXGroupWindow").style.display = "none";
+var dashWindow = document.getElementById("GXGroupWindow").cloneNode(true);
+document.getElementById("GXGroupWindow").style.display = "none"; //"inline-block"
 
 window.onbeforeunload = util_closeSocket;
 
@@ -32,6 +32,7 @@ var hostname = window.location.host;
 //alert("serverPath: " + serverPath + " hostname: " + hostname);
 
 util_openSocket("/dashXML"); //open webSocket
+document.getElementById("output").innerHTML = "";
 
 	Chat.socket.onopen = function() {
 		// connection opened with server
@@ -96,14 +97,14 @@ util_openSocket("/dashXML"); //open webSocket
 		//dashLog("updateDash entered");
 		
 		
-		//Parses and places the statistics at the bottom of the chatBox
+		//Parses and places the statistics at the bottom of the dashWindow
 		var groupStatArr = message.getElementsByTagName('group_summary');
 		
 		
 		groups = [];
 		numGroups = groupStatArr.length;
 		
-		dashLog(numGroups);
+		dashLog(numGroups + " groups <br>");
 		
 		for(var i=0; i<groupStatArr.length; i++) {
 			var groupStat = groupStatArr[i];
@@ -118,6 +119,107 @@ util_openSocket("/dashXML"); //open webSocket
 		
 		
 	};
+	
+//	//Function runs to initialize group info
+//	function updateGroupInfo(messageNode) {
+//		//clear the first table of values
+//		var AMTBody = $("#AMStatusTBody")[0];
+//		//remove every row except the header
+//		while (AMTBody.children.length!=0) //tbody
+//			AMTBody.removeChild(AMTBody.lastElementChild);
+//		
+//		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
+//
+//		//check groups created
+//		var setStatus = messageNode.getAttribute('setStatus');
+//		if (setStatus == 'FALSE') {
+//			alert("There are no groups created currently.");
+//			document.getElementById("loginBtn").disabled = true;
+//			document.getElementById("loginBtn").textContent = "No Groups Created";
+//			groupPrompt = true;
+//		} else {
+//			if (groupPrompt) {
+//				alert("Groups have been created/updated!");
+//				groupPrompt = false;
+//			}
+//			
+//			if (AMCredentials.loggedIn)
+//				AMLogin(); //run login script
+//			
+//			//add rows based on groupInfo
+//			var groupTotal = Number(messageNode.getAttribute('groupTotal'));
+//			var groupOffset = Number(messageNode.getAttribute('groupOffset'));
+//
+//			Global_Group_Total = groupTotal;
+//			Global_Group_Offset = groupOffset;
+//			
+//			groupTotal += groupOffset;
+//			
+//			for (var i=groupOffset; i<groupTotal; i++) {
+//				var groupInfo = AMGroupInfo.cloneNode(true); //clone 
+//				AMTBody.appendChild(groupInfo); 
+//				groupInfo.id = "AMGroupInfo"+(i+1);
+//				groupInfo.cells[0].textContent = "Group "+(i+1);
+//				
+//				groupInfo.cells[1].children[0].id = "CBgroupChat"+(i+1);
+//				groupInfo.cells[1].children[0].onchange = updateAMStatus;
+//				groupInfo.cells[1].children[1].htmlFor  = "CBgroupChat"+(i+1);
+//				
+//				groupInfo.cells[2].children[0].id = "CBgroupMonitor"+(i+1);
+//				groupInfo.cells[2].children[0].onchange = updateAMStatus;
+//				groupInfo.cells[2].children[1].htmlFor = "CBgroupMonitor"+(i+1);
+//			}
+//
+//			document.getElementById("loginBtn").disabled = false;
+//			document.getElementById("loginBtn").textContent = "Login";
+//			document.getElementById('usernameAM').onkeyup = function(e) {if(e.keyCode==13 || e.which==13) AMLogin()};
+//		}
+//		
+//		//Set up background variables to begin to set up the system
+//		//Use dynamic javascript array length here
+//		for (var i=0; i<Global_Group_Total; i++) {
+//			Display_Chat[i] = 0; //Not monitoring, not chatting
+//			Scroll_To_Bot[i] = true;
+//			//GroupType[i] = 0;
+//		}
+//		
+//	}
+//	
+//	function renderDash(){
+//		for (var i=0; i<count; i++) {
+//			var groupId = groups[i].name;
+//			if (groupID.slice(0,5) != "Group"){
+//				groupID = "Group_" + groupID;
+//			}
+//			
+//		var dashWindow = document.getElementById('GroupWindow'+groupId);
+//		
+//			if (dashWindow==null) {
+//				dashWindow = dashWindow.cloneNode(true);
+//				dashWindow.id = "GroupWindow"+groupId;
+//				
+//				$(dashWindow).find("*[id]").each(function(){
+//					this.id = this.id+groupId;
+//				});
+//				$(dashWindow).find("*[for]").attr("for", "windowType"+groupId);
+//				$(dashWindow).find(".groupHeader").text("Group "+groupId);
+//				//$(dashWindow).find('button')
+//				$(dashWindow).find('.chatConsole').scroll(function (event) {
+//					var scrollCoef = event.target.scrollHeight - event.target.scrollTop - event.target.clientHeight;
+//					var groupID = Number(/\d*$/.exec(event.target.id))-Global_Group_Offset-1;
+//					Scroll_To_Bot[groupID] = !(scrollCoef > 100); // average p is about 22px?
+//				});
+//				$(dashWindow).find(".chat")[0].oninput = sendChat;
+//				$(dashWindow).find(".chat")[0].onkeydown = sendChat;
+//				/*
+//				dashWindow.getElementsByTagName('button')[0].onclick = function(event) { buttonSend(event)};
+//				*/
+//				$("#chatEndMarker").before(dashWindow);
+//			}
+//				
+//				
+//		
+//	}
 	
 	function Group(group){
 		this.name = String(group.getAttribute('groupname'));
@@ -140,13 +242,15 @@ util_openSocket("/dashXML"); //open webSocket
 			
 			var out = this.name;
 			
-			out += " " + this.sessionName;
+			out += " " + this.sessionName + "<br>";
 			
 			for (var i = 0; i<this.count; i++){
 				
 				out += " " + this.members[i].toString();
 				
 			}
+			
+			out += "<br>";
 			return out;
 			
 
@@ -179,7 +283,7 @@ util_openSocket("/dashXML"); //open webSocket
 			for (var key in this.attributes){
 				out += " " + key + ": " + this.attributes[key];
 			}
-			
+			out+="<br>";
 			return out;
 				
 		}		
@@ -218,7 +322,7 @@ util_openSocket("/dashXML"); //open webSocket
 //	}
 	
 	function printGroups(){
-		dashLog("printGroups Called");
+		//dashLog("printGroups Called");
 		for (var i = 0; i<numGroups; i++){
 			dashLog(groups[i].toString());
 		}
