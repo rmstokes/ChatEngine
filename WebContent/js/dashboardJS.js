@@ -21,7 +21,7 @@ var sentLeaveDash = false;
 
 //Template for group dashboard window
 var dashWindow = document.getElementById("GXGroupWindow").cloneNode(true);
-document.getElementById("GXGroupWindow").style.display = "none"; //"inline-block"
+document.getElementById("GXGroupWindow").style.display = "none"; //inline-block
 
 window.onbeforeunload = util_closeSocket;
 
@@ -84,6 +84,7 @@ document.getElementById("output").innerHTML = "";
 			
 		} else if (messageType == 'DashUpdate') {
 			updateDash(messageNode);
+			//renderDash();
 			printGroups();
 		} 
 		else {
@@ -120,79 +121,17 @@ document.getElementById("output").innerHTML = "";
 		
 	};
 	
-//	//Function runs to initialize group info
-//	function updateGroupInfo(messageNode) {
-//		//clear the first table of values
-//		var AMTBody = $("#AMStatusTBody")[0];
-//		//remove every row except the header
-//		while (AMTBody.children.length!=0) //tbody
-//			AMTBody.removeChild(AMTBody.lastElementChild);
-//		
-//		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
-//
-//		//check groups created
-//		var setStatus = messageNode.getAttribute('setStatus');
-//		if (setStatus == 'FALSE') {
-//			alert("There are no groups created currently.");
-//			document.getElementById("loginBtn").disabled = true;
-//			document.getElementById("loginBtn").textContent = "No Groups Created";
-//			groupPrompt = true;
-//		} else {
-//			if (groupPrompt) {
-//				alert("Groups have been created/updated!");
-//				groupPrompt = false;
-//			}
-//			
-//			if (AMCredentials.loggedIn)
-//				AMLogin(); //run login script
-//			
-//			//add rows based on groupInfo
-//			var groupTotal = Number(messageNode.getAttribute('groupTotal'));
-//			var groupOffset = Number(messageNode.getAttribute('groupOffset'));
-//
-//			Global_Group_Total = groupTotal;
-//			Global_Group_Offset = groupOffset;
-//			
-//			groupTotal += groupOffset;
-//			
-//			for (var i=groupOffset; i<groupTotal; i++) {
-//				var groupInfo = AMGroupInfo.cloneNode(true); //clone 
-//				AMTBody.appendChild(groupInfo); 
-//				groupInfo.id = "AMGroupInfo"+(i+1);
-//				groupInfo.cells[0].textContent = "Group "+(i+1);
-//				
-//				groupInfo.cells[1].children[0].id = "CBgroupChat"+(i+1);
-//				groupInfo.cells[1].children[0].onchange = updateAMStatus;
-//				groupInfo.cells[1].children[1].htmlFor  = "CBgroupChat"+(i+1);
-//				
-//				groupInfo.cells[2].children[0].id = "CBgroupMonitor"+(i+1);
-//				groupInfo.cells[2].children[0].onchange = updateAMStatus;
-//				groupInfo.cells[2].children[1].htmlFor = "CBgroupMonitor"+(i+1);
-//			}
-//
-//			document.getElementById("loginBtn").disabled = false;
-//			document.getElementById("loginBtn").textContent = "Login";
-//			document.getElementById('usernameAM').onkeyup = function(e) {if(e.keyCode==13 || e.which==13) AMLogin()};
-//		}
-//		
-//		//Set up background variables to begin to set up the system
-//		//Use dynamic javascript array length here
-//		for (var i=0; i<Global_Group_Total; i++) {
-//			Display_Chat[i] = 0; //Not monitoring, not chatting
-//			Scroll_To_Bot[i] = true;
-//			//GroupType[i] = 0;
-//		}
-//		
-//	}
-//	
+	
 //	function renderDash(){
+//		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
+//		
 //		for (var i=0; i<count; i++) {
 //			var groupId = groups[i].name;
 //			if (groupID.slice(0,5) != "Group"){
 //				groupID = "Group_" + groupID;
 //			}
 //			
-//		var dashWindow = document.getElementById('GroupWindow'+groupId);
+//			var dashWindow = document.getElementById('GroupWindow'+groupId);
 //		
 //			if (dashWindow==null) {
 //				dashWindow = dashWindow.cloneNode(true);
@@ -216,6 +155,7 @@ document.getElementById("output").innerHTML = "";
 //				*/
 //				$("#chatEndMarker").before(dashWindow);
 //			}
+//		}
 //				
 //				
 //		
@@ -322,7 +262,8 @@ document.getElementById("output").innerHTML = "";
 //	}
 	
 	function printGroups(){
-		//dashLog("printGroups Called");
+		dashLog("printGroups Called");
+		document.getElementById("output").innerHTML = "";
 		for (var i = 0; i<numGroups; i++){
 			dashLog(groups[i].toString());
 		}
