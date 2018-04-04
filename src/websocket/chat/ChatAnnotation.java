@@ -64,6 +64,10 @@ import util.GroupInfoObject;
 import util.MessageType;
 import util.ErrorCode;
 
+// import container
+import container.dashStatsContainer;
+
+
 @WebListener
 @ServerEndpoint(value = "/{path}")
 public class ChatAnnotation implements ServletContextListener{
@@ -355,6 +359,10 @@ public class ChatAnnotation implements ServletContextListener{
 			int numGroups = Integer.parseInt(element.getTextContent());
 			int groupOffset = Integer.parseInt(element.getAttribute("groupOffset"));
 			String logName = element.getAttribute("logName");
+			//System.out.println("qcount: " + element.getAttribute("qCount"));
+			int qCount = Integer.parseInt(element.getAttribute("qCount"));
+			
+			dashStatsContainer.getInstance().setQCount(qCount);
 			
 			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
 			

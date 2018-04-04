@@ -43,7 +43,20 @@
 			<span style="float: right; top:30px">COMPS</span>
 		</h2>
 		
+		
 	</div>
+	<div id="controlPanel">
+		<div id="perfMinDiv" class="cpField">
+			Performance Minimum: <input id="successVal" type="text" name="perfMin" value = ".40" oninput = "updateSlider()" onchange = "updateSlider()">
+			
+	  		<input type="range" min="0" max="100" value="40" class="slider" id="myRange" oninput="updateSuccessVal()")>
+		</div>
+		
+<!-- 		<div id="questionCount" class="cpField"> -->
+<!-- 			Question Count: <input id="qCount" type="text" name="qCount" value = "0"> -->
+<!-- 		</div> -->
+	</div>
+		
 	<div id="output">
 		This is an output
 	</div>
@@ -57,20 +70,22 @@
 		<br style="clear:both"/>
 		
 		<div class="upperSect">
-			<ul>
-				<li>testtest test test test test tetest test test test test test st </li>
-				<li>test</li>
-				<li>test</li>
-				<li>test</li>
-			</ul>
+			<div id="myProgress">
+  				<div id="myBar"></div>
+			</div>
+			<div id="groupStats" class="upperSectDisplay">
+				
+			</div>
 		</div>
 		<div class="lowerSect">
-			<div class="tableDiv">
-				Table Table Table Table Table Table Table Table Table Table Table 
+			<div id="tableDiv" class="table">
+				
 			</div>
 		</div>
 
 	</div>
+	
+	<div id="dashEndMarker"></div>
 
 <!-- 
 <table id="chatRoomTable" width="100%" style="padding:5px" cellpadding="3px">

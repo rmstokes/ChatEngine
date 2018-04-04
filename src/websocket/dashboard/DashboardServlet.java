@@ -47,6 +47,8 @@ import util.MessageType;
 import websocket.chat.Client;
 import websocket.chat.GroupManager;
 
+//import container
+import container.dashStatsContainer;
 
 @WebServlet  //("/DashboardServlet")
 @WebListener
@@ -310,7 +312,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		Element e = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().createElement("message");
 		//System.out.println(dashXMLString);
 		e.setAttribute("type", "DashUpdate");
-//		e.setAttribute("dash", dashXMLString);
+		e.setAttribute("qCount", Integer.toString(dashStatsContainer.getInstance().getQCount()));
 
 		
 		newDoc.adoptNode(e);

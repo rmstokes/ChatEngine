@@ -14,13 +14,16 @@ var setCreated = null;
 
 var groups = [];
 var numGroups = 0;
+var qCount;
+
 
 var TAfile = null;
 
 var sentLeaveDash = false;
 
+
 //Template for group dashboard window
-var dashWindow = document.getElementById("GXGroupWindow").cloneNode(true);
+var dashWindowTemplate = document.getElementById("GXGroupWindow").cloneNode(true);
 document.getElementById("GXGroupWindow").style.display = "none"; //inline-block
 
 window.onbeforeunload = util_closeSocket;
@@ -83,9 +86,12 @@ document.getElementById("output").innerHTML = "";
 			util_setPermID(messageNode.getAttribute('senderID'));
 			
 		} else if (messageType == 'DashUpdate') {
+			qCount = messageNode.getAttribute('qCount');
+			//alert(qCount);
 			updateDash(messageNode);
-			//renderDash();
-			printGroups();
+			//printGroups();
+			renderDash();
+			
 		} 
 		else {
 			console.log("Could not parse server message: \n" + message.data);
@@ -105,12 +111,13 @@ document.getElementById("output").innerHTML = "";
 		groups = [];
 		numGroups = groupStatArr.length;
 		
-		dashLog(numGroups + " groups <br>");
+		//dashLog(numGroups + " groups <br>");
 		
 		for(var i=0; i<groupStatArr.length; i++) {
 			var groupStat = groupStatArr[i];
 			
-			var groupID = String(groupStat.getAttribute('groupname'));
+			
+			var groupID = idClean(groupStat.getAttribute('groupname'));
 			//dashLog("GRP: " + groupID);
 			//getGroupStats(groupStat);
 			groups[i] = new Group(groupStat);
@@ -121,51 +128,200 @@ document.getElementById("output").innerHTML = "";
 		
 	};
 	
+	function idClean(groupName){
+		groupName = groupName.replace(" ", "");
+		groupName = groupName.replace(/group/i, "");
+		return groupName;
+	}
 	
-//	function renderDash(){
-//		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
-//		
-//		for (var i=0; i<count; i++) {
-//			var groupId = groups[i].name;
-//			if (groupID.slice(0,5) != "Group"){
-//				groupID = "Group_" + groupID;
-//			}
-//			
-//			var dashWindow = document.getElementById('GroupWindow'+groupId);
-//		
-//			if (dashWindow==null) {
-//				dashWindow = dashWindow.cloneNode(true);
-//				dashWindow.id = "GroupWindow"+groupId;
+	function renderDash(){
+		//dashLog("entered renderDash()");
+		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
+		//dashLog(numGroups);
+		for (var i=0; i<numGroups; i++) {
+			
+			var groupId = groups[i].name;
+			//dashLog(groups[i].avgStat());
+			
+			// clean spaces
+			groupId = groupId.replace(" ", "_");
+			
+			// set id to reference table
+			var tableId = "attrTable" + groupId;
+			
+			
+			
+			var dashWindow = document.getElementById('GroupWindow'+groupId);
+			
+			//dashLog("Checked for window");
+			if (dashWindow==null) {
+				
+				dashWindow = dashWindowTemplate.cloneNode(true);
+				
+				var grpWindowId = "GroupWindow"+groupId;
+				
+				dashWindow.id = grpWindowId;
+				//dashLog("Marker 1");
+				
+				
+				
+				// this seems to set all of the IDs
+				$(dashWindow).find("*[id]").each(function(){
+					this.id = this.id+groupId;
+				});
+				
+				//dashLog("Marker 2");
+				
+				$(dashWindow).find(".groupHeader").text("Group "+groupId);
+				
+				//dashLog("Marker 3");
+				
+//				//clear table field
+//				document.getElementById('tableDiv' + groupId).innerHTML="";
+				//dashLog("Marker 4");
 //				
-//				$(dashWindow).find("*[id]").each(function(){
-//					this.id = this.id+groupId;
-//				});
-//				$(dashWindow).find("*[for]").attr("for", "windowType"+groupId);
-//				$(dashWindow).find(".groupHeader").text("Group "+groupId);
-//				//$(dashWindow).find('button')
-//				$(dashWindow).find('.chatConsole').scroll(function (event) {
-//					var scrollCoef = event.target.scrollHeight - event.target.scrollTop - event.target.clientHeight;
-//					var groupID = Number(/\d*$/.exec(event.target.id))-Global_Group_Offset-1;
-//					Scroll_To_Bot[groupID] = !(scrollCoef > 100); // average p is about 22px?
-//				});
-//				$(dashWindow).find(".chat")[0].oninput = sendChat;
-//				$(dashWindow).find(".chat")[0].onkeydown = sendChat;
-//				/*
-//				dashWindow.getElementsByTagName('button')[0].onclick = function(event) { buttonSend(event)};
-//				*/
-//				$("#chatEndMarker").before(dashWindow);
-//			}
-//		}
 //				
-//				
-//		
-//	}
+				// populate table and add it to tableDiv
+				var table = document.createElement("TABLE");
+				//dashLog("Marker 4.05");
+				table.setAttribute('id', tableId );
+				//dashLog("Marker 4.1");
+				$(dashWindow).find(".table").append(table);
+				
+				//dashLog("Marker 4.2");
+				var header = document.createElement("TR");
+				//dashLog("Marker 4.3");				
+				header.setAttribute('id', "header");
+				//dashLog("Marker 4.4");
+				$(dashWindow).find("#"+tableId).append(header);
+				
+
+				
+				//dashLog("Marker 5");
+				
+				//set first column name
+				var z = document.createElement("TH");
+				z.setAttribute("onclick", "sortTable(0, '" + tableId + "')");
+				var t = document.createTextNode("Name");
+			    
+				z.appendChild(t);
+				$(dashWindow).find("#header").append(z);
+				
+				
+				var headerDict = groups[i].attributes();
+				//dashLog(headerDict.length);
+				
+				var colNum  = 1;
+				for (var key in headerDict){
+					//dashLog(key);
+					z = document.createElement("TH");
+					t = document.createTextNode(key);
+					z.setAttribute("onclick", "sortTable(" + colNum + ", '" + tableId + "')");
+					z.appendChild(t);
+					$(dashWindow).find("#header").append(z);
+					colNum++;
+				}
+				
+				for (var j = 0; j < groups[i].count; j++){
+					var member = groups[i].members[j];
+					
+					// Don't show TAs in table
+					if (member.name.startsWith("TA")){
+						$(dashWindow).find("#groupStats"+groupId).append("Assigned: " +
+								member.name + "<br>");
+						continue;
+					}
+					
+					var row = document.createElement("TR");
+					
+					// set row id
+					row.setAttribute('id', "row" + j + tableId);
+					// appends row to table
+					$(dashWindow).find("#"+tableId).append(row);
+					
+					//set first column name
+					z = document.createElement("TD");
+					t = document.createTextNode(member.name);
+				    
+					z.appendChild(t);
+					$(dashWindow).find("#row"+ j + tableId).append(z);
+					
+					for(key in member.attributes){
+						z = document.createElement("TD");
+						var keyInstance=member.attributes[key];
+						
+						if (isNumeric(keyInstance)){
+							//dashLog("before: " + keyInstance);
+							//make sure it's not a string
+							keyInstance = Number(keyInstance);
+							keyInstance = keyInstance.toFixed(6);
+							//dashLog("after: " + keyInstance);
+						}
+						
+						t = document.createTextNode(keyInstance);
+					    
+						z.appendChild(t);
+						$(dashWindow).find("#row"+ j + tableId).append(z);
+					}
+					
+
+					
+				}
+
+			    
+				//dashLog("Marker 6");
+				$(dashWindow).find("#groupStats"+groupId).append("Average Stat: " +
+						groups[i].avgStat().toFixed(6) + "<br>");
+				$("#dashEndMarker").before(dashWindow);
+				
+				
+				//dashLog("Marker 8");
+			}
+		}
+		updateBackgrounds();
+				
+				
+		
+	}
+	
+	
+	
+	function updateBackgrounds(){
+		//alert("in update Backgrounds");
+		for (var i = 0; i < numGroups; i++){
+			var group = groups[i];
+			
+			var idString = group.name;
+			
+			var windowId = "GroupWindow" + idString.replace(" ", "_");
+			
+			if (groups[i].avgStat() > Number(document.getElementById("successVal").value)){
+				//alert("avgStat: " + groups[i].avgStat() + " windowId: " + windowId)
+				$("#"+windowId).css("background-color", "green");
+			} else {
+				$("#"+windowId).css("background-color", "FireBrick");
+			}
+		}
+		
+	}
+	
+	function updateSlider(){
+		var value = $("#successVal").val() * 100;
+		$("#myRange").val(value);
+		updateBackgrounds();
+	}
+	
+	function updateSuccessVal(){
+		var value = $("#myRange").val() / 100;
+		$("#successVal").val(value);
+		updateBackgrounds();
+	}
 	
 	function Group(group){
-		this.name = String(group.getAttribute('groupname'));
+		this.name = idClean(group.getAttribute('groupname'));
 		this.sessionName = String(group.getAttribute('sessionname'));
 		this.count = group.getElementsByTagName('group_person_summary').length;
-				
+		
 		var tempMembers = group.getElementsByTagName('group_person_summary');
 			
 		var newMembers = []
@@ -174,9 +330,36 @@ document.getElementById("output").innerHTML = "";
 			newMembers[i] = new Member(tempMembers[i]);
 			
 			}
-		this.members = newMembers;			
-			
+		this.members = newMembers;	
 		
+		this.avgStat = function(){
+			
+			var numCount = 0;
+			var total = 0;
+			
+			for (var i = 0; i<this.members.length; i++){
+				//dashLog(this.members[i].name);
+				if (this.members[i].name.startsWith("TA")){
+					//dashLog("TA");
+					continue;
+				}
+				numCount++;
+				//dashLog("about to add to total");
+				total += Number(this.members[i].attributes['stat']);
+				
+			}
+			//dashLog("exited loop");
+			
+			return total/numCount;
+		}
+			
+		this.attributes = function(){
+			
+			if(this.members[0] != null){
+				
+				return this.members[0].attributes;
+			}
+		}
 		
 		this.toString = function(){
 			
@@ -228,6 +411,63 @@ document.getElementById("output").innerHTML = "";
 				
 		}		
 	}
+	
+	function sortTable(n, tableId) {
+		//alert("sortTable Called");
+		
+		  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+		  table = document.getElementById(tableId);
+		  switching = true;
+		  //Set the sorting direction to ascending:
+		  dir = "asc"; 
+		  /*Make a loop that will continue until
+		  no switching has been done:*/
+		  while (switching) {
+		    //start by saying: no switching is done:
+		    switching = false;
+		    rows = table.getElementsByTagName("TR");
+		    /*Loop through all table rows (except the
+		    first, which contains table headers):*/
+		    for (i = 1; i < (rows.length - 1); i++) {
+		      //start by saying there should be no switching:
+		      shouldSwitch = false;
+		      /*Get the two elements you want to compare,
+		      one from current row and one from the next:*/
+		      x = rows[i].getElementsByTagName("TD")[n];
+		      y = rows[i + 1].getElementsByTagName("TD")[n];
+		      /*check if the two rows should switch place,
+		      based on the direction, asc or desc:*/
+		      if (dir == "asc") {
+		        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+		          //if so, mark as a switch and break the loop:
+		          shouldSwitch= true;
+		          break;
+		        }
+		      } else if (dir == "desc") {
+		        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+		          //if so, mark as a switch and break the loop:
+		          shouldSwitch= true;
+		          break;
+		        }
+		      }
+		    }
+		    if (shouldSwitch) {
+		      /*If a switch has been marked, make the switch
+		      and mark that a switch has been done:*/
+		      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+		      switching = true;
+		      //Each time a switch is done, increase this count by 1:
+		      switchcount ++;      
+		    } else {
+		      /*If no switching has been done AND the direction is "asc",
+		      set the direction to "desc" and run the while loop again.*/
+		      if (switchcount == 0 && dir == "asc") {
+		        dir = "desc";
+		        switching = true;
+		      }
+		    }
+		  }
+		}
 	
 	
 //	function getGroupStats(group){
@@ -286,3 +526,7 @@ document.getElementById("output").innerHTML = "";
 		sentLeaveDash = true;
 		console.log("before unload has run");
 	};
+	
+	function isNumeric(num){
+		  return !isNaN(num)
+		}

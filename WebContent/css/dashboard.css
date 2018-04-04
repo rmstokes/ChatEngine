@@ -22,10 +22,94 @@
 	border-bottom-right-radius: 0px;
 } 
 
-.tableDiv{
+.table{
 	background-color: White;
-	width: 100%;
+	width: 95%;
 	font-size: 18px;
 	margin: 10px auto;
 	padding: 5px;
+	border-radius: 10px;
 }
+.upperSect{
+	background-color: White;
+	width: 95%;
+	font-size: 18px;
+	margin: 10px auto;
+	padding: 5px;
+	border-radius: 10px;
+	text-align:left;
+}
+
+tr{
+	border: 1px solid black;
+    width: 450px;
+	
+}
+
+td{
+    border: 1px solid black;
+    width: 150px;
+}
+th {
+    cursor: pointer;
+}
+.slidecontainer {
+    width: 100%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 85%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.cpField{
+	width: 98%;
+	margin-bottom:3px;
+}
+#controlPanel{
+	width: 50%;
+	position: relative;
+	left: 25%;
+	padding: 5px;
+	background-color: #cae8ca;
+	border: 2px solid #4CAF50;
+	margin-top: 3px;
+}
+#myProgress {
+  width: 100%;
+  background-color: #ddd;
+}
+
+#myBar {
+  width: 0%;
+  height: 30px;
+  background-color: #4CAF50;
+/* } */
+
+

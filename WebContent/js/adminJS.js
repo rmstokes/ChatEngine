@@ -169,9 +169,11 @@ function createSet () {
 	groupOffset = (groupOffset<0) ? 0 : groupOffset;
 	var groupTotal = $('#groupTotalPicker').prop("value");
 	var logName = $('#logName').prop("value");
+	var qCount = $('#qCount').prop("value");
+	//alert(qCount);
 	
 	var xml = '<message type="groupCreation" senderID="' + clientID
-	+ '" logName="' + logName + '" groupOffset="' + groupOffset + '">'
+	+ '" logName="' + logName + '" groupOffset="' + groupOffset + '" qCount="' + qCount + '">'
 	+ '<text>' + groupTotal + '</text>' + '</message>';
 	
 	Chat.socket.send(xml);
