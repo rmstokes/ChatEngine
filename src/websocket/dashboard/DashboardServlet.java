@@ -76,7 +76,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		//System.out.println("doGet is called");
-		
+		System.out.println(req.toString());
 		String dashXMLString;
 		PrintWriter out = res.getWriter();
 		res.setContentType("text/xml;charset=UTF-8");

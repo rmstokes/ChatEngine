@@ -15,6 +15,25 @@ var setCreated = null;
 var TAfile = null;
 
 window.onbeforeunload = util_closeSocket;
+//checks for empty fields and disables create button if empty
+$('input[type=text]').keyup(function() {
+	console.log("checker function called");
+
+    var empty = false;
+    $('input[type=text]').each(function() {
+        if ($(this).val() == '') {
+        	console.log("found empty input: " +this.id);
+            empty = true;
+        }
+    });
+
+    if (empty) {
+        $('#createBtn').attr('disabled', 'true'); // updated according to http://stackoverflow.com/questions/7637790/how-to-remove-disabled-attribute-with-jquery-ie
+    } else {
+        $('#createBtn').removeAttr('disabled'); // updated according to http://stackoverflow.com/questions/7637790/how-to-remove-disabled-attribute-with-jquery-ie
+    }
+});
+//console.log("input keyups set");
 
 util_openSocket();
 
@@ -24,7 +43,7 @@ util_openSocket();
 		$ ("#serverGfx").addClass("activeWS");
 		$ ("#pingGfx").addClass("pingPong");
 		util_affirmUserClient();
-		$ ('#createBtn').removeAttr('disabled');
+		//$ ('#createBtn').removeAttr('disabled');
 		//util_setUserClient();
 	};
 

@@ -118,6 +118,11 @@ public class ChatAnnotation implements ServletContextListener{
 		sessionOpen = true;
 		this.session = session;
 		//WATCH OUT FOR FALL THROUGH
+		
+		//don't know why, path started ending with undefined 
+		// this fixes the symptom
+		path = path.replace("undefined", "");
+		
 		switch (path) {
 		case "admin":
 			sendXMLGroupSetInfo(session);
@@ -125,6 +130,7 @@ public class ChatAnnotation implements ServletContextListener{
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
+			
 			
 			break;
 
@@ -138,10 +144,11 @@ public class ChatAnnotation implements ServletContextListener{
 		
 			//session.setMaxIdleTimeout(1000*60);
 			//System.out.println("Set timeout to: "+session.getMaxIdleTimeout());
-			
+			System.out.println("number of sessions before:" + connectedSessions.size());
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
+			System.out.println("number of sessions after:" + connectedSessions.size());
 			//System.out.println("path "+session.getPathParameters().toString());
 			return;
 		default:
@@ -359,9 +366,9 @@ public class ChatAnnotation implements ServletContextListener{
 			int numGroups = Integer.parseInt(element.getTextContent());
 			int groupOffset = Integer.parseInt(element.getAttribute("groupOffset"));
 			String logName = element.getAttribute("logName");
-			//System.out.println("qcount: " + element.getAttribute("qCount"));
-			int qCount = Integer.parseInt(element.getAttribute("qCount"));
 			
+			int qCount = Integer.parseInt(element.getAttribute("qCount"));
+			System.out.println("qcount: " + qCount);
 			dashStatsContainer.getInstance().setQCount(qCount);
 			
 			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
@@ -375,6 +382,7 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			//adminCreatedGroups = true;
 			
+			System.out.println(connectedSessions.size());
 			//broadcastCheckGroups(); //Broadcast change of groups to all users
 			for (int i=0; i<connectedSessions.size(); i++) {
 				sendXMLGroupInfo(connectedSessions.get(i));
@@ -1003,13 +1011,16 @@ public class ChatAnnotation implements ServletContextListener{
 		e.setAttribute("type", "groupInfo");
 		
 		if (groupManager==null) {
+			System.out.println("NULL groupmanager");
 			e.setAttribute("setStatus", "FALSE");
 			e.setAttribute("groupOffset", "#");
 			e.setAttribute("groupTotal", "#");
 		} else {
 			e.setAttribute("setStatus", "TRUE");
 			e.setAttribute("groupOffset", Integer.toString(groupManager.groupOffset));
+			System.out.println("groupOffset" + Integer.toString(groupManager.groupOffset));
 			e.setAttribute("groupTotal", Integer.toString(groupManager.groupTotal));
+			System.out.println("groupOffset" + Integer.toString(groupManager.groupTotal));
 		}
 		sendSession.getBasicRemote().sendText(convertXMLtoString(e));
 	}

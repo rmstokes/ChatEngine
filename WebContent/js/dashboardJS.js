@@ -106,13 +106,13 @@ document.getElementById("output").innerHTML = "";
 		
 		//Parses and places the statistics at the bottom of the dashWindow
 		var groupStatArr = message.getElementsByTagName('group_summary');
-		
+		var convStatArr = message.getElementsByTagName('conv_summary')
 		
 		groups = [];
 		numGroups = groupStatArr.length;
 		
 		//dashLog(numGroups + " groups <br>");
-		
+		console.log("processing groups");
 		for(var i=0; i<groupStatArr.length; i++) {
 			var groupStat = groupStatArr[i];
 			
@@ -121,7 +121,14 @@ document.getElementById("output").innerHTML = "";
 			//dashLog("GRP: " + groupID);
 			//getGroupStats(groupStat);
 			groups[i] = new Group(groupStat);
-			
+			//console.log("group " + groupID + " created");
+			for (var j=0; j<convStatArr.length; j++){
+				if(idClean(convStatArr[j].getAttribute('groupname')) == groupID){
+					console.log("Found matching ConvStat group " + groupID);
+					groups[i].updateConvStat(convStatArr[j]);
+					break;
+				}
+			}
 			//dashLog(groups[i].toString());
 		}
 		
@@ -254,7 +261,12 @@ document.getElementById("output").innerHTML = "";
 							//dashLog("before: " + keyInstance);
 							//make sure it's not a string
 							keyInstance = Number(keyInstance);
-							keyInstance = keyInstance.toFixed(6);
+							if (key == 'gauge'){
+								keyInstance = keyInstance.toFixed(0);
+							} else {
+								keyInstance = keyInstance.toFixed(6);
+							}
+							
 							//dashLog("after: " + keyInstance);
 						}
 						
@@ -270,8 +282,10 @@ document.getElementById("output").innerHTML = "";
 
 			    
 				//dashLog("Marker 6");
-				$(dashWindow).find("#groupStats"+groupId).append("Average Stat: " +
-						groups[i].avgStat().toFixed(6) + "<br>");
+				$(dashWindow).find("#groupStats"+groupId).append("Conversation Stat: " +
+						groups[i].avgStat.toFixed(6) + "<br>");
+				$(dashWindow).find("#groupStats"+groupId).append("Conversation Gauge: " +
+						groups[i].gauge.toFixed(0) + "<br>");
 				$("#dashEndMarker").before(dashWindow);
 				
 				
@@ -295,7 +309,7 @@ document.getElementById("output").innerHTML = "";
 			
 			var windowId = "GroupWindow" + idString.replace(" ", "_");
 			
-			if (groups[i].avgStat() > Number(document.getElementById("successVal").value)){
+			if (groups[i].avgStat > Number(document.getElementById("successVal").value)){
 				//alert("avgStat: " + groups[i].avgStat() + " windowId: " + windowId)
 				$("#"+windowId).css("background-color", "green");
 			} else {
@@ -332,26 +346,8 @@ document.getElementById("output").innerHTML = "";
 			}
 		this.members = newMembers;	
 		
-		this.avgStat = function(){
-			
-			var numCount = 0;
-			var total = 0;
-			
-			for (var i = 0; i<this.members.length; i++){
-				//dashLog(this.members[i].name);
-				if (this.members[i].name.startsWith("TA")){
-					//dashLog("TA");
-					continue;
-				}
-				numCount++;
-				//dashLog("about to add to total");
-				total += Number(this.members[i].attributes['stat']);
-				
-			}
-			//dashLog("exited loop");
-			
-			return total/numCount;
-		}
+		this.avgStat;
+		this.gauge;
 			
 		this.attributes = function(){
 			
@@ -377,6 +373,11 @@ document.getElementById("output").innerHTML = "";
 			return out;
 			
 
+		}
+		
+		this.updateConvStat = function(element){
+			this.avgStat = Number(element.getAttribute('stat'));
+			this.gauge = Number(element.getAttribute('gauge'));
 		}
 	}
 	
