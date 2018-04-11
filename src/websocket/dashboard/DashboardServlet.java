@@ -1,6 +1,7 @@
 package websocket.dashboard;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
@@ -9,16 +10,25 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.sql.Timestamp;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -38,20 +48,19 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 
-import util.MessageType;
-import websocket.chat.Client;
-import websocket.chat.GroupManager;
-
+import container.Group;
 //import container
 import container.dashStatsContainer;
+import util.MessageType;
+import websocket.chat.Client;
 
 @WebServlet  //("/DashboardServlet")
 @WebListener
+@MultipartConfig
 @ServerEndpoint(value = "/{path}/dashXML")
 public class DashboardServlet extends HttpServlet implements ServletContextListener{
 	private static final long serialVersionUID = 1L;
@@ -68,6 +77,19 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	private Session session;
 	private Client userClient;
 	private static boolean sessionOpen = false;
+	ScheduledExecutorService service;
+	
+	private static String savedDash = "";
+	
+	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
+
+    
+    
+    
+    
+    
+
   
     public DashboardServlet() {
         super();
@@ -76,26 +98,47 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		//System.out.println("doGet is called");
-		System.out.println(req.toString());
+		
+		
 		String dashXMLString;
+		// get printwriters
 		PrintWriter out = res.getWriter();
+		
+		
 		res.setContentType("text/xml;charset=UTF-8");
 		
 		BufferedReader reader = new BufferedReader(req.getReader());
 		StringBuffer xmlBuffer = new StringBuffer();
 		
+		//int k = 0;
 		while ((dashXMLString = reader.readLine()) != null) {
-			xmlBuffer.append(dashXMLString + "\n");
+			//System.out.println(k + "line:" + dashXMLString);
+			//k++;
+			if(dashXMLString.startsWith("<?xml") || dashXMLString.startsWith("<dashboard_data>")) {
+					xmlBuffer.append(dashXMLString + "\n");
+			
+			}
+			
 		}
 		dashXMLString = xmlBuffer.toString();
 		out.append(dashXMLString);
-		
-		
+		if(dashStatsContainer.getInstance().getPath().length() > 0) {
+			File xmlSaver = new File(dashStatsContainer.getInstance().getPath()+ 
+					sdf.format(new Timestamp(System.currentTimeMillis())) + "xmlLog.txt");
+			System.out.println("path: '" + dashStatsContainer.getInstance().getPath()+ "'");
+			PrintWriter xmlLog = new PrintWriter(xmlSaver);
+			xmlLog.append(dashXMLString);
+			xmlLog.append("\n");
+			xmlLog.close();
+		} else {
+			System.out.println("Failed to save xmlLog: no path in dashStatsContainer");
+		}
 		
 		if (dashXMLString.length() > 0) {
 			System.out.println("Received XML file");
 			try {
 				updateDash(dashXMLString);
+				savedDash = dashXMLString;
 			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
 				System.out.println("No session to reference: NullPointerException");
@@ -148,9 +191,28 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		
 		//sendXML(session);
 		
+		Runnable runnable = new Runnable() {
+		      public void run() {
+		    	  try {
+					updateCompletedQCount();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		      }
+		    };
+		    
+		    service = Executors
+		                    .newSingleThreadScheduledExecutor();
+		    service.scheduleAtFixedRate(runnable, 0, 15, TimeUnit.SECONDS);
+		
 		synchronized (connectedSessions) {
 			connectedSessions.add(this.session);
 		}
+		if(savedDash.length() > 0) {
+			updateDash(savedDash);
+			
+			}
 		
 		//sendXML();
 		
@@ -164,7 +226,9 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 			connectedSessions.remove(this.session);
 		}
 		sessionOpen = false;
-		
+		if(service != null) {
+			service.shutdown();
+		}
 		if (!session.isOpen()) {
 			System.out.println("Session was closed- ");
 			if (userClient != null) {
@@ -289,6 +353,29 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		} //end of UserClientAffirm
 	}
 	
+	private void updateCompletedQCount() throws IOException {
+		
+		Set<String> keys = dashStatsContainer.getInstance().getGroupKeys();
+		
+		String msg = "<message type='CorrectQCountUpdate'>";
+		
+		for(String key:keys) {
+			
+			int correctCount = dashStatsContainer.getInstance().getGroupCorrectQs(key);
+			
+			msg += "<entry id='" + key + "' count='" + correctCount + 
+					"'></entry>";
+		}
+		
+		
+		msg = msg + "</message>";
+		//println(msg);
+		for (Session session : connectedSessions) {
+			//System.out.println("Sent updated CorrectQCount to dash");
+			session.getBasicRemote().sendText(msg);
+		}
+	}
+	
 	private void updateDash(String dashXMLString) throws Exception {
 		
 		//System.out.println(dashXMLString);
@@ -329,7 +416,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		
 		// This gets all connected sessions from memory and shares dash update
 		for (Session session : connectedSessions) {
-			System.out.println("Sent update to dash");
+			System.out.println("Sent update to dash for session: " + session.getId());
 			session.getBasicRemote().sendText(convertDocumentToString(newDoc));
 		}
 		
@@ -396,5 +483,16 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	
 	public static void println(String s) {
 		System.out.println(s);
+	}
+	private String getFileName(final Part part) {
+	    final String partHeader = part.getHeader("content-disposition");
+	    
+	    for (String content : part.getHeader("content-disposition").split(";")) {
+	        if (content.trim().startsWith("filename")) {
+	            return content.substring(
+	                    content.indexOf('=') + 1).trim().replace("\"", "");
+	        }
+	    }
+	    return null;
 	}
 }

@@ -16,7 +16,10 @@
  */
 package websocket.chat;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -63,7 +66,8 @@ import util.CHAT_COLOR;
 import util.GroupInfoObject;
 import util.MessageType;
 import util.ErrorCode;
-
+import util.ConsoleLog;
+import container.Group;
 // import container
 import container.dashStatsContainer;
 
@@ -92,6 +96,9 @@ public class ChatAnnotation implements ServletContextListener{
 	private static int groupIteration = 0;
 	//private static int uniqueServerID = new java.util.Random(new Date().getTime()).nextInt();
 	private static String logPath = "log\\";
+	
+	// string for the conversation log names
+	private String convLog = "currentLogFileNames.txt"; 
 	
 	//private String nickname;
 	private Session session;
@@ -144,11 +151,11 @@ public class ChatAnnotation implements ServletContextListener{
 		
 			//session.setMaxIdleTimeout(1000*60);
 			//System.out.println("Set timeout to: "+session.getMaxIdleTimeout());
-			System.out.println("number of sessions before:" + connectedSessions.size());
+			//System.out.println("number of sessions before:" + connectedSessions.size());
 			synchronized (connectedSessions) {
 				connectedSessions.add(this.session);
 			}
-			System.out.println("number of sessions after:" + connectedSessions.size());
+			//System.out.println("number of sessions after:" + connectedSessions.size());
 			//System.out.println("path "+session.getPathParameters().toString());
 			return;
 		default:
@@ -166,6 +173,7 @@ public class ChatAnnotation implements ServletContextListener{
 			connectedSessions.remove(this.session);
 		}
 		sessionOpen = false;
+		//Thread.currentThread().interrupt();
 		//Session has already been closed before end could run
 		if (!session.isOpen()) {//Monitor this for WI-FI users
 			System.out.print("Session was closed- ");
@@ -362,15 +370,15 @@ public class ChatAnnotation implements ServletContextListener{
 		//userClient AND senderID MUST/ARE be set after this point
 		else if (messageType.equals(MessageType.Admin_GroupCreation)) {
 			//From ADMIN page, called when accessing group creation
-			
+			System.out.println("In admin group creation");
 			int numGroups = Integer.parseInt(element.getTextContent());
 			int groupOffset = Integer.parseInt(element.getAttribute("groupOffset"));
 			String logName = element.getAttribute("logName");
-			
+			System.out.println("got logname");
 			int qCount = Integer.parseInt(element.getAttribute("qCount"));
 			System.out.println("qcount: " + qCount);
 			dashStatsContainer.getInstance().setQCount(qCount);
-			
+			System.out.println("set qCount");
 			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
 			
 			if (groupManager!=null) groupManager.destroy();
@@ -379,10 +387,17 @@ public class ChatAnnotation implements ServletContextListener{
 			//End Filelogger and recreate new one
 			if (fileLogger!=null) fileLogger.destroy();
 			fileLogger = new FileLogger(groupManager, ++groupIteration, logPath);
+			System.out.println("resetting file");
+			//reset the conversation names file
+			File logNames = new File(logPath + convLog);
+			if (logNames.exists()) {logNames.delete();}
+			System.out.println("creating new file at: " + logPath + convLog);
+			logNames.createNewFile();
+			System.out.println("file reset");
 			
 			//adminCreatedGroups = true;
 			
-			System.out.println(connectedSessions.size());
+			//System.out.println(connectedSessions.size());
 			//broadcastCheckGroups(); //Broadcast change of groups to all users
 			for (int i=0; i<connectedSessions.size(); i++) {
 				sendXMLGroupInfo(connectedSessions.get(i));
@@ -758,8 +773,11 @@ public class ChatAnnotation implements ServletContextListener{
 			groupManager.answerLock[groupNo] = false;
 			groupManager.prevAnswer[groupNo] = groupManager.answer[groupNo];
 			
-			if (answerReview.equals("correct"))
+			if (answerReview.equals("correct")) {
 				groupManager.answer[groupNo] = "";
+				
+				dashStatsContainer.getInstance().incrementCQs(groupID);
+			}
 			
 
 			Element ansMsg = doc.createElement("message"); 
@@ -1018,9 +1036,9 @@ public class ChatAnnotation implements ServletContextListener{
 		} else {
 			e.setAttribute("setStatus", "TRUE");
 			e.setAttribute("groupOffset", Integer.toString(groupManager.groupOffset));
-			System.out.println("groupOffset" + Integer.toString(groupManager.groupOffset));
+			//System.out.println("groupOffset" + Integer.toString(groupManager.groupOffset));
 			e.setAttribute("groupTotal", Integer.toString(groupManager.groupTotal));
-			System.out.println("groupOffset" + Integer.toString(groupManager.groupTotal));
+			//System.out.println("groupOffset" + Integer.toString(groupManager.groupTotal));
 		}
 		sendSession.getBasicRemote().sendText(convertXMLtoString(e));
 	}
@@ -1464,6 +1482,12 @@ public class ChatAnnotation implements ServletContextListener{
 	    System.out.println("Running on "+OS+" machine.");
 	    if (!OS.contains("Windows"))
 	    	logPath = (initLogPath == null) || (initLogPath.equals("")) ? logPath : initLogPath;
+	    
+	    //REMOVE THIS LINE AFTER TESTING
+	    //logPath = "D:\\Documents\\COMPSlog\\";
+	    
+	    
+	    
 	    System.out.println("logPath initialized to: " + logPath);
 	    
 	    System.out.println("Activating userClient Culler");

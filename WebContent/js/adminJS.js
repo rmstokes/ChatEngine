@@ -15,17 +15,31 @@ var setCreated = null;
 var TAfile = null;
 
 window.onbeforeunload = util_closeSocket;
+
 //checks for empty fields and disables create button if empty
 $('input[type=text]').keyup(function() {
 	console.log("checker function called");
 
     var empty = false;
     $('input[type=text]').each(function() {
-        if ($(this).val() == '') {
-        	console.log("found empty input: " +this.id);
+    	// get vars
+    	var testVal = $(this).val();
+    	var testId = $(this).attr('id')
+    	var isNaN = ( ! (parseInt(testVal, 10).toString() == testVal) );
+    	
+    	// checks for empty values and ensures that qCount is a valid integer
+    	console.log("id: " + testId + " isNaN: " + isNaN + " val: " + testVal);
+    	
+    	if(testId == 'qCount' && isNaN){
+    		console.log("bad input in qCount: " + testVal);
+            empty = true;
+    	}
+        if (testVal == '') {
+        	console.log("found empty input: " + testId);
             empty = true;
         }
     });
+    console.log("empty: " + empty);
 
     if (empty) {
         $('#createBtn').attr('disabled', 'true'); // updated according to http://stackoverflow.com/questions/7637790/how-to-remove-disabled-attribute-with-jquery-ie
@@ -189,7 +203,14 @@ function createSet () {
 	var groupTotal = $('#groupTotalPicker').prop("value");
 	var logName = $('#logName').prop("value");
 	var qCount = $('#qCount').prop("value");
-	//alert(qCount);
+
+	var qCountIsNaN = ( ! (parseInt(qCount, 10).toString() == qCount) );
+	
+	if (qCountIsNaN){
+		alert("Input error for number of questions.");
+		return;
+	}
+	
 	
 	var xml = '<message type="groupCreation" senderID="' + clientID
 	+ '" logName="' + logName + '" groupOffset="' + groupOffset + '" qCount="' + qCount + '">'

@@ -12,9 +12,9 @@ Chat.socket = null;
 var host = '';
 var setCreated = null;
 
-var groups = [];
+var groups = {};
 var numGroups = 0;
-var qCount;
+var qCount=1;
 
 
 var TAfile = null;
@@ -80,24 +80,57 @@ document.getElementById("output").innerHTML = "";
 		
 		
 		
-		
+		//console.log("message Received: " + messageType);
 		if (messageType == 'permIDSet' || messageType == 'permIDConfirm') {
 			console.log(messageType+" "+messageNode.getAttribute('senderID'));
 			util_setPermID(messageNode.getAttribute('senderID'));
 			
 		} else if (messageType == 'DashUpdate') {
 			qCount = messageNode.getAttribute('qCount');
+			console.log("qCount: " + qCount);
 			//alert(qCount);
 			updateDash(messageNode);
 			//printGroups();
 			renderDash();
 			
-		} 
+		} else if (messageType == 'CorrectQCountUpdate'){
+			updatecorrectQCounts(messageNode);
+		}
 		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
+	
+	function updatecorrectQCounts(message){
+		//console.log("updating correctQCounts");
+		// get the updated counts
+		var newCounts = message.getElementsByTagName('entry');
+		
+		
+		
+		for (var i = 0; i < newCounts.length; i++){
+			//console.log("newCounts[" + i + "]: " +newCounts[i].innerHTML)
+			var id = parseInt(newCounts[i].getAttribute('id'));
+			var count = parseInt(newCounts[i].getAttribute('count'));
+			//console.log("updating correctQCounts for Group: " + id + " with count: " + count);
+			//don't overfill complete bar
+			if (count > qCount) continue;
+			if (groups[id]!=null && groups[id].correctQCount != count){
+				//update needed
+				groups[id].setCorrectQCount(count);
+				//console.log("about to access completedBar"+id);
+				$('#completedBar'+id).css("width", ((count/qCount)*100)+"%");
+				$('#qCountStatus'+id).html(count + "/" + qCount);
+				
+			}
+			
+		}
+		
+		
+		
+		
+	}
 	
 	function updateDash(message){
 		
@@ -108,7 +141,7 @@ document.getElementById("output").innerHTML = "";
 		var groupStatArr = message.getElementsByTagName('group_summary');
 		var convStatArr = message.getElementsByTagName('conv_summary')
 		
-		groups = [];
+		groups = {};
 		numGroups = groupStatArr.length;
 		
 		//dashLog(numGroups + " groups <br>");
@@ -120,12 +153,12 @@ document.getElementById("output").innerHTML = "";
 			var groupID = idClean(groupStat.getAttribute('groupname'));
 			//dashLog("GRP: " + groupID);
 			//getGroupStats(groupStat);
-			groups[i] = new Group(groupStat);
+			groups[groupID] = new Group(groupStat);
 			//console.log("group " + groupID + " created");
 			for (var j=0; j<convStatArr.length; j++){
 				if(idClean(convStatArr[j].getAttribute('groupname')) == groupID){
-					console.log("Found matching ConvStat group " + groupID);
-					groups[i].updateConvStat(convStatArr[j]);
+					//console.log("Found matching ConvStat group " + groupID);
+					groups[groupID].updateConvStat(convStatArr[j]);
 					break;
 				}
 			}
@@ -145,9 +178,9 @@ document.getElementById("output").innerHTML = "";
 		//dashLog("entered renderDash()");
 		var oldChatWindows = $(".groupWindow").remove(); //get rid of all chat windows
 		//dashLog(numGroups);
-		for (var i=0; i<numGroups; i++) {
+		for (var groupKey in groups) {
 			
-			var groupId = groups[i].name;
+			var groupId = groups[groupKey].name;
 			//dashLog(groups[i].avgStat());
 			
 			// clean spaces
@@ -215,7 +248,7 @@ document.getElementById("output").innerHTML = "";
 				$(dashWindow).find("#header").append(z);
 				
 				
-				var headerDict = groups[i].attributes();
+				var headerDict = groups[groupKey].attributes();
 				//dashLog(headerDict.length);
 				
 				var colNum  = 1;
@@ -229,13 +262,13 @@ document.getElementById("output").innerHTML = "";
 					colNum++;
 				}
 				
-				for (var j = 0; j < groups[i].count; j++){
-					var member = groups[i].members[j];
+				for (var j = 0; j < groups[groupKey].count; j++){
+					var member = groups[groupKey].members[j];
 					
 					// Don't show TAs in table
 					if (member.name.startsWith("TA")){
-						$(dashWindow).find("#groupStats"+groupId).append("Assigned: " +
-								member.name + "<br>");
+//						$(dashWindow).find("#assigned"+groupId).append("Assigned: " +
+//								member.name + "<br>");
 						continue;
 					}
 					
@@ -283,9 +316,9 @@ document.getElementById("output").innerHTML = "";
 			    
 				//dashLog("Marker 6");
 				$(dashWindow).find("#groupStats"+groupId).append("Conversation Stat: " +
-						groups[i].avgStat.toFixed(6) + "<br>");
+						groups[groupKey].avgStat.toFixed(6) + "<br>");
 				$(dashWindow).find("#groupStats"+groupId).append("Conversation Gauge: " +
-						groups[i].gauge.toFixed(0) + "<br>");
+						groups[groupKey].gauge.toFixed(0) + "<br>");
 				$("#dashEndMarker").before(dashWindow);
 				
 				
@@ -302,14 +335,14 @@ document.getElementById("output").innerHTML = "";
 	
 	function updateBackgrounds(){
 		//alert("in update Backgrounds");
-		for (var i = 0; i < numGroups; i++){
-			var group = groups[i];
+		for (var groupKey in groups){
+			var group = groups[groupKey];
 			
 			var idString = group.name;
 			
 			var windowId = "GroupWindow" + idString.replace(" ", "_");
 			
-			if (groups[i].avgStat > Number(document.getElementById("successVal").value)){
+			if (groups[groupKey].avgStat > Number(document.getElementById("successVal").value)){
 				//alert("avgStat: " + groups[i].avgStat() + " windowId: " + windowId)
 				$("#"+windowId).css("background-color", "green");
 			} else {
@@ -335,6 +368,7 @@ document.getElementById("output").innerHTML = "";
 		this.name = idClean(group.getAttribute('groupname'));
 		this.sessionName = String(group.getAttribute('sessionname'));
 		this.count = group.getElementsByTagName('group_person_summary').length;
+		this.correctQCount=0;
 		
 		var tempMembers = group.getElementsByTagName('group_person_summary');
 			
@@ -378,6 +412,10 @@ document.getElementById("output").innerHTML = "";
 		this.updateConvStat = function(element){
 			this.avgStat = Number(element.getAttribute('stat'));
 			this.gauge = Number(element.getAttribute('gauge'));
+		}
+		
+		this.setCorrectQCount = function(count){
+			this.correctQCount = count;
 		}
 	}
 	
@@ -505,8 +543,8 @@ document.getElementById("output").innerHTML = "";
 	function printGroups(){
 		dashLog("printGroups Called");
 		document.getElementById("output").innerHTML = "";
-		for (var i = 0; i<numGroups; i++){
-			dashLog(groups[i].toString());
+		for (var groupKey in groups){
+			dashLog(groups[groupKey].toString());
 		}
 		
 	}

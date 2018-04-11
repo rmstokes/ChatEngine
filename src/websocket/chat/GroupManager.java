@@ -19,6 +19,7 @@ import org.apache.juli.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import container.dashStatsContainer;
 import util.CHAT_COLOR;
 import util.GroupInfoObject;
 
@@ -68,6 +69,9 @@ public class GroupManager {
 			CopyOnWriteArraySet<Client> value = new CopyOnWriteArraySet<Client>();
 			groupTable.put(key, value);
 			groupStatistics.put(key, new GroupInfoObject(key));
+			System.out.println("in GroupManager groupOffset: "+ groupOffset + " key: " + key);
+			// input group numbers to dashStatsContainer
+			dashStatsContainer.getInstance().initializeGroup(+ groupOffset + key); 
 		}
 		
 		this.logName = logName;
