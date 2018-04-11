@@ -1,8 +1,12 @@
 package container;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Group {
 	private String groupId;
 	private int completedQuestions = 0;
+	private Set<String> setAMs = new HashSet<String>();
 	
 	public Group(String id){
 		this.groupId = id;
@@ -21,6 +25,18 @@ public class Group {
 	}
 	public int getComplQs() {
 		return this.completedQuestions;
+	}
+	public void addAM(String s) {
+		setAMs.add(s);
+	}
+	public void removeAM(String s) {
+		if (setAMs.contains(s)) {
+			setAMs.remove(s);
+		}
+	}
+	public Set<String> getAMs(){
+		return setAMs;
+		
 	}
 
 }

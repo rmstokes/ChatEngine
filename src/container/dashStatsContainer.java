@@ -89,5 +89,24 @@ public class dashStatsContainer {
 			groups.get(cleanID(id)).decrementCQs();
 		}
 	}
+	public void addGroupAM(int id, String uName) {
+		String stringID = cleanID(id);
+		
+		System.out.println("Added " + uName + " to '" + stringID + "'");
+		
+		groups.get(stringID).addAM(uName);
+	}
+	public void removeGroupAM(int id, String uName) {
+		String stringID = cleanID(id);
+		
+		System.out.println("Removed " + uName + " from '" + stringID + "'");
+		
+		groups.get(stringID).removeAM(uName);
+	}
+	public Set<String> getAMs(String key){
+		return groups.get(key).getAMs();
+		
+		
+	}
 	
 }

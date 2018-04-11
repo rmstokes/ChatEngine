@@ -95,13 +95,33 @@ document.getElementById("output").innerHTML = "";
 			
 		} else if (messageType == 'CorrectQCountUpdate'){
 			updatecorrectQCounts(messageNode);
+		} else if (messageType == 'updateAMs'){
+			updateAMs(messageNode);
 		}
 		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
-	
+	function updateAMs(message){
+		var newAMs = message.getElementsByTagName('adminMonitor');
+		$(".assignedDiv").each(function(){
+			this.innerHTML = "";
+		});
+		
+		
+		for (var i = 0; i < newAMs.length; i++){
+			
+			var id = parseInt(newAMs[i].getAttribute('id'));
+			var uName = newAMs[i].getAttribute('uName');
+			console.log("adding status for " + uName + " in group "+ id);
+			$('#assigned' + id).append("Assigned: " + uName);
+			
+			
+			
+			
+		}
+	}
 	function updatecorrectQCounts(message){
 		//console.log("updating correctQCounts");
 		// get the updated counts

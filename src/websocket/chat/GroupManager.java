@@ -235,6 +235,7 @@ public class GroupManager {
 		try {
 			adminMonitorTable.put(userClient, monitorTable);
 			userClient.isAdmin = true;
+			
 			return adminMonitorTable.containsKey(userClient);
 		} catch (Error e) {
 			log.error(e);

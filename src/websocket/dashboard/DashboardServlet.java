@@ -195,6 +195,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		      public void run() {
 		    	  try {
 					updateCompletedQCount();
+					updateAMs();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -370,6 +371,30 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		
 		msg = msg + "</message>";
 		//println(msg);
+		for (Session session : connectedSessions) {
+			//System.out.println("Sent updated CorrectQCount to dash");
+			session.getBasicRemote().sendText(msg);
+		}
+	}
+	private void updateAMs() throws IOException {
+		
+		Set<String> keys = dashStatsContainer.getInstance().getGroupKeys();
+		Set<String> adminMonitors;
+		
+		String msg = "<message type='updateAMs'>";
+		
+		for(String key:keys) {
+			
+			adminMonitors = dashStatsContainer.getInstance().getAMs(key);
+			for (String adminMonitor : adminMonitors) {
+				msg += "<adminMonitor id='" + key + "' uName='" + adminMonitor + 
+						"'></adminMonitor>";
+			}
+		}
+		
+		
+		msg = msg + "</message>";
+		println(msg);
 		for (Session session : connectedSessions) {
 			//System.out.println("Sent updated CorrectQCount to dash");
 			session.getBasicRemote().sendText(msg);

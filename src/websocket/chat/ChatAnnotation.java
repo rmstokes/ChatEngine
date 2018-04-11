@@ -475,7 +475,7 @@ public class ChatAnnotation implements ServletContextListener{
 				groupManager.assignChatColor(userClient);
 				groupManager.joinGroup(groupID, userClient);
 				sendChatHistory(userClient, 0, true);
-					
+				dashStatsContainer.getInstance().addGroupAM(groupID, userClient.getUsername());	
 				System.out.print("User AM "+userClient.IDString()+" -> Group "+groupID);
 				
 			} else if (currAMStat==GroupManager.AM_NONE) { //leaving group
@@ -485,6 +485,7 @@ public class ChatAnnotation implements ServletContextListener{
 				if (group==null)
 					return;
 				group.remove(userClient);
+				dashStatsContainer.getInstance().removeGroupAM(groupID, userClient.getUsername());
 				System.out.println("User AM: "+userClient.IDString() +" -> Left Group "+groupID);
 			}
 			
