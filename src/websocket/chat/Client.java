@@ -34,5 +34,8 @@ public class Client {
 		else 
 			return this.toString()+ " ["+permID+"]";
 	}
+	public String getUsername() {
+		return username;
+	}
 
 }

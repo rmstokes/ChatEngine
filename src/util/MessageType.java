@@ -57,4 +57,10 @@ public class MessageType {
 	public static final String Answer_Review = "answerReview";
 	
 	public static final String Answer_UnderReview = "answerUnderReview";
+	
+	public static final String Answer_Unlock = "answerUnlock";
+	
+	public static final String Answer_Window_Update = "answerWindowFlagUpdate";
+	
+	public static final String Answer_Window_Request = "ansWinStatusReq";
 }
