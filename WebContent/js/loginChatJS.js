@@ -198,9 +198,9 @@ util_openSocket(); //open the webSocket
 //				$("#answerInput").prop("disabled", true);
 //				$("#answerInput").val(answerText);
 				$("#lockedPara").css("opacity", 1);
-				$("#lockedPara").text("Locked by "+senderName+"");
+				$("#lockedPara").text("Locked by "+senderName);
 				$("#lockedPara").css("background-color", senderColor);
-				
+				console.log("answer should be locked by " + senderName + " with color " + senderColor);
 				lastAnswerEdit = new Date().getTime();
 				
 				$("#lockedParaTimer").css("width", "100%");

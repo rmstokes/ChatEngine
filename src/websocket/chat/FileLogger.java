@@ -36,6 +36,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import container.dashStatsContainer;
+
 
 public class FileLogger extends TimerTask {
 	
@@ -240,8 +242,8 @@ public class FileLogger extends TimerTask {
 	    	  recordFileName(logPathDir + filename);
 	    	  fileNames.add(logPathDir + filename);
 	      }
-	      
-	      
+	      System.out.println("FileLogger logPathDir: '"+ logPathDir + "'");
+	      dashStatsContainer.getInstance().setPath(logPathDir);
 	      File logFile = new File(logPathDir + filename);
 	      logFile.setReadable(true, false); //make the logFile readable from linux
 	      //Final permissions should be 644 rw-r--r--

@@ -65,6 +65,8 @@ public class HttpReqHandlerClass extends HttpServlet {
 			responseXMLString = getLogsAsXML();
 			out.append(responseXMLString);
 			break;
+		default: System.out.println("There was an incorrect request sent to HttpReqHandler");
+				
 		}
 		
 	}
