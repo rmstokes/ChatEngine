@@ -194,8 +194,9 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		Runnable runnable = new Runnable() {
 		      public void run() {
 		    	  try {
-					updateCompletedQCount();
-					updateAMs();
+		    		  updateUserNames();
+		    		  updateCompletedQCount();
+		    		  updateAMs();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -205,7 +206,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		    
 		    service = Executors
 		                    .newSingleThreadScheduledExecutor();
-		    service.scheduleAtFixedRate(runnable, 0, 15, TimeUnit.SECONDS);
+		    service.scheduleAtFixedRate(runnable, 0, 5, TimeUnit.SECONDS);
 		
 		synchronized (connectedSessions) {
 			connectedSessions.add(this.session);
@@ -394,11 +395,39 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		
 		
 		msg = msg + "</message>";
-		println(msg);
+		//println(msg);
 		for (Session session : connectedSessions) {
 			//System.out.println("Sent updated CorrectQCount to dash");
 			session.getBasicRemote().sendText(msg);
 		}
+	}
+	
+	private void updateUserNames() throws IOException{
+		Set<String> groupIDs = dashStatsContainer.getInstance().getGroupKeys();
+		
+		String msg = "<message type='updateUNames'>";
+		
+		// here is where we get the usernames and put them in groups xml
+		for (String groupID : groupIDs) {
+			msg += "<group groupname='" + groupID + "'" + ">";
+			
+			Set<String> users = dashStatsContainer.getInstance().getSetUNames(groupID);
+			// here is where we attach the usernames
+			for (String uName : users) {
+				msg += "<groupmember name='" + uName + "'></groupmember>";
+			}
+			
+			msg += "</group>";
+					
+		}
+		
+		msg = msg + "</message>";
+		//println(msg);
+		for (Session session : connectedSessions) {
+			//System.out.println("Sent updated CorrectQCount to dash");
+			session.getBasicRemote().sendText(msg);
+		}
+		
 	}
 	
 	private void updateDash(String dashXMLString) throws Exception {
@@ -444,6 +473,8 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 			System.out.println("Sent update to dash for session: " + session.getId());
 			session.getBasicRemote().sendText(convertDocumentToString(newDoc));
 		}
+		
+		
 		
 		
 	}

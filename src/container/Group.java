@@ -7,7 +7,20 @@ public class Group {
 	private String groupId;
 	private int completedQuestions = 0;
 	private Set<String> setAMs = new HashSet<String>();
+	private Set<String> setUNames = new HashSet<String>();
 	
+	public Set<String> getSetUNames() {
+		return setUNames;
+	}
+
+	public void addUname(String s) {
+		this.setUNames.add(s);
+	}
+	public void removeUname(String s) {
+		if(this.setUNames.contains(s))
+			this.setUNames.remove(s);
+	}
+
 	public Group(String id){
 		this.groupId = id;
 	}
@@ -38,5 +51,6 @@ public class Group {
 		return setAMs;
 		
 	}
+	
 
 }

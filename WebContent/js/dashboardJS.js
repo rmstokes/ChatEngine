@@ -15,6 +15,8 @@ var setCreated = null;
 var groups = {};
 var numGroups = 0;
 var qCount=1;
+var groupStatArr = {};
+var convStatArr = {};
 
 
 var TAfile = null;
@@ -46,6 +48,7 @@ document.getElementById("output").innerHTML = "";
 		//$ ('#createBtn').removeAttr('disabled');
 		//util_setUserClient();
 		console.log("WebSocket was opened");
+		updateSlider();
 	};
 
 	Chat.socket.onclose = function() {
@@ -91,18 +94,25 @@ document.getElementById("output").innerHTML = "";
 			//alert(qCount);
 			updateDash(messageNode);
 			//printGroups();
-			renderDash();
+			
 			
 		} else if (messageType == 'CorrectQCountUpdate'){
 			updatecorrectQCounts(messageNode);
 		} else if (messageType == 'updateAMs'){
 			updateAMs(messageNode);
+		}else if (messageType == 'updateUNames'){
+			updateUNames(messageNode);
+			renderDash();
+			updateBackgrounds();
 		}
 		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
+	
+	
+	
 	function updateAMs(message){
 		var newAMs = message.getElementsByTagName('adminMonitor');
 		$(".assignedDiv").each(function(){
@@ -114,8 +124,8 @@ document.getElementById("output").innerHTML = "";
 			
 			var id = parseInt(newAMs[i].getAttribute('id'));
 			var uName = newAMs[i].getAttribute('uName');
-			console.log("adding status for " + uName + " in group "+ id);
-			$('#assigned' + id).append("Assigned: " + uName);
+			//console.log("adding status for " + uName + " in group "+ id);
+			$('#assigned' + id).append("Assigned: " + uName + "<br>");
 			
 			
 			
@@ -152,39 +162,52 @@ document.getElementById("output").innerHTML = "";
 		
 	}
 	
-	function updateDash(message){
-		
-		//dashLog("updateDash entered");
-		
-		
-		//Parses and places the statistics at the bottom of the dashWindow
-		var groupStatArr = message.getElementsByTagName('group_summary');
-		var convStatArr = message.getElementsByTagName('conv_summary')
-		
+	function updateUNames(message){
+		var messageGroups = message.getElementsByTagName('group');
+		//console.log("adding members");
 		groups = {};
-		numGroups = groupStatArr.length;
+		numGroups = messageGroups.length;
 		
 		//dashLog(numGroups + " groups <br>");
-		console.log("processing groups");
-		for(var i=0; i<groupStatArr.length; i++) {
-			var groupStat = groupStatArr[i];
-			
+		//console.log("processing groups");
+		for(var i=0; i<numGroups; i++) {
+			var groupStat = messageGroups[i];
 			
 			var groupID = idClean(groupStat.getAttribute('groupname'));
-			//dashLog("GRP: " + groupID);
-			//getGroupStats(groupStat);
+			//console.log("processing group " + groupID);
+			
 			groups[groupID] = new Group(groupStat);
-			//console.log("group " + groupID + " created");
-			for (var j=0; j<convStatArr.length; j++){
-				if(idClean(convStatArr[j].getAttribute('groupname')) == groupID){
-					//console.log("Found matching ConvStat group " + groupID);
-					groups[groupID].updateConvStat(convStatArr[j]);
-					break;
-				}
-			}
-			//dashLog(groups[i].toString());
+			
+			
 		}
 		
+		
+	}
+	
+	
+	function updateDash(message){
+		
+		//Parses and places the statistics at the bottom of the dashWindow
+		var groupStatArrTemp = message.getElementsByTagName('group_summary');
+		var convStatArrTemp = message.getElementsByTagName('conv_summary');
+		
+		for (var i = 0; i<convStatArrTemp.length; i++){
+			var groupID = idClean(convStatArrTemp[i].getAttribute('groupname'));
+			convStatArr[groupID] = convStatArrTemp[i];
+		}
+		for (var i = 0; i<groupStatArrTemp.length; i++){
+			var groupID = idClean(groupStatArrTemp[i].getAttribute('groupname'));
+			var membersDict = {};
+			
+			var memberElems = groupStatArrTemp[i].getElementsByTagName('group_person_summary');
+			for (var j = 0; j < memberElems.length; j++){
+				membersDict[memberElems[j].getAttribute('name')] = memberElems[j];
+			}
+			
+			groupStatArr[groupID] = membersDict;
+		}
+		
+		console.log("dash arrays updated");
 		
 	};
 	
@@ -333,19 +356,25 @@ document.getElementById("output").innerHTML = "";
 					
 				}
 
-			    
-				//dashLog("Marker 6");
-				$(dashWindow).find("#groupStats"+groupId).append("Conversation Stat: " +
-						groups[groupKey].avgStat.toFixed(6) + "<br>");
-				$(dashWindow).find("#groupStats"+groupId).append("Conversation Gauge: " +
-						groups[groupKey].gauge.toFixed(0) + "<br>");
+				
+				if (convStatArr != null && groups[groupKey] != null && groups[groupKey].avgStat != null){
+					$(dashWindow).find("#groupStats"+groupId).append("Conversation Stat: " +
+							groups[groupKey].avgStat.toFixed(6) + "<br>");
+				}
+				if (groupStatArr != null && groups[groupKey] != null && groups[groupKey].avgStat != null){
+					$(dashWindow).find("#groupStats"+groupId).append("Conversation Gauge: " +
+							groups[groupKey].gauge.toFixed(0) + "<br>");
+				}
+				
+				
 				$("#dashEndMarker").before(dashWindow);
 				
 				
-				//dashLog("Marker 8");
+				
 			}
 		}
-		updateBackgrounds();
+		
+		
 				
 				
 		
@@ -386,26 +415,45 @@ document.getElementById("output").innerHTML = "";
 	
 	function Group(group){
 		this.name = idClean(group.getAttribute('groupname'));
-		this.sessionName = String(group.getAttribute('sessionname'));
-		this.count = group.getElementsByTagName('group_person_summary').length;
+		this.sessionName = "";
+		this.count = group.getElementsByTagName('groupmember').length;
 		this.correctQCount=0;
 		
-		var tempMembers = group.getElementsByTagName('group_person_summary');
+		this.initializeMembers = function(group){
+			var tempMembers = group.getElementsByTagName('groupmember');
 			
-		var newMembers = []
-		for(var i=0; i<this.count; i++) {
+			// no members to initialize
+			if (tempMembers == null) return null;
 			
-			newMembers[i] = new Member(tempMembers[i]);
-			
+			var newMembers = []
+			for(var i=0; i<this.count; i++) {
+				
+				newMembers[i] = new Member(tempMembers[i]);
+				
+				var newMemberName = newMembers[i].name;
+				
+				if (groupStatArr[this.name] != null && groupStatArr[this.name][newMemberName] != null){
+					newMembers[i].setAttributes(groupStatArr[this.name][newMembers[i].name]);
+				}
+				
 			}
-		this.members = newMembers;	
+			return newMembers;
+		}
+		this.members = this.initializeMembers(group);	
 		
 		this.avgStat;
 		this.gauge;
+		
+		if (convStatArr[this.name] !=null){
+			this.avgStat = Number(convStatArr[this.name].getAttribute('stat'));
+		}
+		if (convStatArr[this.name] !=null){
+			this.gauge = Number(convStatArr[this.name].getAttribute('gauge'));
+		}
 			
 		this.attributes = function(){
 			
-			if(this.members[0] != null){
+			if(this.members != null && this.members[0] != null){
 				
 				return this.members[0].attributes;
 			}
@@ -429,9 +477,9 @@ document.getElementById("output").innerHTML = "";
 
 		}
 		
-		this.updateConvStat = function(element){
-			this.avgStat = Number(element.getAttribute('stat'));
-			this.gauge = Number(element.getAttribute('gauge'));
+		
+		this.updateGroupStat = function(element){
+			this.sessionName = String(element.getAttribute('sessionname'));
 		}
 		
 		this.setCorrectQCount = function(count){
@@ -441,23 +489,27 @@ document.getElementById("output").innerHTML = "";
 	
 	function Member(member){
 		this.name = String(member.getAttribute('name'));
+		this.attrNames = null;
+		this.attributes = null;	
 		
-		
-		
-		this.attrNames = member.attributes;
-		var attrDict = {};
-		
-		for(var j=0; j<this.attrNames.length; j++){
-			var attribute = this.attrNames[j].localName;
-			var value = this.attrNames[j].value;
-			if (attribute == 'name'){
-				continue;
-			} else{
-				attrDict[attribute] = value;
+		this.setAttributes = function(memberStat){
+			this.attrNames = memberStat.attributes;
+			var attrDict = {};
+			
+			for(var j=0; j<this.attrNames.length; j++){
+				var attribute = this.attrNames[j].localName;
+				var value = this.attrNames[j].value;
+				if (attribute == 'name'){
+					continue;
+				} else{
+					attrDict[attribute] = value;
+				}
 			}
+			this.attributes = attrDict;
+			
 		}
 		
-		this.attributes = attrDict;	
+		//this.setAttributes();
 			
 		this.toString = function(){
 			//dashLog(this.attrNames.length);

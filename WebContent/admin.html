@@ -40,14 +40,15 @@
     		<label title="Start the number of groups from this value +1 
 Eg. offset of 10, groups start at 11, 12, 13...">
     			<h3 class="yellow">Group Offset</h3>
-   			  	<input type='number' pattern='[0-9]' min='0' value='0' max='1000' step='1'  id='groupOffset' style="width:5em; text-align:center"/><br/>
+   			  	<input type='number' pattern='[10-1000]' min='10' value='10' max='1000' step='10'  id='groupOffset' style="width:5em; text-align:center"/><br/>
     		</label>	
     		</div>
     		<div class="halfDiv rightF">
     		<label title="Number of groups created. 
 Eg. 5 groups, 1,2,3,4,5">
     			<h3 class="yellow">Number of Groups</h3>
-    			<select id='groupTotalPicker' style="text-align:center">
+    			<input type='number' pattern='[1-9]' min='1' value='1' max='9' step='1'  id='groupTotalPicker' style="width:5em; text-align:center"/><br/>
+    			<!-- <select id='groupTotalPicker' style="text-align:center">
         			<option value="1">1</option>
         			<option value="2">2</option>
         			<option value="3">3</option>
@@ -60,7 +61,7 @@ Eg. 5 groups, 1,2,3,4,5">
         			<option value="10">10</option>     
         			<option value="11">11</option>  
         			<option value="12">12</option>     
-    			</select> 
+    			</select>  -->
     		</label>
     		</div>
     	</div>

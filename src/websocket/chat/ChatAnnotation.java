@@ -235,7 +235,7 @@ public class ChatAnnotation implements ServletContextListener{
 		Element element = doc.getDocumentElement();
 		String messageType = element.getAttribute("type");
 		
-		System.out.println("Recieved: "+convertXMLtoString(element));
+		System.out.println("Received: "+convertXMLtoString(element));
 
 		String senderID = null; 
 		
@@ -378,6 +378,7 @@ public class ChatAnnotation implements ServletContextListener{
 			int qCount = Integer.parseInt(element.getAttribute("qCount"));
 			System.out.println("qcount: " + qCount);
 			dashStatsContainer.getInstance().setQCount(qCount);
+			dashStatsContainer.getInstance().clearUNames();
 			System.out.println("set qCount");
 			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
 			
@@ -412,6 +413,7 @@ public class ChatAnnotation implements ServletContextListener{
 			groupManager = null;
 			if (fileLogger!=null) fileLogger.destroy();
 			fileLogger = null;
+			
 			//adminCreatedGroups = false;
 			
 			//I'll let the setClose message in GroupManager handle the change
@@ -554,7 +556,7 @@ public class ChatAnnotation implements ServletContextListener{
 			
 			userClient.answerStatus = false; //assume this user has not submitted anything
 			groupManager.assignChatColor(userClient);
-			
+			dashStatsContainer.getInstance().addUname(userClient.groupID, userClient.username);
 			System.out.println("User: "+userClient.IDString()+"-> Group: "+userClient.groupID+"-> color: "+userClient.chatColor.toString());
 			
 			
@@ -588,6 +590,7 @@ public class ChatAnnotation implements ServletContextListener{
 			if (group==null) //group did not exist
 				return;
 			group.remove(userClient);
+			dashStatsContainer.getInstance().removeUname(bGroupID, userClient.IDString());
 			
 			sendExitMessage(doc, userClient, bGroupID);
 			//userClient.session.close(); //Attempt to close connection from server side

@@ -108,5 +108,20 @@ public class dashStatsContainer {
 		
 		
 	}
+	public Set<String> getSetUNames(String groupID) {
+		return groups.get(groupID).getSetUNames();
+	}
+
+	public void addUname(int id, String s) {
+		String stringID = cleanID(id);
+		groups.get(stringID).addUname(s);
+	}
+	public void removeUname(int id, String s) {
+		String stringID = cleanID(id);
+		groups.get(stringID).removeUname(s);
+	}
+	public void clearUNames() {
+		groups.clear();
+	}
 	
 }
