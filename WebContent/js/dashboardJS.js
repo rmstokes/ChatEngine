@@ -268,6 +268,7 @@ document.getElementById("output").innerHTML = "";
 				var table = document.createElement("TABLE");
 				//dashLog("Marker 4.05");
 				table.setAttribute('id', tableId );
+				table.setAttribute('align', "center");
 				//dashLog("Marker 4.1");
 				$(dashWindow).find(".table").append(table);
 				
@@ -389,13 +390,13 @@ document.getElementById("output").innerHTML = "";
 			
 			var idString = group.name;
 			
-			var windowId = "GroupWindow" + idString.replace(" ", "_");
+			var windowId = "statsIndicator" + idString.replace(" ", "_");
 			
 			if (groups[groupKey].avgStat > Number(document.getElementById("successVal").value)){
 				//alert("avgStat: " + groups[i].avgStat() + " windowId: " + windowId)
-				$("#"+windowId).css("background-color", "green");
+				$("#"+windowId).css("background", "green");
 			} else {
-				$("#"+windowId).css("background-color", "FireBrick");
+				$("#"+windowId).css("background", "FireBrick");
 			}
 		}
 		

@@ -47,7 +47,9 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
@@ -114,9 +116,10 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		while ((dashXMLString = reader.readLine()) != null) {
 			//System.out.println(k + "line:" + dashXMLString);
 			//k++;
-			if(dashXMLString.startsWith("<?xml") || dashXMLString.startsWith("<dashboard_data>")) {
-					xmlBuffer.append(dashXMLString + "\n");
-			
+			if(dashXMLString.startsWith("--") || dashXMLString.startsWith("Content-Disposition:")) {
+					continue;			
+			}else {
+				xmlBuffer.append(dashXMLString);
 			}
 			
 		}
@@ -206,7 +209,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		    
 		    service = Executors
 		                    .newSingleThreadScheduledExecutor();
-		    service.scheduleAtFixedRate(runnable, 0, 5, TimeUnit.SECONDS);
+		    service.scheduleAtFixedRate(runnable, 0, 1, TimeUnit.SECONDS);
 		
 		synchronized (connectedSessions) {
 			connectedSessions.add(this.session);
@@ -432,7 +435,7 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 	
 	private void updateDash(String dashXMLString) throws Exception {
 		
-		//System.out.println(dashXMLString);
+		System.out.println(dashXMLString);
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -461,10 +464,20 @@ public class DashboardServlet extends HttpServlet implements ServletContextListe
 		
 		// Create a duplicate node
 	    Node newNode = doc.getDocumentElement().cloneNode(true);
+	    
 	    // Transfer ownership of the new node into the destination document
 	    newDoc.adoptNode(newNode);
 	    // Make the new node an actual item in the target document
 	    newDoc.getDocumentElement().appendChild(newNode);
+	    
+	    NodeList persons = newDoc.getElementsByTagName("group_person_summary");
+	    for (int i = 0; i < persons.getLength(); i++) {
+	    	Node person = persons.item(i);
+	    	String md5 = ((Element)person).getAttribute("name");
+	    	((Element)person).setAttribute("name", 
+	    			dashStatsContainer.getInstance().getNameFromMD5(md5));
+	    	
+	    }
 		
 		//println(convertDocumentToString(newDoc));
 		

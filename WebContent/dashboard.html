@@ -67,6 +67,7 @@
 		
 		<span style="display:inline-block; min-width:400px"></span>
 		<span class="groupHeader">Group X</span>
+		<div id="statsIndicator" class="statsIndicator"></div>
 		<br style="clear:both"/>
 		
 		<div class="upperSect">
@@ -85,7 +86,7 @@
 				<div id="assigned" class="assignedDiv"></div>
 			</div>
 		</div>
-		<div class="lowerSect" style = "min-width:73">
+		<div class="lowerSect">
 			<div id="tableDiv" class="table">
 				
 			</div>
@@ -138,7 +139,23 @@
 
 
 </body>
-
+<footer>
+  <div id="footer-right">
+  <a id="dashButton" class="buttonCOMPS buttonFooter" href="dashboard.html" target="_self">DASHBOARD</a>
+  <a id="adminButton" class="buttonCOMPS buttonFooter" href="admin.html" target="_self">ADMIN</a>
+  <a id="adminMonitorButton" class="buttonCOMPS buttonFooter" href="adminMonitor.html" target="_self">TA</a>
+  <p id="pageHostname">Hosted on </p>
+    <!-- <p style="text-align: right; font-size: 80%; padding: 0% 1%; margin: 0px;">Site updated 22/5/16</p> -->
+    <!-- <p class="bottomRightMsg">This site uses HTML5 & WebSockets.</p>
+    <p class="bottomRightMsg">Please make sure your browser is compatible.</p> -->
+    </div>
+  </footer>
+<script type="application/javascript"> 
+        "use strict";
+        
+        $ ("#pageHostname").text("Hosted by "+window.location.hostname);
+        	
+    </script>  
 <!-- <script	  src="https://code.jquery.com/jquery-2.2.4.min.js" -->
 <!-- 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" -->
 <!-- 			  crossorigin="anonymous"></script> -->

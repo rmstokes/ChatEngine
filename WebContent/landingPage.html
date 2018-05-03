@@ -8,7 +8,7 @@ This is the page that users will see when they first input the url.
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
   <head>
-    <title>Landing Page - COMPS</title>
+    <title>COMPS</title>
     <link id="titleIcon" type="image/png" href="img/chatbubble-working.png" rel="shortcut icon"/>
     <link rel="stylesheet" type="text/css" href="css/landingPage.css"/>
     <link rel="stylesheet" type="text/css" href="css/siteWide.css"/>
@@ -17,36 +17,44 @@ This is the page that users will see when they first input the url.
     
   </head>
   <body>
-    <h2>Landing Page 
-    	<span  style="float: right; top:30px">COMPS</span>
+    <h2>COMPS
+    	<span  style="float: right; top:30px"></span>
     </h2>
-    <p class="navMessage">Try not to use <strong>refresh</strong> or <strong>back</strong>  to change pages while on this site</p>
+<!--     <p class="navMessage">Try not to use <strong>refresh</strong> or <strong>back</strong>  to change pages while on this site</p> -->
 <!--     <div style=""></div> -->
     
-    <h1 >Welcome to <br />the Computer-Mediated Problem Solving Lab!</h1>
-    <div style="">
+    <h1 >Welcome to COMPS <br />COmputer Mediated Problem Solving</h1>
+    <div class="circle">
       
-      <p style="margin-bottom: 0px;">Select Desired Function:</p>
-      <select id="userType" >
+      <!-- <p style="margin-bottom: 0px;">Select Desired Function:</p> -->
+      <!-- <select id="userType" >
         <option value="0" title="Students login from here" selected="selected">Login</option>
         <option value="1" title="Use to create new groups/log files">Admin</option>
         <option value="2" title="TA/Instructors should log in here">Admin Monitor</option>
         <option value="3" title="Dashboard for viewing metrics">Dashboard</option>
-      </select>
+      </select> -->
       <p style="display: none;">Info will be displayed below</p>
       
-    <div style="background-color: aliceblue; padding: 1em; margin: 0px;">
+    <!-- <div style="background-color: aliceblue; padding: 1em; margin: 0px;">
     	<p id="infoBox"><strong>Login</strong> is the page for <strong>Student</strong> users. </p>
-    </div>
-    <a id="goButton" href="" target="_self">Go!</a></div>
+    </div> -->
+    <a id="goButton" class="buttonCOMPS" href="loginChat.html" target="_self">LOGIN</a></div>
     
-    <p id="pageHostname" style="text-align: right; font-size: 80%; padding: 0% 1%; margin: 5em 0px 0px;">Hosted on </p>
-    <p style="text-align: right; font-size: 80%; padding: 0% 1%; margin: 0px;">Site updated 22/5/16</p>
-    <p class="bottomRightMsg">This site uses HTML5 & WebSockets.</p>
-    <p class="bottomRightMsg">Please make sure your browser is compatible.</p>
+    
     
     <!-- <div id='main_image'>   </div> -->
   </body>
+  <footer>
+  <div id="footer-right">
+  <a id="dashButton" class="buttonCOMPS buttonFooter" href="dashboard.html" target="_self">DASHBOARD</a>
+  <a id="adminButton" class="buttonCOMPS buttonFooter" href="admin.html" target="_self">ADMIN</a>
+  <a id="adminMonitorButton" class="buttonCOMPS buttonFooter" href="adminMonitor.html" target="_self">TA</a>
+  <p id="pageHostname">Hosted on </p>
+    <!-- <p style="text-align: right; font-size: 80%; padding: 0% 1%; margin: 0px;">Site updated 22/5/16</p> -->
+    <!-- <p class="bottomRightMsg">This site uses HTML5 & WebSockets.</p>
+    <p class="bottomRightMsg">Please make sure your browser is compatible.</p> -->
+    </div>
+  </footer>
   
 <!--   <script	  src="https://code.jquery.com/jquery-2.2.4.min.js" -->
 <!-- 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" -->
@@ -59,7 +67,7 @@ This is the page that users will see when they first input the url.
         
         $ ("#pageHostname").text("Hosted by "+window.location.hostname);
         
-        $ ("#userType").change( function () {
+        /* $ ("#userType").change( function () {
         	var selected = $("#userType option:selected")[0].text;
         	
         	if (selected == "Login") {
@@ -78,7 +86,7 @@ This is the page that users will see when they first input the url.
         	
         });
         
-        $ ("#userType").trigger("change");
+        $ ("#userType").trigger("change"); */
         	
     </script>  
 

@@ -1478,7 +1478,7 @@ public class ChatAnnotation implements ServletContextListener{
 	@Override
 	  public void contextInitialized(ServletContextEvent sce)
 	  {
-	    System.out.println("Initialing chat server"); //called when server context is made
+	    System.out.println("Initializing chat server"); //called when server context is made
 	    
 	    String initLogPath = sce.getServletContext().getInitParameter("logPath");
 	    //iternary operator; fancy way of saying use default if initLogPath is empty
@@ -1488,7 +1488,7 @@ public class ChatAnnotation implements ServletContextListener{
 	    	logPath = (initLogPath == null) || (initLogPath.equals("")) ? logPath : initLogPath;
 	    
 	    //REMOVE THIS LINE AFTER TESTING
-	    //logPath = "D:\\Documents\\COMPSlog\\";
+	    logPath = "D:\\Documents\\COMPSlog\\";
 	    
 	    
 	    

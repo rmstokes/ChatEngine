@@ -31,12 +31,16 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+// import container
+import container.*;
+
 @WebServlet
 public class HttpReqHandlerClass extends HttpServlet {
 	/**
 	 *  this is cheating, needs to be fixed so it is getting the log param from web.xml
 	 */
 	private String logPath = "/home/kimlab/newserver_test/logs/"; 
+
 																	
 	private String sFileName = "currentLogFileNames.txt";
 	
@@ -45,6 +49,7 @@ public class HttpReqHandlerClass extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		this.logPath = config.getInitParameter("logPath");
 	}*/
+	
 	
 	public HttpReqHandlerClass() throws UnsupportedEncodingException {
 		/*String  logPathMaybe = this.getInitParameter("logPath");
@@ -138,6 +143,8 @@ public class HttpReqHandlerClass extends HttpServlet {
 					for(int i =0; i < nodesToCopy.getLength(); i++) {
 					    /// Create a duplicate node
 					    Node newNode = nodesToCopy.item(i).cloneNode(true);
+					    String name = newNode.getLocalName();
+					    
 					    // Transfer ownership of the new node into the destination document
 					    newDoc.adoptNode(newNode);
 					    // Make the new node an actual item in the target document

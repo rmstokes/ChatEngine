@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -86,6 +87,8 @@ public class FileLogger extends TimerTask {
 	
 	public boolean captureMessage(Element e) {
 		try {
+			
+			
 			//add server timestamp to this xml element
 			loggedClientMessages.add(e);
 			System.out.print("Captured broadcast ->");
@@ -100,9 +103,27 @@ public class FileLogger extends TimerTask {
 	public ArrayList<Element> getLoggedClientMessages() {
 		//Element[] e = {};
 		//if (loggedClientMessages==null) return e; //return empty array
-		return loggedClientMessages;
+		return /*getPlainTextLoggedClientMessages(*/loggedClientMessages/*)*/;
 		
 	}
+	// poorly written, need to fix, no time
+//	private ArrayList<Element> getPlainTextLoggedClientMessages(ArrayList<Element> localLoggedClientMessages){
+//		for (Element element: localLoggedClientMessages) {
+//			if (element.hasAttribute("senderName")) {
+//				element.setAttribute("senderName", dashStatsContainer.getInstance().getNameFromMD5(element.getAttribute("senderName")));
+//				}
+//			String s = element.getFirstChild().getFirstChild().getTextContent();
+//			String [] words = s.split("\\s+");
+//			for (String word:words) {
+//				if (isValidMD5(word)) {
+//					s = s.replace(word, dashStatsContainer.getInstance().getNameFromMD5(word));
+//				}
+//			}
+//			element.getFirstChild().getFirstChild().setTextContent(s);
+//		}
+//		
+//		return localLoggedClientMessages;
+//	}
 	
 	public void destroy () {
 		destroy = true;
@@ -204,6 +225,20 @@ public class FileLogger extends TimerTask {
 	      
 	      Node ne = docs[indexID].importNode(e, true);
 	      
+	    //test for senderName
+		if (((Element)ne).hasAttribute("senderName")) {
+			String name = ((Element)ne).getAttribute("senderName");
+			String hashValue = dashStatsContainer.getInstance().saveMD5hash(((Element)ne).getAttribute("senderName")); 
+			((Element)ne).setAttribute("senderName", hashValue);
+
+			String value = ((Element)ne).getElementsByTagName("text").item(0).getTextContent();
+			value = value.replace(name, hashValue);
+			((Element)ne).getElementsByTagName("text").item(0).setTextContent(value);
+			
+			
+							
+		}
+	      
 	      root[indexID].appendChild(ne);
 	      
 	      
@@ -297,6 +332,9 @@ public class FileLogger extends TimerTask {
             
         }
 		
+	}
+	public boolean isValidMD5(String s) {
+	    return s.matches("^[a-fA-F0-9]{32}$");
 	}
 
 }

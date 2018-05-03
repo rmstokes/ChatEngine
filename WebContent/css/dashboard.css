@@ -29,6 +29,8 @@
 	margin: 10px auto;
 	padding: 5px;
 	border-radius: 10px;
+	
+	
 }
 .upperSect{
 	background-color: White;
@@ -38,6 +40,10 @@
 	padding: 5px;
 	border-radius: 10px;
 	text-align:left;
+}
+.lowerSect{
+	text-align:"center;
+	min-width:73;
 }
 
 tr{
@@ -94,12 +100,15 @@ th {
 }
 #controlPanel{
 	width: 50%;
-	position: relative;
+	position: absolute;
 	left: 25%;
+	bottom:0;
 	padding: 5px;
-	background-color: #cae8ca;
-	border: 2px solid #4CAF50;
+	margin-bottom:60px;
+	background-color: #015249;
+/* 	border: 2px solid #4CAF50; */
 	margin-top: 3px;
+	color:snow;
 }
 #progressBar {
   width: 100%;
@@ -113,6 +122,21 @@ th {
   
   background-color: #4CAF50;
   clear:both;
+}
+.statsIndicator{
+	width: 26px;
+      height: 26px;
+      -webkit-border-radius: 13px;
+      -moz-border-radius: 13px;
+      border-radius: 13px;
+      background: white;
+      float:right;
+      margin-top:2px;
+      margin-left:10px;
+      
+}
+.groupWindow{
+	background:#015249;
 }
 
 

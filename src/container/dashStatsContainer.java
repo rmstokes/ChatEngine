@@ -1,11 +1,15 @@
 package container;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Set;
 
 public class dashStatsContainer {
 	
 	private HashMap<String, Group> groups = new HashMap<String, Group>();
+	private HashMap<String, String> MD5Map = new HashMap<String, String>();
 	private int qCount;
 	private String path = "";
 	
@@ -122,6 +126,24 @@ public class dashStatsContainer {
 	}
 	public void clearUNames() {
 		groups.clear();
+	}
+	public String saveMD5hash(String plaintext) throws NoSuchAlgorithmException {
+		MessageDigest m = MessageDigest.getInstance("MD5");
+		m.reset();
+		m.update(plaintext.getBytes());
+		byte[] digest = m.digest();
+		BigInteger bigInt = new BigInteger(1,digest);
+		String hashtext = bigInt.toString(16);
+		// Now we need to zero pad it if you actually want the full 32 chars.
+		while(hashtext.length() < 32 ){
+		  hashtext = "0"+hashtext;
+		}
+		MD5Map.put(hashtext, plaintext);
+		return hashtext;
+	}
+	public String getNameFromMD5(String key) {
+		return MD5Map.get(key);
+		
 	}
 	
 }
