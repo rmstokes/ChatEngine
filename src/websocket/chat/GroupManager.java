@@ -61,7 +61,7 @@ public class GroupManager {
 	private ConcurrentHashMap<Integer, GroupInfoObject> groupStatistics = new ConcurrentHashMap<Integer, GroupInfoObject>();
 	
 	public GroupManager(int numGroups, int groupOffset, String logName) {
-		System.out.println("Group Manager Constructor: Group Total:"+numGroups + " Group Offset:"+groupOffset +" Log Name: "+logName); 
+		//System.out.println("Group Manager Constructor: Group Total:"+numGroups + " Group Offset:"+groupOffset +" Log Name: "+logName); 
 		
 		//Populate group list
 		for (int key = 1; key <= numGroups; key++) {

@@ -91,7 +91,7 @@ public class FileLogger extends TimerTask {
 			
 			//add server timestamp to this xml element
 			loggedClientMessages.add(e);
-			System.out.print("Captured broadcast ->");
+			//System.out.print("Captured broadcast ->");
 			return true;
 		} catch (Error err) {
 			log.error(err);
@@ -143,6 +143,9 @@ public class FileLogger extends TimerTask {
 			System.out.println("Problem saving XML "+e.getMessage()+" "+e.toString());
 			fileCounter = 0; //if file not saved- try again
 		}
+		
+		// save the final map so that users can be matched up
+		dashStatsContainer.getInstance().saveMD5Map();
 
 	}
 	
@@ -250,7 +253,7 @@ public class FileLogger extends TimerTask {
 	    transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
 	    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 	    
-	    System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
+	    //System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
 	    
 	    //save xml file for each group
 	    for (int i = 0; i < gManage.groupTotal; i++)  {
@@ -277,7 +280,7 @@ public class FileLogger extends TimerTask {
 	    	  recordFileName(logPathDir + filename);
 	    	  fileNames.add(logPathDir + filename);
 	      }
-	      System.out.println("FileLogger logPathDir: '"+ logPathDir + "'");
+	      //System.out.println("FileLogger logPathDir: '"+ logPathDir + "'");
 	      dashStatsContainer.getInstance().setPath(logPathDir);
 	      File logFile = new File(logPathDir + filename);
 	      logFile.setReadable(true, false); //make the logFile readable from linux
@@ -321,7 +324,7 @@ public class FileLogger extends TimerTask {
             if (oFile.canWrite()) {
                 BufferedWriter oWriter = new BufferedWriter(new FileWriter(oFile, true));
                 oWriter.write (sContent + "\n");
-                System.out.println("content presumeably written: " + sContent);
+                
                 oWriter.close();
             }
 

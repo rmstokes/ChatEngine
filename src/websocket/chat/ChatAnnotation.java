@@ -131,37 +131,26 @@ public class ChatAnnotation implements ServletContextListener{
 		path = path.replace("undefined", "");
 		
 		switch (path) {
-		case "admin":
-			sendXMLGroupSetInfo(session);
+			case "admin":
+				sendXMLGroupSetInfo(session);
+				synchronized (connectedSessions) {
+					connectedSessions.add(this.session);
+				}	
+				break;
+			case "adminMonitor":
+			case "loginChat":
+				sendXMLGroupInfo(session);
 			
-			synchronized (connectedSessions) {
-				connectedSessions.add(this.session);
-			}
-			
-			
-			break;
-
-//		case "login": 
-//		case "chat": //outdated now
-//			break;
-			
-		case "adminMonitor":
-		case "loginChat":
-			sendXMLGroupInfo(session);
-		
-			//session.setMaxIdleTimeout(1000*60);
-			//System.out.println("Set timeout to: "+session.getMaxIdleTimeout());
-			//System.out.println("number of sessions before:" + connectedSessions.size());
-			synchronized (connectedSessions) {
-				connectedSessions.add(this.session);
-			}
-			//System.out.println("number of sessions after:" + connectedSessions.size());
-			//System.out.println("path "+session.getPathParameters().toString());
-			return;
-		default:
-			return;
+				synchronized (connectedSessions) {
+					connectedSessions.add(this.session);
+				}
+				break;
+			default:
+				return;
 
 		}
+		
+		
 
 	}
 
@@ -215,6 +204,7 @@ public class ChatAnnotation implements ServletContextListener{
 			}
 			
 		}
+		
 			
 	}
 
@@ -235,7 +225,7 @@ public class ChatAnnotation implements ServletContextListener{
 		Element element = doc.getDocumentElement();
 		String messageType = element.getAttribute("type");
 		
-		System.out.println("Received: "+convertXMLtoString(element));
+		//System.out.println("Received: "+convertXMLtoString(element));
 
 		String senderID = null; 
 		
@@ -370,16 +360,15 @@ public class ChatAnnotation implements ServletContextListener{
 		//userClient AND senderID MUST/ARE be set after this point
 		else if (messageType.equals(MessageType.Admin_GroupCreation)) {
 			//From ADMIN page, called when accessing group creation
-			System.out.println("In admin group creation");
+			//System.out.println("In admin group creation");
 			int numGroups = Integer.parseInt(element.getTextContent());
 			int groupOffset = Integer.parseInt(element.getAttribute("groupOffset"));
 			String logName = element.getAttribute("logName");
-			System.out.println("got logname");
+			//System.out.println("got logname");
 			int qCount = Integer.parseInt(element.getAttribute("qCount"));
-			System.out.println("qcount: " + qCount);
 			dashStatsContainer.getInstance().setQCount(qCount);
 			dashStatsContainer.getInstance().clearUNames();
-			System.out.println("set qCount");
+			System.out.println("set qCount: " + qCount);
 			if(numGroups == 0 || groupOffset < 0) return; //Ignore invalid messages
 			
 			if (groupManager!=null) groupManager.destroy();
@@ -408,11 +397,18 @@ public class ChatAnnotation implements ServletContextListener{
 			return;
 			
 		} else if (messageType.equals(MessageType.Admin_GroupDeletion)) {
+			
+			// save the final map so that users can be matched up
+			dashStatsContainer.getInstance().saveMD5Map();
+			
 			//Destroy the current groupManager and fileLogger
 			if (groupManager!=null) groupManager.destroy();
 			groupManager = null;
 			if (fileLogger!=null) fileLogger.destroy();
 			fileLogger = null;
+			
+			// clear the MD5Map
+			dashStatsContainer.getInstance().resetMD5Map();
 			
 			//adminCreatedGroups = false;
 			
@@ -889,7 +885,7 @@ public class ChatAnnotation implements ServletContextListener{
 			fileLogger.captureMessage(msg);
 		}
 		
-		System.out.println("Broadcast Message: "+convertXMLtoString(msg));
+		//System.out.println("Broadcast Message: "+convertXMLtoString(msg));
 		
 		Set<Client> group = groupManager.getGroup(groupID);
 		
@@ -900,13 +896,13 @@ public class ChatAnnotation implements ServletContextListener{
 		
 		//Get each client and push message to them
 		String xmlStr = convertXMLtoString(msg);
-		System.out.print("Broadcast to group ("+groupID+ ")");
+		//System.out.print("Broadcast to group ("+groupID+ ")");
 		for (Client gClient : group) {
 			try { //It should throw a IllegalStateException should this fail
 				synchronized (gClient.session) {
 				if (gClient.session.isOpen()) {
 					gClient.session.getBasicRemote().sendText(xmlStr); 
-					System.out.print(" : "+gClient.IDString());
+					//System.out.print(" : "+gClient.IDString());
 				} else
 					throw new Exception();
 				}
@@ -926,13 +922,13 @@ public class ChatAnnotation implements ServletContextListener{
 
 			}//end of try catch		
 		}//end of for - for each group Member
-		System.out.println();
+		//System.out.println();
 		
 	} //End of broadcastGroup
 	
 	public static void silentBroadcastGroup(Element msg, int groupID)  throws Exception {
 		//same as broadcast but silent (meaning it is not logged)
-		System.out.println("Silent broadcast Message: "+convertXMLtoString(msg));
+		//System.out.println("Silent broadcast Message: "+convertXMLtoString(msg));
 		
 		Set<Client> group = groupManager.getGroup(groupID);
 		
@@ -942,13 +938,13 @@ public class ChatAnnotation implements ServletContextListener{
 		}
 		
 		String xmlStr = convertXMLtoString(msg);
-		System.out.print("Silent Broadcast to group ("+groupID+ ")");
+		//System.out.print("Silent Broadcast to group ("+groupID+ ")");
 		for (Client gClient : group) {
 			try { //It should throw a IllegalStateException should this fail
 				synchronized (gClient.session) {
 				if (gClient.session.isOpen()) {
 					gClient.session.getBasicRemote().sendText(xmlStr); 
-					System.out.print(" : "+gClient.IDString());
+					//System.out.print(" : "+gClient.IDString());
 				} else
 					throw new Exception();
 				}
@@ -968,7 +964,7 @@ public class ChatAnnotation implements ServletContextListener{
 
 			}//end of try catch		
 		}//end of for - for each group Member
-		System.out.println();
+		//System.out.println();
 	}
 		
 	//Send simple message in xml form
@@ -1190,7 +1186,7 @@ public class ChatAnnotation implements ServletContextListener{
 		int chatHisSize = chatHis.size();
 		for (int i=startLog; i<chatHisSize; i++) {
 			Element chatMsg = (Element) chatHis.get(i).cloneNode(true); //Need to clone node otherwise reference will pick up chatHistory attrib
-			System.out.println("groupNumber" + chatMsg.getAttribute("groupNumber"));
+			//System.out.println("groupNumber" + chatMsg.getAttribute("groupNumber"));
 			if (userClient.groupID != Integer.parseInt(chatMsg.getAttribute("groupNumber")) )
 			//		|| chatMsg.getAttribute("type").equals("typing"))  //get everything thats not typing
 				continue;
@@ -1490,8 +1486,8 @@ public class ChatAnnotation implements ServletContextListener{
 	    //REMOVE THIS LINE AFTER TESTING
 	    logPath = "D:\\Documents\\COMPSlog\\";
 	    
-	    
-	    
+	    // setMasterLogPath no longer used
+	    //dashStatsContainer.getInstance().setMasterLogPath(logPath);
 	    System.out.println("logPath initialized to: " + logPath);
 	    
 	    System.out.println("Activating userClient Culler");
