@@ -43,12 +43,35 @@ function util_webSocketConnect(page) {
 function util_openSocket (){
 	var serverPath = window.location.pathname.match(/^(.*)\./)[1];
 	var wspath;
+	
 	 if (window.location.protocol == 'http:') {            
          wspath = 'ws://' + window.location.host + serverPath;
      } else {
          wspath = 'wss://' + window.location.host + serverPath;
     }
-	 
+	
+	if ('WebSocket' in window) {
+		Chat.socket = new WebSocket(wspath);
+	} else if ('MozWebSocket' in window) {
+		Chat.socket = new MozWebSocket(wspath);
+	} else {
+		console.log('Error: WebSocket is not supported by this browser.');
+		return;
+	}
+}
+
+function util_openSocket (extension){
+	var serverPath = window.location.pathname.match(/^(.*)\./)[1];
+	var wspath;
+	
+	 if (window.location.protocol == 'http:') {            
+         wspath = 'ws://' + window.location.host + 
+         serverPath + extension;
+     } else {
+         wspath = 'wss://' + window.location.host + 
+         serverPath + extension;
+    }
+	
 	if ('WebSocket' in window) {
 		Chat.socket = new WebSocket(wspath);
 	} else if ('MozWebSocket' in window) {

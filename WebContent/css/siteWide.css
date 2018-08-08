@@ -1,7 +1,7 @@
 
 h2 {
-	font-size: 270%;
-  font-family: Tahoma, serif;
+	font-size: 220%;
+  font-family: "Verdana";
 /*   padding: 0.1em; */
   margin: 0;
 /*   background-color: blue; */
@@ -9,6 +9,7 @@ h2 {
   text-shadow: 2px 2px black;
 /*   transition: all 2s; */
   text-align: left;
+  background:#015249;
 }
 
 h2 span {
@@ -23,6 +24,7 @@ h2 span {
 #headerDiv {
 	padding: 0.3em;
 	position: relative;
+	background-color: #015249;
 }
 
 #webSocketGfx {
@@ -56,7 +58,7 @@ h2 span {
 }
 
 #serverGfx.disconnectWS {
-	background-color:orangered;
+	background-color:#015249;
 	transition: background-color 0.5s ease-in;
 }
 
@@ -109,7 +111,9 @@ body {
   font-size: 16px;
   text-align: center;
   font-family: "Trebuchet MS", Helvetica, sans-serif;
-  background-color: #E6E6EA;
+  
+  /* background: #77C9D4; For browsers that do not support gradients */
+  background: linear-gradient(to right, #77C9D4, #57BC90); /* Standard syntax (must be last) */
   margin: 0;
 }   
 
@@ -148,4 +152,53 @@ button:not([disabled]):active {
 
 select, input {
 	text-align:center;
+}
+footer {
+	position:absolute;
+   	bottom:0;
+   	width:100%;
+   	height:60;   /* Height of the footer */
+   	
+   	background-color: white;
+   	text-align: right;
+
+   	
+}
+footer-right{
+	position:relative;
+	width: auto;
+	display: block;
+}
+.buttonCOMPS{
+	background: #015249;
+	font-weight: lighter;
+	color:white;
+	
+	
+	
+}
+.buttonFooter{
+	margin:3px;
+	margin-top:10px;
+	margin-bottom:10px;
+	font-size:10px;
+	
+}
+#pageHostname{
+	margin-right: 15px;
+	margin-top:15px;
+	float:right;
+	font-size:12px;
+}
+a {
+	text-decoration: none;
+	font-size: 100%;
+	color: snow;
+	padding: 8px 15px;
+/* 	background-color: forestgreen; */
+	border: 2px solid transparent;
+	margin-top: 3em;
+	display: inline-block;
+  	transition: all, 0s;
+/* 	margin: 1em; */
 }

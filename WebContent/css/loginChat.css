@@ -1,9 +1,7 @@
-#headerDiv {
-	background-color: forestgreen;
-}
+
 
 #bodyDiv {
- 	position:absolute;
+	position: absolute;
 	height: 87%;
 	width: 100%;
 	overflow-x: hidden;
@@ -15,15 +13,15 @@
 	top: 90px;
 	background-color: rgba(200, 00, 00, 0.6);
 	min-width: 25px;
-	min-height:50px;
-	padding:0.5em 0em;
+	min-height: 50px;
+	padding: 0.5em 0em;
 	padding-top: 1em;
 	border-radius: 0% 14px 14px 0%;
 	transition: transform 1s;
-/* 	transform: translateX(-90px); */
+	/* 	transform: translateX(-90px); */
 	transform: translateX(-120px);
-/* 	cursor: pointer; */
-	opacity:0;
+	/* 	cursor: pointer; */
+	opacity: 0;
 }
 
 #sidebar.show {
@@ -39,10 +37,10 @@
 	background-color: blue;
 	padding: 0.1em 2em 0.1em 1em;
 	border-bottom: 5px outset blue;
-	font-weight:bold;
-	color:snow;
+	font-weight: bold;
+	color: snow;
 	border-radius: 0% 0% 10% 0%;
-	clear:right;
+	clear: right;
 	margin: 2px 0px;
 }
 
@@ -54,21 +52,50 @@
 	animation: 0.7s infinite alternate redWhiteBlink;
 }
 
-@keyframes whiteBlink {
-	from { } to {border-color:white; background-color:white;}
+@
+keyframes whiteBlink {from {
+	
 }
 
-@keyframes redWhiteBlink {
-	0% {}
-	33% {background-color:white; border-color:white;}
-	66% {background-color:red; border-color:red;}
-	100% {}
+to {
+	border-color: white;
+	background-color: white;
 }
 
+}
+@
+keyframes redWhiteBlink { 0% {
+	
+}
+
+33%
+{
+background-color
+:white
+;
+ 
+border-color
+:white
+;
+}
+66%
+{
+background-color
+:red
+;
+ 
+border-color
+:red
+;
+}
+100%
+{
+}
+}
 #sidebar img {
-	float:right;
-	padding:5px;
-	padding-top:0px;
+	float: right;
+	padding: 5px;
+	padding-top: 0px;
 	cursor: pointer;
 }
 
@@ -82,16 +109,15 @@ h1 {
 	transform: translateX(-120%);
 	transition: left 2s, transform 2s, height 4s;
 	backface-visibility: hidden;
-/* 	height: 400px; */
+	/* 	height: 400px; */
 }
 
 .centerDiv {
 	left: 50%;
-	transform: translateX(-50%); 
+	transform: translateX(-50%);
 	transition: left 2s, transform 2s, height 4s;
-	height:auto;
+	height: auto;
 	backface-visibility: hidden;
-	
 }
 
 .offRightDiv {
@@ -99,32 +125,30 @@ h1 {
 	transform: translateX(50%);
 	transition: left 2s, transform 2s, height 4s;
 	backface-visibility: hidden;
-/* 	height: 400px; */
-	
+	/* 	height: 400px; */
 }
 
 #loginDiv {
-	position: absolute; 
-/* 	left: 50%;  */
-/* 	transform: translateX(-50%); */
-/* 	display:none; */
+	position: absolute;
+	/* 	left: 50%;  */
+	/* 	transform: translateX(-50%); */
+	/* 	display:none; */
 	width: 480px;
-	background-color: rgba(0,0,255,0.1);
+	background-color: rgba(0, 0, 255, 0.1);
 	border-radius: 20px;
 	margin: 0.5em 1em;
 	box-sizing: border-box;
 	padding-bottom: 30px;
-	
-/* 	transition: left 2s, transform 2s; */
+	/* 	transition: left 2s, transform 2s; */
 	transition: none;
 }
 
 #infoDiv {
-/* 	display: none; */
-/* 	left: 50%; */
-/* 	transform: translateX(-50%); */
-	background-color:snow;
-	border-radius:20px;
+	/* 	display: none; */
+	/* 	left: 50%; */
+	/* 	transform: translateX(-50%); */
+	background-color: snow;
+	border-radius: 20px;
 	position: absolute;
 	padding: 0.5em 1em;
 	margin: 0.5em 1em;
@@ -146,7 +170,7 @@ h2 {
 }
 
 button {
-	background-color:lightgreen;
+	background-color: lightgreen;
 }
 
 .cancelBtn {
@@ -158,20 +182,20 @@ button {
 }
 
 .blueBtn {
-	background-color:skyblue;
-	float:left;
-	margin:0 1em;
-	border-radius:10%;
+	background-color: skyblue;
+	float: left;
+	margin: 0 1em;
+	border-radius: 10%;
 }
 
-button:not([disabled]):hover {
-  transition: all 0.5s;
-  background-color: white;
+button:not ([disabled] ):hover {
+	transition: all 0.5s;
+	background-color: white;
 }
 
-button:not([disabled]):active {
-  transition: all 0s;
-  background-color: gray;
+button:not ([disabled] ):active {
+	transition: all 0s;
+	background-color: gray;
 }
 
 input {
@@ -179,17 +203,16 @@ input {
 	font-size: 100%;
 }
 
-input.chat  {
+input.chat {
 	width: 75%
 }
 
 div::-webkit-resizer {
-    transform: scale(200, 200);
-    /*No idea how to use this thing
+	transform: scale(200, 200);
+	/*No idea how to use this thing
     Might use an enlarged picture so Chrome's thing isn't so small,
     seems to be my best option*/
 }
-
 
 #chatWindow, #answerWindow {
 	background-color: rgba(0, 0, 200, 0.7);
@@ -197,41 +220,68 @@ div::-webkit-resizer {
 	border-radius: 10px;
 	float: left;
 	min-width: 430px;
-	position:relative;
+	position: relative;
 }
 
-#answerWindow { 
- 	background-color: rgba(200, 0, 00, 0.7);
- 	float:left; 
- 	margin: 0px 5px 0px 35px;
+#answerWindow {
+	background-color: rgba(200, 0, 00, 0.7);
+	float: left;
+	margin: 0px 5px 0px 35px;
+}
+
+#alertButtonDiv {
+	padding: 10px;
+	border-radius: 10px;
+	float: left;
+	min-width: 430px;
+	position: center;
+}
+
+#alertBtn {
+	background-color: red;
+	border-radius: 8px;
+	width: 50%;
+	height: 60px;
+	box-shadow: 0 9px #999;
+}
+
+#alertBtn:active {
+	background-color: darkred;
+	box-shadow: 0 5px #666;
+	transform: translateY(4px);
+	color: black;
+}
+
+#alertBtn:hover {
+	background-color: darkred
 }
 
 .answerContainer {
 	background-color: White;
-	font-size:18px;
-	resize:both;
-	width:100%;
+	font-size: 18px;
+	resize: both;
+	width: 100%;
 	position: relative;
 	margin: 10px auto;
 	min-width: 400px;
-	padding:5px 0px;
-	overflow:hidden;
-	border-radius:10px;
-	width:410px;
-	height:300px;
+	padding: 5px 0px;
+	overflow: hidden;
+	border-radius: 10px;
+	width: 410px;
+	height: 300px;
 	border-bottom-right-radius: 0px;
 }
 
 .prevDiv {
 	height: 1.3em;
-	overflow:hidden;
+	overflow: hidden;
 	position: absolute;
 	top: 0px;
 	left: 0px;
-	width:100%;
-	margin:0;
-	-moz-user-select:none;
-	user-select:none;
+	width: 100%;
+	margin: 0;
+	-moz-user-select: none;
+	user-select: none;
 	transition: height 0.7s;
 }
 
@@ -241,7 +291,7 @@ div::-webkit-resizer {
 
 .prevHeader {
 	background-color: red;
-	color:snow;
+	color: snow;
 	margin: 0px;
 	padding: 0.1em;
 	cursor: pointer;
@@ -249,80 +299,80 @@ div::-webkit-resizer {
 
 #prevPara {
 	background-color: lightgray;
-	margin:0px;
-/* 	height:400px; */
-	height:100%;
-	padding:1em;
-	width:100%;
-	box-sizing:border-box;
-	text-align:left;
-	white-space:pre-wrap;
+	margin: 0px;
+	/* 	height:400px; */
+	height: 100%;
+	padding: 1em;
+	width: 100%;
+	box-sizing: border-box;
+	text-align: left;
+	white-space: pre-wrap;
 	color: rebeccaPurple;
-	overflow-y:auto;
+	overflow-y: auto;
 }
 
 #answerPara {
-	box-sizing:border-box;
-	height:400px;
+	box-sizing: border-box;
+	height: 400px;
 	margin-top: 1em;
-	margin-bottom:0px;
-	padding:1em;
-	padding-top:1em;
-/* 	max-width:400px; */
-	width:100%;
-	height:100%;
+	margin-bottom: 0px;
+	padding: 1em;
+	padding-top: 1em;
+	/* 	max-width:400px; */
+	width: 100%;
+	height: 100%;
 	position: relative;
-	text-align:left;
+	text-align: left;
 	white-space: pre-wrap; /* preserves whitespace and line-breaks*/
 }
 
 #answerInput {
-	box-sizing:border-box;
-	height:400px;
+	box-sizing: border-box;
+	height: 400px;
 	margin-top: 1em;
-	margin-bottom:0px;
-	padding:1em;
-	padding-top:1em;
-/* 	max-width:400px; */
-	width:100%;
-	height:100%;
+	margin-bottom: 0px;
+	padding: 1em;
+	padding-top: 1em;
+	/* 	max-width:400px; */
+	width: 100%;
+	height: 100%;
 	position: relative;
-	text-align:left;
+	text-align: left;
 	white-space: pre-wrap; /* preserves whitespace and line-breaks*/
-/* 	font-size:80%; */
-	font-size:90%;
-	overflow-y:auto;
+	/* 	font-size:80%; */
+	font-size: 90%;
+	overflow-y: auto;
 }
 
 .lockedPara {
-/* 	position:absolute; */
-/* 	left:50%; */
-/* 	top: 50%; */
-/* 	transform: translate(-50%, -50%); */
-	width:100%;
-	background-color:gray;
-	margin:0;
-	color:white;
-	font-size:110%;
-	opacity:1;
-/* 	pointer-events:none; */
+	/* 	position:absolute; */
+	/* 	left:50%; */
+	/* 	top: 50%; */
+	/* 	transform: translate(-50%, -50%); */
+	width: 100%;
+	background-color: gray;
+	margin: 0;
+	color: white;
+	font-size: 110%;
+	opacity: 1;
+	/* 	pointer-events:none; */
 	transition: opacity 0.5s, background-color 0.5s ease-out;
 	padding: 0.5em 0px;
 }
 
 #lockedParaTimer {
 	height: 3px;
-	background-color:white;
-	width:100%;
-	transition:width 0.25s;
+	background-color: white;
+	width: 100%;
+	transition: width 0.25s;
 }
 
 #answerDropDown p {
 	color: white;
-	height:0px;
-	padding:0.5em;
-	font-weight:bold;
-	font-size:110%;
+	height: 0px;
+	padding: 0.5em;
+	font-weight: bold;
+	font-size: 110%;
 	margin: 2px 0px;
 	transition: height 0.5s, padding 0.5s;
 	overflow: hidden;
@@ -330,29 +380,29 @@ div::-webkit-resizer {
 
 .blackOverlay {
 	position: fixed;
-	top:0%;
+	top: 0%;
 	background-color: black;
 	opacity: 0.8;
-	width:100%;
-	height:100%;
-	transition:opacity 0.5s, visibility 0.5s;
-	visibility:visible;
+	width: 100%;
+	height: 100%;
+	transition: opacity 0.5s, visibility 0.5s;
+	visibility: visible;
 }
 
 .answerPopup {
 	position: fixed;
-	z-index:10;
+	z-index: 10;
 	width: 500px;
-	left:50%;
-	top:20%;
+	left: 50%;
+	top: 20%;
 	transform: translateX(-50%);
 	transition: opacity 0.8s, visibility 0.8s;
-	border-radius:10px;
-	background-color:whitesmoke;
-/* 	padding:0px 5px; */
-	padding:2em 1em;
-	opacity:1;
-	visibility:visible;
+	border-radius: 10px;
+	background-color: whitesmoke;
+	/* 	padding:0px 5px; */
+	padding: 2em 1em;
+	opacity: 1;
+	visibility: visible;
 }
 
 #answerInputCopy {
@@ -365,7 +415,7 @@ div::-webkit-resizer {
 }
 
 .hidePopup {
-	opacity:0;
-	visibility:hidden;
-/* 	pointer-events:none; */
+	opacity: 0;
+	visibility: hidden;
+	/* 	pointer-events:none; */
 }

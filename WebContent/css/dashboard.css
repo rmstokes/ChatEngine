@@ -1,0 +1,142 @@
+#conversationWindow {
+	background-color: rgba(200, 0, 00, 0.7);
+	float: left;
+	margin: 0px 5px 0px 300px;
+	padding: 10px;
+	border-radius: 10px;
+	min-width: 800px;
+}
+.chatContainer {
+	background-color: White;
+	font-size: 18px;
+	resize: both;
+	width: 100%;
+	position: relative;
+	margin: 10px auto;
+	min-width: 775px;
+	padding: 5px 0px;
+	overflow: hidden;
+	border-radius: 10px;
+	width: 410px;
+	height: 300px;
+	border-bottom-right-radius: 0px;
+} 
+
+.table{
+	background-color: White;
+	width: 95%;
+	font-size: 18px;
+	margin: 10px auto;
+	padding: 5px;
+	border-radius: 10px;
+	
+	
+}
+.upperSect{
+	background-color: White;
+	width: 95%;
+	font-size: 18px;
+	margin: 10px auto;
+	padding: 5px;
+	border-radius: 10px;
+	text-align:left;
+}
+.lowerSect{
+	text-align:"center;
+	min-width:73;
+}
+
+tr{
+	border: 1px solid black;
+    width: 450px;
+	
+}
+
+td{
+    border: 1px solid black;
+    width: 150px;
+}
+th {
+    cursor: pointer;
+}
+.slidecontainer {
+    width: 100%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 85%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.cpField{
+	width: 98%;
+	margin-bottom:3px;
+}
+#controlPanel{
+	width: 50%;
+	position: absolute;
+	left: 25%;
+	bottom:0;
+	padding: 5px;
+	margin-bottom:60px;
+	background-color: #015249;
+/* 	border: 2px solid #4CAF50; */
+	margin-top: 3px;
+	color:snow;
+}
+#progressBar {
+  width: 100%;
+  height: 30px;
+  background-color: #ddd;
+  clear:both;
+}
+
+#completedBar {
+ 
+  
+  background-color: #4CAF50;
+  clear:both;
+}
+.statsIndicator{
+	width: 26px;
+      height: 26px;
+      -webkit-border-radius: 13px;
+      -moz-border-radius: 13px;
+      border-radius: 13px;
+      background: white;
+      float:right;
+      margin-top:2px;
+      margin-left:10px;
+      
+}
+.groupWindow{
+	background:#015249;
+}
+
+

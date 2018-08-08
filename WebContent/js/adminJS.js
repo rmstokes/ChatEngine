@@ -16,6 +16,39 @@ var TAfile = null;
 
 window.onbeforeunload = util_closeSocket;
 
+//checks for empty fields and disables create button if empty
+$('input[type=text]').keyup(function() {
+	console.log("checker function called");
+
+    var empty = false;
+    $('input[type=text]').each(function() {
+    	// get vars
+    	var testVal = $(this).val();
+    	var testId = $(this).attr('id')
+    	var isNaN = ( ! (parseInt(testVal, 10).toString() == testVal) );
+    	
+    	// checks for empty values and ensures that qCount is a valid integer
+    	console.log("id: " + testId + " isNaN: " + isNaN + " val: " + testVal);
+    	
+    	if(testId == 'qCount' && isNaN){
+    		console.log("bad input in qCount: " + testVal);
+            empty = true;
+    	}
+        if (testVal == '') {
+        	console.log("found empty input: " + testId);
+            empty = true;
+        }
+    });
+    console.log("empty: " + empty);
+
+    if (empty) {
+        $('#createBtn').attr('disabled', 'true'); // updated according to http://stackoverflow.com/questions/7637790/how-to-remove-disabled-attribute-with-jquery-ie
+    } else {
+        $('#createBtn').removeAttr('disabled'); // updated according to http://stackoverflow.com/questions/7637790/how-to-remove-disabled-attribute-with-jquery-ie
+    }
+});
+//console.log("input keyups set");
+
 util_openSocket();
 
 	Chat.socket.onopen = function() {
@@ -24,7 +57,7 @@ util_openSocket();
 		$ ("#serverGfx").addClass("activeWS");
 		$ ("#pingGfx").addClass("pingPong");
 		util_affirmUserClient();
-		$ ('#createBtn').removeAttr('disabled');
+		//$ ('#createBtn').removeAttr('disabled');
 		//util_setUserClient();
 	};
 
@@ -111,12 +144,27 @@ util_openSocket();
 			util_alert(msgtext);
 		} else if (messageType=='redirect' || messageType=='groupInfo') {
 			//capture but do nothing
-		} else {
+		} 
+		else {
 			console.log("Could not parse server message: \n" + message.data);
 		}
 
 	}; // end onmessage
 
+	
+function sendAnswerWindowStatus() {
+	
+	var checked = document.getElementById('answerWindowCheck').checked;
+	//alert(checked);
+	var xml = '<message type="answerWindowFlagUpdate" senderID="' + clientID
+	+ '" answerWindowFlag="' + checked 
+	+ '">'
+	+ '</message>';
+	
+	
+	Chat.socket.send(xml);
+}
+	
 function createGroups() {
 
 	if (adminGroupsCreated) {
@@ -134,6 +182,7 @@ function createGroups() {
 	var xml = '<message type="groupCreation" senderID="' + clientID
 			+ '" instructor="' + instruct + '" groupOffset="' + groupOff + '">'
 			+ '<text>' + numGroups + '</text>' + '</message>';
+	
 	Chat.socket.send(xml);
 }
 
@@ -153,9 +202,18 @@ function createSet () {
 	groupOffset = (groupOffset<0) ? 0 : groupOffset;
 	var groupTotal = $('#groupTotalPicker').prop("value");
 	var logName = $('#logName').prop("value");
+	var qCount = $('#qCount').prop("value");
+
+	var qCountIsNaN = ( ! (parseInt(qCount, 10).toString() == qCount) );
+	
+	if (qCountIsNaN){
+		alert("Input error for number of questions.");
+		return;
+	}
+	
 	
 	var xml = '<message type="groupCreation" senderID="' + clientID
-	+ '" logName="' + logName + '" groupOffset="' + groupOffset + '">'
+	+ '" logName="' + logName + '" groupOffset="' + groupOffset + '" qCount="' + qCount + '">'
 	+ '<text>' + groupTotal + '</text>' + '</message>';
 	
 	Chat.socket.send(xml);

@@ -19,6 +19,7 @@ import org.apache.juli.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import container.dashStatsContainer;
 import util.CHAT_COLOR;
 import util.GroupInfoObject;
 
@@ -60,7 +61,7 @@ public class GroupManager {
 	private ConcurrentHashMap<Integer, GroupInfoObject> groupStatistics = new ConcurrentHashMap<Integer, GroupInfoObject>();
 	
 	public GroupManager(int numGroups, int groupOffset, String logName) {
-		System.out.println("Group Manager Constructor: Group Total:"+numGroups + " Group Offset:"+groupOffset +" Log Name: "+logName); 
+		//System.out.println("Group Manager Constructor: Group Total:"+numGroups + " Group Offset:"+groupOffset +" Log Name: "+logName); 
 		
 		//Populate group list
 		for (int key = 1; key <= numGroups; key++) {
@@ -68,6 +69,9 @@ public class GroupManager {
 			CopyOnWriteArraySet<Client> value = new CopyOnWriteArraySet<Client>();
 			groupTable.put(key, value);
 			groupStatistics.put(key, new GroupInfoObject(key));
+			System.out.println("in GroupManager groupOffset: "+ groupOffset + " key: " + key);
+			// input group numbers to dashStatsContainer
+			dashStatsContainer.getInstance().initializeGroup(+ groupOffset + key); 
 		}
 		
 		this.logName = logName;
@@ -231,6 +235,7 @@ public class GroupManager {
 		try {
 			adminMonitorTable.put(userClient, monitorTable);
 			userClient.isAdmin = true;
+			
 			return adminMonitorTable.containsKey(userClient);
 		} catch (Error e) {
 			log.error(e);

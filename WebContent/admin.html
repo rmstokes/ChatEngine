@@ -20,11 +20,11 @@
   		<div id="pingGfx" class="circleBase ping"></div>
   	</div>
    	<h2>Admin 
-   		<span class="navH2" style="left:260px"><a href="loginChat.html" >>Login</a></span>
-   		<span class="navH2" style="left:400px"><a href="adminMonitor.html" >>Admin-Monitor</a></span>
+   		<!-- <span class="navH2" style="left:260px"><a href="loginChat.html" >>Login</a></span>
+   		<span class="navH2" style="left:400px"><a href="adminMonitor.html" >>Admin-Monitor</a></span> -->
    		<span  style="float: right; padding: 0em 0.1em">COMPS</span></h2>
    </div>
-   <p class="navMessage">Try not to use <strong>refresh</strong> or <strong>back</strong>  to change pages while on this site</p>
+   <!-- <p class="navMessage">Try not to use <strong>refresh</strong> or <strong>back</strong>  to change pages while on this site</p> -->
   <br/>
   
   
@@ -40,14 +40,15 @@
     		<label title="Start the number of groups from this value +1 
 Eg. offset of 10, groups start at 11, 12, 13...">
     			<h3 class="yellow">Group Offset</h3>
-   			  	<input type='number' pattern='[0-9]' min='0' value='0' max='1000' step='1'  id='groupOffset' style="width:5em; text-align:center"/><br/>
+   			  	<input type='number' pattern='[10-1000]' min='10' value='10' max='1000' step='10'  id='groupOffset' style="width:5em; text-align:center"/><br/>
     		</label>	
     		</div>
     		<div class="halfDiv rightF">
     		<label title="Number of groups created. 
 Eg. 5 groups, 1,2,3,4,5">
     			<h3 class="yellow">Number of Groups</h3>
-    			<select id='groupTotalPicker' style="text-align:center">
+    			<input type='number' pattern='[1-9]' min='1' value='1' max='9' step='1'  id='groupTotalPicker' style="width:5em; text-align:center"/><br/>
+    			<!-- <select id='groupTotalPicker' style="text-align:center">
         			<option value="1">1</option>
         			<option value="2">2</option>
         			<option value="3">3</option>
@@ -60,21 +61,39 @@ Eg. 5 groups, 1,2,3,4,5">
         			<option value="10">10</option>     
         			<option value="11">11</option>  
         			<option value="12">12</option>     
-    			</select> 
+    			</select>  -->
     		</label>
     		</div>
     	</div>
 <!--     	<br style="clear:both"></br> -->
 		<div id="secondDivRow" class="divRow">
+			
 			<label title="This string is saved in the log directory. 
 Use this to add text to the log directory name. 
 For example, you can name a Set (set of groups) 'Lab_3_Wed'. ">
     			<h3 class="yellow">Log Name</h3>
     			<input maxlength='30' type='text' id='logName' placeholder="Log Name" style="text-align:center"/>
     		</label>
+    		
+    		
+    		
+		</div>
+		<div id="qCountDiv" class="divRow">
+			
+			<label title="Input the number of questions to be completed in this session.">
+    			<h3 class="yellow">Number of Questions</h3>
+    			<input maxlength='30' type='text' id='qCount' placeholder="Question Count" style="text-align:center"/>
+    		</label>
+    		
+    		
+    		
 		</div>
 		<div id="thirdDivRow" class="">
+			
 			<button id="createBtn" disabled>Create Set</button>
+			
+			
+			
 		</div>
     </div>
     </div>
@@ -83,6 +102,19 @@ For example, you can name a Set (set of groups) 'Lab_3_Wed'. ">
     <div id="currentSetDiv" style="max-width: 520px; margin: 0px auto;">
     	<h1 class="sectionName">Current Set</h1>
     	<p id="serverStatus">Waiting for server info</p>
+    	
+    	<div id="answerWindowDiv" class="divRow">
+    		<div class="leftF halfDiv">
+			<label title="Unheck this box to disable the answer window">
+    			<h3>Answer Window:</h3>
+    			
+    		</label>
+    		</div>
+    		<div class="rightF halfDiv">
+    		<input id="answerWindowCheck" type="checkbox" onclick="sendAnswerWindowStatus();" checked>
+    		</div>
+    	</div>
+    	
     	<div id="firstDivRow2" class="divRow">
     		<div class="halfDiv leftF">
     			<h3>Group Offset</h3>
@@ -141,6 +173,17 @@ For example, you can name a Set (set of groups) 'Lab_3_Wed'. ">
     </div>
     
   </body>
+  <footer>
+  <div id="footer-right">
+  <a id="dashButton" class="buttonCOMPS buttonFooter" href="dashboard.html" target="_self">DASHBOARD</a>
+  <a id="adminButton" class="buttonCOMPS buttonFooter" href="admin.html" target="_self">ADMIN</a>
+  <a id="adminMonitorButton" class="buttonCOMPS buttonFooter" href="adminMonitor.html" target="_self">TA</a>
+  <p id="pageHostname">Hosted on </p>
+    <!-- <p style="text-align: right; font-size: 80%; padding: 0% 1%; margin: 0px;">Site updated 22/5/16</p> -->
+    <!-- <p class="bottomRightMsg">This site uses HTML5 & WebSockets.</p>
+    <p class="bottomRightMsg">Please make sure your browser is compatible.</p> -->
+    </div>
+  </footer>
   
 <!--    <script	  src="https://code.jquery.com/jquery-2.2.4.min.js" -->
 <!-- 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" -->

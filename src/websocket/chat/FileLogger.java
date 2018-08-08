@@ -1,6 +1,10 @@
 package websocket.chat;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -16,6 +20,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -31,6 +36,8 @@ import org.apache.juli.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import container.dashStatsContainer;
 
 
 public class FileLogger extends TimerTask {
@@ -57,6 +64,10 @@ public class FileLogger extends TimerTask {
 	//private final String instructor;
 	private boolean destroy = false;
 	private String logPath;
+	private String sFileName = "currentLogFileNames.txt";
+	private static HashSet<String> fileNames = new HashSet<String>();
+	
+	private static boolean writeableFileList = false;
 	
 	public FileLogger(GroupManager gm, int groupIt, String logPath) {
 		//int groupNum, Date date, int groupIt, String logPath, String instruct
@@ -70,14 +81,17 @@ public class FileLogger extends TimerTask {
 	    this.groupIteration = groupIt;
 	    //this.instructor = instruct;
 	    this.logPath = logPath;
+	    
 	}
 	
 	
 	public boolean captureMessage(Element e) {
 		try {
+			
+			
 			//add server timestamp to this xml element
 			loggedClientMessages.add(e);
-			System.out.print("Captured broadcast ->");
+			//System.out.print("Captured broadcast ->");
 			return true;
 		} catch (Error err) {
 			log.error(err);
@@ -89,9 +103,27 @@ public class FileLogger extends TimerTask {
 	public ArrayList<Element> getLoggedClientMessages() {
 		//Element[] e = {};
 		//if (loggedClientMessages==null) return e; //return empty array
-		return loggedClientMessages;
+		return /*getPlainTextLoggedClientMessages(*/loggedClientMessages/*)*/;
 		
 	}
+	// poorly written, need to fix, no time
+//	private ArrayList<Element> getPlainTextLoggedClientMessages(ArrayList<Element> localLoggedClientMessages){
+//		for (Element element: localLoggedClientMessages) {
+//			if (element.hasAttribute("senderName")) {
+//				element.setAttribute("senderName", dashStatsContainer.getInstance().getNameFromMD5(element.getAttribute("senderName")));
+//				}
+//			String s = element.getFirstChild().getFirstChild().getTextContent();
+//			String [] words = s.split("\\s+");
+//			for (String word:words) {
+//				if (isValidMD5(word)) {
+//					s = s.replace(word, dashStatsContainer.getInstance().getNameFromMD5(word));
+//				}
+//			}
+//			element.getFirstChild().getFirstChild().setTextContent(s);
+//		}
+//		
+//		return localLoggedClientMessages;
+//	}
 	
 	public void destroy () {
 		destroy = true;
@@ -111,6 +143,9 @@ public class FileLogger extends TimerTask {
 			System.out.println("Problem saving XML "+e.getMessage()+" "+e.toString());
 			fileCounter = 0; //if file not saved- try again
 		}
+		
+		// save the final map so that users can be matched up
+		dashStatsContainer.getInstance().saveMD5Map();
 
 	}
 	
@@ -123,6 +158,7 @@ public class FileLogger extends TimerTask {
 	    //To close the Set, it must run for 15mins without ANY messages sent
 	    int sleepTime = 1;
 		int actualTime = 0;
+		
 		while (loggedClientMessages.size()==fileCounter) {
 			actualTime += sleepTime;
 			
@@ -142,6 +178,7 @@ public class FileLogger extends TimerTask {
 			Thread.sleep(1000*60*sleepTime++); //sleep
 			//sleepTime++;
 		}
+		
 		
 		fileCounter = loggedClientMessages.size();
 		
@@ -177,13 +214,37 @@ public class FileLogger extends TimerTask {
 	    //Loop through each message, add to corresponding document
 	    //for (Element e : this.loggedClientMessages) {
 	    int logSize = loggedClientMessages.size();
+	    
 	    for (int i=0; i<logSize; i++) {
+	      
 	      Element e = loggedClientMessages.get(i);
+	      
+	      
 	      int groupID = Integer.parseInt(e.getAttribute("groupNumber")) - 1;
+	      
 	      int indexID = groupID - gManage.groupOffset;
+	      
 	      if(indexID<0 || indexID>gManage.groupTotal) return;
+	      
 	      Node ne = docs[indexID].importNode(e, true);
+	      
+	    //test for senderName
+		if (((Element)ne).hasAttribute("senderName")) {
+			String name = ((Element)ne).getAttribute("senderName");
+			String hashValue = dashStatsContainer.getInstance().saveMD5hash(((Element)ne).getAttribute("senderName")); 
+			((Element)ne).setAttribute("senderName", hashValue);
+
+			String value = ((Element)ne).getElementsByTagName("text").item(0).getTextContent();
+			value = value.replace(name, hashValue);
+			((Element)ne).getElementsByTagName("text").item(0).setTextContent(value);
+			
+			
+							
+		}
+	      
 	      root[indexID].appendChild(ne);
+	      
+	      
 	    }
 	    
 	    
@@ -192,7 +253,7 @@ public class FileLogger extends TimerTask {
 	    transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
 	    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 	    
-	    System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
+	    //System.out.println("Saving to path " + this.logPath+" @ "+df.format(endDate));
 	    
 	    //save xml file for each group
 	    for (int i = 0; i < gManage.groupTotal; i++)  {
@@ -210,17 +271,73 @@ public class FileLogger extends TimerTask {
 	      logPathDir = logPathDir.replaceAll(" ", "_"); //space can sneak in with instructor
 	      File logPathFile = new File(logPathDir); 
 	      logPathFile.mkdir(); //create new file directory if DNE 
+	    
 	      logPathFile.setExecutable(true, false); //This gives linux dir read/execute perm so kimlab can read root dirs
 	      logPathFile.setReadable(true, false); //So kimlab can view the dir & contents, but cannot edit it
 	      //Final permissions should be 755 rwxr-xr-x
 	      
+	      if (!fileNames.contains(logPathDir + filename)) {
+	    	  recordFileName(logPathDir + filename);
+	    	  fileNames.add(logPathDir + filename);
+	      }
+	      //System.out.println("FileLogger logPathDir: '"+ logPathDir + "'");
+	      dashStatsContainer.getInstance().setPath(logPathDir);
 	      File logFile = new File(logPathDir + filename);
 	      logFile.setReadable(true, false); //make the logFile readable from linux
 	      //Final permissions should be 644 rw-r--r--
 	      StreamResult streamresult = new StreamResult(logFile);
 	      
 	      transformer.transform(source, streamresult);
+	      
 	    }
+	}
+	
+	/**
+	 * This function writes the current log names out to file so that they can be read by 
+	 * the HTTP Get Handler
+	 * @param sFileName is the file name being written to
+	 * @param sContent is the file name of the specific log
+	 */
+	public synchronized void recordFileName(String sContent){ // synchronized to avoid multi Fileloggers writing at same time
+		
+		try {
+
+            File oFile = new File(this.logPath + this.sFileName);
+            // this is to make sure that we are not reusing old file names
+            //System.out.println("writeableFileList: " + writeableFileList);
+            if (!writeableFileList) {
+            	//System.out.println("in if statement");
+            	oFile.delete();
+            	//System.out.println(this.logPath + this.sFileName);
+            	try {
+					oFile.createNewFile();
+				} catch (Exception e) {
+					// problem creating file
+					System.out.println(e.getMessage() + " for oFile.createNewFile(); in FileLogger");
+				}
+            	//System.out.println("new file");
+            	writeableFileList = true;
+            	//System.out.println("boolean changed");
+            }
+            //System.out.println("writeableFileList: " + writeableFileList);
+            
+            if (oFile.canWrite()) {
+                BufferedWriter oWriter = new BufferedWriter(new FileWriter(oFile, true));
+                oWriter.write (sContent + "\n");
+                
+                oWriter.close();
+            }
+
+        }
+        catch (IOException oException) {
+            
+        	oException.printStackTrace();
+            
+        }
+		
+	}
+	public boolean isValidMD5(String s) {
+	    return s.matches("^[a-fA-F0-9]{32}$");
 	}
 
 }

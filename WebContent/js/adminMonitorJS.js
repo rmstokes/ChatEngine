@@ -326,6 +326,7 @@ function AMLogin() {
 		alert("Username is empty!");
 		return;
 	}
+	usernameText = "TA_" + usernameText
 	var xml = '<message type="adminMonitorLogin"  senderID="' + clientID + '">'
 				+usernameText+
 				'</message>';
